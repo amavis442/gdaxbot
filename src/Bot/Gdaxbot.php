@@ -153,6 +153,11 @@ class Gdaxbot {
 
                 echo 'Sell ' . $order_size . ' for ' . $sellPrice . "\n";
 
+                if ($startPrice < $this->sellingTreshold) {
+                    printf("Reached sell treshold %s  [%s] so no selling for now\n", $this->sellingTreshold, $startPrice);
+                    return;
+                }
+        
                 $order = (new \GDAX\Types\Request\Authenticated\Order())
                         ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
                         ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
