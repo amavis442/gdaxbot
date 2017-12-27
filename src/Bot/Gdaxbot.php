@@ -155,7 +155,7 @@ class Gdaxbot {
 
                 if ($startPrice < $this->sellingTreshold) {
                     printf("Reached sell treshold %s  [%s] so no selling for now\n", $this->sellingTreshold, $startPrice);
-                    return;
+                    continue;
                 }
         
                 $order = (new \GDAX\Types\Request\Authenticated\Order())
