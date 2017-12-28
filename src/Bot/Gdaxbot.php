@@ -56,7 +56,7 @@ class Gdaxbot {
 
     public function createDatabase() {
 
-        $sql = "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTO_INCREMENT, parent_id integer, side varchar(10), amount decimal(15,9),status varchar(10), order_id varchar(40), created_at datetime, updated_at timestamp)";
+        $sql = "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTO_INCREMENT, parent_id integer, side varchar(10), size varchar(20), amount decimal(15,9),status varchar(10), order_id varchar(40), created_at datetime, updated_at timestamp)";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
     }
@@ -90,11 +90,23 @@ class Gdaxbot {
         $stmt->execute();
     }
 
-    public function insertOrder($side, $order_id, $amount, $status = 'pending', $parent_id = 0) {
-        $sql = 'insert into orders SET side = :side, order_id = :orderid, amount = :amount,status = :status, parent_id = :parentid, created_at = :createdat';
+    /**
+     * Insert an order into the database 
+     * 
+     * @param string $side
+     * @param string $order_id
+     * @param string $size
+     * @param string $amount
+     * @param string $status
+     * @param int $parent_id
+     * @return int
+     */
+    public function insertOrder($side, $order_id, $size, $amount, $status = 'pending', $parent_id = 0) {
+        $sql = 'insert into orders SET side = :side, order_id = :orderid, size = :size, amount = :amount,status = :status, parent_id = :parentid, created_at = :createdat';
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue('side', $side);
         $stmt->bindValue('orderid', $order_id);
+        $stmt->bindValue('size', $size);
         $stmt->bindValue('amount', $amount);
         $stmt->bindValue('status', $status);
         $stmt->bindValue('parentid', $parent_id);
@@ -108,6 +120,9 @@ class Gdaxbot {
         return (int) $lastId['insertid'];
     }
 
+    /**
+     * Get rid of the failures.
+     */
     public function deleteOrdersWithoutOrderId() {
         $sql = "update orders SET status = :status WHERE order_id = '' AND status <> :status";
         $stmt = $this->conn->prepare($sql);
@@ -115,6 +130,11 @@ class Gdaxbot {
         $stmt->execute();
     }
 
+    /**
+     * Get the open buy orders
+     * 
+     * @return array
+     */
     public function getPendingBuyOrders() {
         $sql = "SELECT * FROM orders WHERE side='buy' AND (status = 'pending' or status='open')";
         $stmt = $this->conn->prepare($sql);
@@ -123,6 +143,12 @@ class Gdaxbot {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Fetch all orders that have given status
+     * 
+     * @param string $status
+     * @return array
+     */
     public function fetchAllOrders($status = 'pending') {
         $sql = 'SELECT * FROM orders WHERE status = :status';
         $stmt = $this->conn->prepare($sql);
@@ -132,6 +158,12 @@ class Gdaxbot {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Fetch inidividual order 
+     * 
+     * @param int $id
+     * @return array
+     */
     public function fetchOrder($id) {
         $sql = 'SELECT * FROM orders WHERE id = :id';
         $stmt = $this->conn->prepare($sql);
@@ -141,6 +173,12 @@ class Gdaxbot {
         return $stmt->fetch();
     }
 
+    /**
+     * Fetch order by order id from coinbase (has the form of aaaaa-aaaa-aaaa-aaaaa)
+     * 
+     * @param type $order_id
+     * @return type
+     */
     public function fetchOrderByOrderId($order_id) {
         $sql = 'SELECT * FROM orders WHERE order_id = :orderid';
         $stmt = $this->conn->prepare($sql);
@@ -150,6 +188,12 @@ class Gdaxbot {
         return $stmt->fetch();
     }
 
+    /**
+     * 
+     * @param string $side
+     * @param string $status
+     * @return array
+     */
     public function getOrdersBySide($side, $status = 'pending') {
         $sql = "SELECT * FROM orders WHERE side = :side AND status = :status";
         $stmt = $this->conn->prepare($sql);
@@ -160,6 +204,11 @@ class Gdaxbot {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Get the open sell orders
+     * 
+     * @return array
+     */
     public function getOrdersOpenSells() {
         $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open')";
         $stmt = $this->conn->prepare($sql);
@@ -169,6 +218,11 @@ class Gdaxbot {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Get the open buy orders
+     * 
+     * @return array
+     */
     public function getOrdersOpenBuys() {
         $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open')";
         $stmt = $this->conn->prepare($sql);
@@ -178,7 +232,9 @@ class Gdaxbot {
         return $stmt->fetchAll();
     }
     
-    
+    /**
+     * 
+     */
     public function listRowsFromDatabase() {
         $currentPendingOrders = $this->fetchAllOrders();
         foreach ($currentPendingOrders as $row) {
@@ -186,6 +242,9 @@ class Gdaxbot {
         }
     }
 
+    /**
+     * Get acount data like balance (can be handy to check if there is enough funds left)
+     */
     public function getAccounts() {
         $accounts = $this->client->getAccounts();
 
@@ -202,6 +261,11 @@ class Gdaxbot {
         }
     }
 
+    /**
+     * What is the current asking price
+     * 
+     * @return type
+     */
     public function getCurrentPrice() {
         $product = (new \GDAX\Types\Request\Market\Product())->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR);
         $productTicker = $this->client->getProductTicker($product);
@@ -228,11 +292,14 @@ class Gdaxbot {
             $order_id = $order->getId();
             $row = $this->fetchOrderByOrderId($order_id);
             if (!$row) {
-                $this->insertOrder($order->getSide(), $order->getId(), $order->getPrice());
+                $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
             }
         }
     }
 
+    /**
+     * Update the open buys
+     */
     public function actualizeBuys() {
         $rows = $this->getOrdersOpenBuys();
 
@@ -254,6 +321,9 @@ class Gdaxbot {
         }
     }
     
+    /**
+     * Update the open Sells
+     */
     public function actualizeSells() {
         $rows = $this->getOrdersOpenSells();
 
@@ -269,6 +339,9 @@ class Gdaxbot {
         }
     }
 
+    /**
+     * Cancel pending/open buy orders that have not filled yet in x seconds (90 seconds for now)
+     */
     public function cancelOldBuyOrders() {
         $currentPendingOrders = $this->getPendingBuyOrders();
 
@@ -313,11 +386,17 @@ class Gdaxbot {
         }
     }
 
-    protected function placeSellOrder($price) {
+    /**
+     * 
+     * @param string $size
+     * @param decimal $price
+     * @return boolean
+     */
+    protected function placeSellOrder($size, $price) {
         $order = (new \GDAX\Types\Request\Authenticated\Order())
                 ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
                 ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
-                ->setSize($this->order_size)
+                ->setSize($size)
                 ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_SELL)
                 ->setPrice($price)
                 ->setPostOnly(true);
@@ -331,6 +410,9 @@ class Gdaxbot {
         }
     }
 
+    /**
+     * Checks the open buys and if they are filled then place a buy order for the same size but higher price
+     */
     public function sell() {
         $startPrice = $this->getCurrentPrice();
         $currentPendingOrders = $this->getOrdersOpenBuys();
@@ -354,10 +436,10 @@ class Gdaxbot {
 
                 echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
 
-                $order_id = $this->placeSellOrder($sellPrice);
+                $order_id = $this->placeSellOrder($row['size'], $sellPrice);
 
                 if ($order_id) {
-                    $this->insertOrder('sell', $order_id, $sellPrice, 'open', $row['id']);
+                    $this->insertOrder('sell', $order_id, $row['size'], $sellPrice, 'open', $row['id']);
 
                     echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                     $this->updateOrderStatus($row['id'], $status);
@@ -368,6 +450,11 @@ class Gdaxbot {
         }
     }
     
+    /**
+     * Get the last lowest sell price (prevents crosstrading which is not allowed)
+     * 
+     * @return array
+     */
     public function getOpenOrders() {
         $lowestSellPrice = 1000.0;
 
@@ -394,6 +481,12 @@ class Gdaxbot {
         return [$restOrders, $lowestSellPrice];
     }
 
+    /**
+     * Place a buy order 
+     * 
+     * @param type $price
+     * @return boolean
+     */
     protected function placeBuyOrder($price) {
         $order = (new \GDAX\Types\Request\Authenticated\Order())
                 ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
@@ -413,6 +506,12 @@ class Gdaxbot {
         }
     }
 
+    /**
+     * Checks if there are slots open to place a buy order an if so places x amount of orders
+     * 
+     * @param int $overrideMaxOrders
+     * @return type
+     */
     public function buy($overrideMaxOrders = 0) {
         list($restOrders, $lowestSellPrice) = $this->getOpenOrders();
 
@@ -444,7 +543,7 @@ class Gdaxbot {
                 $order_id = $this->placeBuyOrder($buyPrice);
 
                 if ($order_id) {
-                    $this->insertOrder('buy', $order_id, $buyPrice);
+                    $this->insertOrder('buy', $order_id, $this->order_size, $buyPrice);
                 } else {
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
@@ -454,6 +553,9 @@ class Gdaxbot {
         }
     }
 
+    /**
+     * Main entry point
+     */
     public function run() {
         $this->deleteOrdersWithoutOrderId();
          
