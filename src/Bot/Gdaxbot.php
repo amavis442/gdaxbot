@@ -348,7 +348,7 @@ class Gdaxbot {
                 $buyprice = $row['amount'];
                 $sellPrice = $buyprice + 0.01 + $this->spread;
                 if ($startPrice > $sellPrice) {
-                    $sellPrice = $startPrice + ($n * 0.05);
+                    $sellPrice = $startPrice + 0.01;
                 }
                 $sellPrice = number_format($sellPrice, 2);
 
