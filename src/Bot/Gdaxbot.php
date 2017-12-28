@@ -26,8 +26,8 @@ class Gdaxbot {
     protected $accountEUR;
     protected $accountLTC;
     protected $pendingBuyPrices;
-    protected $buyingTreshold;
-    protected $sellingTreshold;
+    protected $bottomBuyingTreshold;
+    protected $topBuyingTreshold;
 
 // Get the number of open LTC orders 
 // Calc allowed number of order = max_orders - open orders.
@@ -43,8 +43,9 @@ class Gdaxbot {
         $this->max_orders_per_run = getenv('MAX_ORDERS_PER_RUN');
         $this->waitingtime = getenv('WAITINGTIME');
         $this->lifetime = getenv('LIFETIME');
-        $this->buyingTreshold = getenv('BUYINGTRHESHOLD');
-        $this->sellingTreshold = getenv('SELLINGTRESHOLD');
+        
+        $this->bottomBuyingTreshold = getenv('BOTTOMBUYINGTRHESHOLD');
+        $this->topBuyingTreshold = getenv('TOPBUYINGTRHESHOLD');
 
 
         $this->db = new \PDO('sqlite:orders.sqlite');
@@ -523,8 +524,8 @@ class Gdaxbot {
 
         $startPrice = $this->getCurrentPrice();
 
-        if ($startPrice > $this->buyingTreshold || $startPrice < $this->sellingTreshold) {
-            printf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->sellingTreshold, $startPrice, $this->buyingTreshold);
+        if ($startPrice > $this->topBuyingTreshold || $startPrice < $this->bottomBuyingTreshold) {
+            printf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->bottomBuyingTreshold, $startPrice, $this->topBuyingTreshold);
             return;
         }
 
