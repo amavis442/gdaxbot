@@ -18,3 +18,4 @@
 .env
 nbproject
 orders.sqlite
+gdax.log
