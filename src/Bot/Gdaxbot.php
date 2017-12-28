@@ -354,13 +354,7 @@ class Gdaxbot {
 
                 echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
 
-                if ($startPrice < $this->sellingTreshold) {
-                    printf("Reached sell treshold %s  [%s] so no selling for now\n", $this->sellingTreshold, $startPrice);
-                    continue;
-                }
-
                 $order_id = $this->placeSellOrder($sellPrice);
-
 
                 if ($order_id) {
                     $this->insertOrder('sell', $order_id, $sellPrice, 'open', $row['id']);
@@ -373,7 +367,7 @@ class Gdaxbot {
             }
         }
     }
-
+    
     public function getOpenOrders() {
         $lowestSellPrice = 1000.0;
 
