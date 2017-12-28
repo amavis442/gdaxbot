@@ -11,6 +11,7 @@ use Carbon\Carbon;
  */
 class Gdaxbot {
 
+    protected $conn;
     protected $endpoint;
     protected $spread;
     protected $order_size;
@@ -31,14 +32,17 @@ class Gdaxbot {
 // Get the number of open LTC orders 
 // Calc allowed number of order = max_orders - open orders.
 // Get the max bid price and substract 10
-    public function __construct() {
+    public function __construct($conn) {
+        $this->conn = $conn;
+
+
         $this->endpoint = getenv('GDAX_ENDPOINT');
-        $this->spread = getenv('spread');
-        $this->order_size = getenv('order_size');
-        $this->max_orders = getenv('max_orders');
-        $this->max_orders_per_run = getenv('max_orders_per_run');
-        $this->waitingtime = getenv('waitingtime');
-        $this->lifetime = getenv('lifetime');
+        $this->spread = getenv('SPREAD');
+        $this->order_size = getenv('ORDER_SIZE');
+        $this->max_orders = getenv('MAX_ORDERS');
+        $this->max_orders_per_run = getenv('MAX_ORDERS_PER_RUN');
+        $this->waitingtime = getenv('WAITINGTIME');
+        $this->lifetime = getenv('LIFETIME');
         $this->buyingTreshold = getenv('BUYINGTRHESHOLD');
         $this->sellingTreshold = getenv('SELLINGTRESHOLD');
 
@@ -51,17 +55,134 @@ class Gdaxbot {
     }
 
     public function createDatabase() {
-        $this->db->exec("CREATE TABLE orders (id INTEGER PRIMARY KEY, side TEXT, amount TEXT,order_id TEXT, created_at TEXT)");
+
+        $sql = "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTO_INCREMENT, parent_id integer, side varchar(10), amount decimal(15,9),status varchar(10), order_id varchar(40), created_at datetime, updated_at timestamp)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
     }
 
     public function purgeDatabase() {
-        $this->db->exec('delete from orders');
+        $sql = 'delete from orders';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
     }
 
+    public function deleteOrder($id) {
+        $sql = 'delete from orders WHERE id = :id';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('id', $id);
+        $stmt->execute();
+    }
+
+    public function updateOrder($id, $side) {
+        $sql = 'update orders SET side = :side WHERE id = :id';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('id', $id);
+        $stmt->bindValue('side', $side);
+        $stmt->execute();
+    }
+
+    public function updateOrderStatus($id, $status) {
+        $sql = 'update orders SET status = :status WHERE id = :id';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('id', $id);
+        $stmt->bindValue('status', $status);
+        $stmt->execute();
+    }
+
+    public function insertOrder($side, $order_id, $amount, $status = 'pending', $parent_id = 0) {
+        $sql = 'insert into orders SET side = :side, order_id = :orderid, amount = :amount,status = :status, parent_id = :parentid, created_at = :createdat';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('side', $side);
+        $stmt->bindValue('orderid', $order_id);
+        $stmt->bindValue('amount', $amount);
+        $stmt->bindValue('status', $status);
+        $stmt->bindValue('parentid', $parent_id);
+
+        $stmt->bindValue('createdat', date('Y-m-d H:i:s'));
+
+        $stmt->execute();
+
+        $lastId = $this->conn->query('SELECT max(id) as insertid FROM orders')->fetch();
+
+        return (int) $lastId['insertid'];
+    }
+
+    public function deleteOrdersWithoutOrderId() {
+        $sql = "update orders SET status = :status WHERE order_id = '' AND status <> :status";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('status', 'deleted');
+        $stmt->execute();
+    }
+
+    public function getPendingBuyOrders() {
+        $sql = "SELECT * FROM orders WHERE side='buy' AND (status = 'pending' or status='open')";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function fetchAllOrders($status = 'pending') {
+        $sql = 'SELECT * FROM orders WHERE status = :status';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('status', $status);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function fetchOrder($id) {
+        $sql = 'SELECT * FROM orders WHERE id = :id';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('id', $id);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public function fetchOrderByOrderId($order_id) {
+        $sql = 'SELECT * FROM orders WHERE order_id = :orderid';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('orderid', $order_id);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public function getOrdersBySide($side, $status = 'pending') {
+        $sql = "SELECT * FROM orders WHERE side = :side AND status = :status";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('side', $side);
+        $stmt->bindValue('status', $status);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function getOrdersOpenSells() {
+        $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open')";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('side', 'sell');
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function getOrdersOpenBuys() {
+        $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open')";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('side', 'buy');
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+    
+    
     public function listRowsFromDatabase() {
-        $currentPendingOrders = $this->db->query('SELECT * FROM orders');
+        $currentPendingOrders = $this->fetchAllOrders();
         foreach ($currentPendingOrders as $row) {
-            var_dump($row);
+            printf("%s| %s| %s| %s\n", $row['created_at'], $row['side'], $row['amount'], $row['order_id']);
         }
     }
 
@@ -91,89 +212,164 @@ class Gdaxbot {
         return $startPrice;
     }
 
-    public function cancelOrPurgeOrders() {
-        $currentPendingOrders = $this->db->query('SELECT * FROM orders');
+    
+    /**
+     * Check if we have added orders manually and add them to the database.
+     */
+    public function actualize() {
+       
+        
+        $listOrders = (new \GDAX\Types\Request\Authenticated\ListOrders())
+                ->setStatus(\GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)
+                ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR);
 
-        foreach ($currentPendingOrders as $orderSqlite) {
-            if (empty($orderSqlite['order_id'])) {
-                $this->db->exec('delete from orders where id =' . $orderSqlite['id']);
-                continue;
+        $orders = $this->client->getOrders($listOrders);
+        foreach ($orders as $order) {
+            $order_id = $order->getId();
+            $row = $this->fetchOrderByOrderId($order_id);
+            if (!$row) {
+                $this->insertOrder($order->getSide(), $order->getId(), $order->getPrice());
             }
+        }
+    }
 
+    public function actualizeBuys() {
+        $rows = $this->getOrdersOpenBuys();
+
+        foreach ($rows as $row) {
+            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
+            $orderData = $this->client->getOrder($order);
+            
+            if ($orderData->getStatus()) {
+                $this->updateOrderStatus($row['id'], $orderData->getStatus());
+
+                //echo "Actualize sells with order id: " . $order->getId() . "\n";
+            }
+            
+            if ($orderData->getStatus()) {
+                $this->updateOrderStatus($row['id'], $orderData->getStatus());
+            } else {
+                $this->updateOrderStatus($row['id'], $orderData->getMessage());
+            }
+        }
+    }
+    
+    public function actualizeSells() {
+        $rows = $this->getOrdersOpenSells();
+
+        foreach ($rows as $row) {
+            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
+            $orderData = $this->client->getOrder($order);
+
+            if ($orderData->getStatus()) {
+                $this->updateOrderStatus($row['id'], $orderData->getStatus());
+
+                //echo "Actualize sells with order id: " . $order->getId() . "\n";
+            }
+        }
+    }
+
+    public function cancelOldBuyOrders() {
+        $currentPendingOrders = $this->getPendingBuyOrders();
+
+        foreach ($currentPendingOrders as $row) {
+            
             // Get the status of the buy order. You can only sell what you got.
-            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($orderSqlite['order_id']);
+            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
+            
             /** \GDAX\Types\Response\Authenticated\Order $orderData */
             $orderData = $this->client->getOrder($order);
-            $status = $orderData->getStatus();
+            
+            if ($orderData instanceof \GDAX\Types\Response\Authenticated\Order) {
+                $status = $orderData->getStatus(); 
+            } else {
+                $status = null;
+            }
 
             // Check for old orders and if so cancel them to start over
-            if ($status != 'done') {
-                $diffInSecs = Carbon::createFromFormat('Y-m-d H:i:s', $orderSqlite['created_at'])->diffInSeconds(Carbon::now());
+            if ($status == 'pending' || $status == 'open') {
+                $diffInSecs = Carbon::createFromFormat('Y-m-d H:i:s', $row['created_at'])->diffInSeconds(Carbon::now());
 
-                if (Carbon::createFromFormat('Y-m-d H:i:s', $orderSqlite['created_at'])->diffInSeconds(Carbon::now()) > $this->lifetime) {
+                if (Carbon::createFromFormat('Y-m-d H:i:s', $row['created_at'])->diffInSeconds(Carbon::now()) > $this->lifetime) {
 
-                    $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($orderSqlite['order_id']);
+                    $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
                     $response = $this->client->cancelOrder($order);
 
+                    echo $response->getMessage()."\n";
+
                     if (isset($response)) {
-                        echo "Order " . $orderSqlite['order_id'] . " is older then " . $this->lifetime . " seconds (" . $diffInSecs . ") and will be deleted\n";
-                        $this->db->exec('delete from orders where id =' . $orderSqlite['id']);
+                        echo "Order " . $row['order_id'] . " is older then " . $this->lifetime . " seconds (" . $diffInSecs . ") and will be deleted\n";
+                        $this->updateOrderStatus($row['id'], 'deleted');
                     } else {
-                        echo "Could not cancel order " . $orderSqlite['order_id'] . " for " . $orderSqlite['amount'] . "\n";
+                        echo "Could not cancel order " . $row['order_id'] . " for " . $row['amount'] . "\n";
                     }
                 }
             }
 
             if (is_null($status)) {
-                $this->db->exec('delete from orders where id =' . $orderSqlite['id']);
+                echo "Order not found with order id: " . $row['order_id'] . "\n";
+                $this->updateOrderStatus($row['id'], $orderData->getMessage());
             }
+        }
+    }
+
+    protected function placeSellOrder($price) {
+        $order = (new \GDAX\Types\Request\Authenticated\Order())
+                ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
+                ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
+                ->setSize($this->order_size)
+                ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_SELL)
+                ->setPrice($price)
+                ->setPostOnly(true);
+
+        $response = $this->client->placeOrder($order);
+        if (isset($response) && $response->getId()) {
+            return $response->getId();
+        } else {
+            echo "Order not placed because : " . $response->getMessage() . "\n";
+            return false;
         }
     }
 
     public function sell() {
         $startPrice = $this->getCurrentPrice();
-
-        $currentPendingOrders = $this->db->query('SELECT * FROM orders');
+        $currentPendingOrders = $this->getOrdersOpenBuys();
 
         $n = 1;
-        foreach ($currentPendingOrders as $orderSqlite) {
+        foreach ($currentPendingOrders as $row) {
             // Get the status of the buy order. You can only sell what you got.
-            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($orderSqlite['order_id']);
+            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
             $orderData = $this->client->getOrder($order);
 
             /** \GDAX\Types\Response\Authenticated\Order $orderData */
             $status = $orderData->getStatus();
 
             if ($status == 'done') {
-                $buyprice = $orderSqlite['amount'];
-                $sellPrice = $buyprice + 0.01 + $spread;
+                $buyprice = $row['amount'];
+                $sellPrice = $buyprice + 0.01 + $this->spread;
                 if ($startPrice > $sellPrice) {
                     $sellPrice = $startPrice + ($n * 0.05);
                 }
+                $sellPrice = number_format($sellPrice, 2);
 
-                echo 'Sell ' . $order_size . ' for ' . $sellPrice . "\n";
+                echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
 
                 if ($startPrice < $this->sellingTreshold) {
                     printf("Reached sell treshold %s  [%s] so no selling for now\n", $this->sellingTreshold, $startPrice);
                     continue;
                 }
-        
-                $order = (new \GDAX\Types\Request\Authenticated\Order())
-                        ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
-                        ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
-                        ->setSize($order_size)
-                        ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_SELL)
-                        ->setPrice($sellPrice)
-                        ->setPostOnly(true);
 
-                $response = $this->client->placeOrder($order);
+                $order_id = $this->placeSellOrder($sellPrice);
 
-                if (isset($response) && !is_null($response) && $response->getStatus() == 'pending') {
-                    echo "Removing buy from records: " . $orderSqlite['order_id'] . "\n";
-                    $this->db->exec('delete from orders where id =' . $orderSqlite['id']);
+
+                if ($order_id) {
+                    $this->insertOrder('sell', $order_id, $sellPrice, 'open', $row['id']);
+
+                    echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
+                    $this->updateOrderStatus($row['id'], $status);
                 }
             } else {
-                echo "Order not done " . $orderSqlite['order_id'] . "\n";
+                echo "Order not done " . $row['order_id'] . "\n";
             }
         }
     }
@@ -204,7 +400,26 @@ class Gdaxbot {
         return [$restOrders, $lowestSellPrice];
     }
 
-    public function buy() {
+    protected function placeBuyOrder($price) {
+        $order = (new \GDAX\Types\Request\Authenticated\Order())
+                ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
+                ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
+                ->setSize($this->order_size)
+                ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_BUY)
+                ->setPrice($price)
+                ->setPostOnly(true);
+
+        $response = $this->client->placeOrder($order);
+
+        if (isset($response) && $response->getId()) {
+            return $response->getId();
+        } else {
+            echo "Order not placed because : " . $response->getMessage() . "\n";
+            return false;
+        }
+    }
+
+    public function buy($overrideMaxOrders = 0) {
         list($restOrders, $lowestSellPrice) = $this->getOpenOrders();
 
         if ($this->max_orders_per_run > $restOrders) {
@@ -220,27 +435,22 @@ class Gdaxbot {
             return;
         }
 
+        if ($overrideMaxOrders > 0) {
+            $restOrders = $overrideMaxOrders;
+        }
+
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys
             $buyPrice = $startPrice - 0.01 - $i * $this->spread;
-
+            $buyPrice = number_format($buyPrice, 2);
 
             if ($buyPrice < $lowestSellPrice) {
                 echo 'Buy ' . $this->order_size . ' for ' . $buyPrice . "\n";
 
-                $order = (new \GDAX\Types\Request\Authenticated\Order())
-                        ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
-                        ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
-                        ->setSize($this->order_size)
-                        ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_BUY)
-                        ->setPrice($buyPrice)
-                        ->setPostOnly(true);
+                $order_id = $this->placeBuyOrder($buyPrice);
 
-                $response = $this->client->placeOrder($order);
-
-                if (isset($response) && !is_null($response) && $response->getStatus() == 'pending') {
-                    $order_id = $response->getId();
-                    $this->db->exec("INSERT INTO orders (side, amount, order_id, created_at) VALUES ('buy', '" . $buyPrice . "','" . $order_id . "','" . date('Y-m-d H:i:s') . "');");
+                if ($order_id) {
+                    $this->insertOrder('buy', $order_id, $buyPrice);
                 } else {
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
@@ -251,9 +461,17 @@ class Gdaxbot {
     }
 
     public function run() {
-        $this->cancelOrPurgeOrders();
+        $this->deleteOrdersWithoutOrderId();
+         
+        $this->actualize();
+        $this->actualizeSells();
         $this->sell();
+        
+        
+        $this->actualizeBuys();
+        $this->cancelOldBuyOrders();
         $this->buy();
+        
 
         echo "\nDONE\n";
     }

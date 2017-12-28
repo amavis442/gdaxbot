@@ -1,0 +1,101 @@
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 97
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 139
+Maximum number of orders left to place: 1 of 5
+Lowest sellprice 237.8
+Buy 0.01 for 233.49
+
+DONE
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 97
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 139
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 97
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 139
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 97
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 139
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+PHP Warning:  Invalid argument supplied for foreach() in /home/patrick/Sites/gdaxbot/src/Bot/Gdaxbot.php on line 141
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+Maximum number of orders left to place: 2 of 5
+Lowest sellprice 237.8
+Buy 0.01 for 233.48
+Buy 0.01 for 233.43
+
+DONE
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+Maximum number of orders left to place: 0 of 5
+Lowest sellprice 237.8
+
+DONE
+Maximum number of orders left to place: 2 of 5
+Lowest sellprice 237.8
+Buy 0.01 for 232.78
+Buy 0.01 for 232.73
+Order not placed for 232.73
+
+DONE
+Maximum number of orders left to place: 3 of 8
+Lowest sellprice 231.52
+Buy 0.01 for 230.91
+Buy 0.01 for 230.86
+Buy 0.01 for 230.81
+
+DONE
+Maximum number of orders left to place: 0 of 8
+Lowest sellprice 231.52
+
+DONE
+Maximum number of orders left to place: 0 of 8
+Lowest sellprice 231.52
+
+DONE
+Maximum number of orders left to place: 0 of 8
+Lowest sellprice 231.52
+
+DONE
+Maximum number of orders left to place: 0 of 8
+Lowest sellprice 231.52
+
+DONE
+Maximum number of orders left to place: 1 of 5
+Lowest sellprice 233.6
+Treshold reached 230.0  [232.4]  232.0 so no buying for now
+
+DONE
+2017-12-28 03:10:02 Start run
+Maximum number of orders left to place: 1 of 5
+Lowest sellprice 233.6
+Buy 0.01 for 231.5
+2017-12Europe/Amsterdam2017-12-28T03:10:07+01:00032017-28 03:10:07 End run
+
+DONE
+2017-12-28 03:14:01 Start run
+Maximum number of orders left to place: 1 of 5
+Lowest sellprice 233.6
+Buy 0.01 for 231.24
+2017-12-28 03:14:06 End run
+
+DONE
