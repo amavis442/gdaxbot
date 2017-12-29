@@ -642,7 +642,7 @@ class Gdaxbot {
             }
 
 
-            if ($buyPrice < $lowestSellPrice && $placeOrder) {
+            if ( (is_null($lowestSellPrice) || $buyPrice < $lowestSellPrice) && $placeOrder) {
                 echo 'Buy ' . $this->order_size . ' for ' . $buyPrice . "\n";
 
                 $order_id = $this->placeBuyOrder($buyPrice);
