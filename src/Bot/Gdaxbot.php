@@ -14,6 +14,7 @@ class Gdaxbot {
     protected $conn;
     protected $endpoint;
     protected $spread;
+    protected $sellspread;
     protected $order_size;
     protected $max_orders_per_run;
     protected $waitingtime;
@@ -49,6 +50,7 @@ class Gdaxbot {
         $this->waitingtime = getenv('WAITINGTIME');
 
         $this->spread = $settings['spread'];
+        $this->sellspread = $settings['sellspread'];
         $this->order_size = $settings['size'];
         $this->max_orders = $settings['max_orders'];
 
@@ -68,7 +70,7 @@ class Gdaxbot {
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
 
-        $sql = "CREATE TABLE settings (id INTEGER PRIMARY KEY AUTO_INCREMENT, spread decimal(8,2), max_orders int, bottom decimal(10,2),top decimal(10,2) ,size varchar(10),lifetime int, created_at datetime, updated_at timestamp);";
+        $sql = "CREATE TABLE settings (id INTEGER PRIMARY KEY AUTO_INCREMENT, spread decimal(8,2),sellspread decimal(8,2), max_orders int, bottom decimal(10,2),top decimal(10,2) ,size varchar(10),lifetime int, created_at datetime, updated_at timestamp);";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
 
@@ -509,7 +511,7 @@ class Gdaxbot {
 
                 if ($status == 'done') {
                     $buyprice = $row['amount'];
-                    $sellPrice = $buyprice + 0.01 + $this->spread;
+                    $sellPrice = $buyprice + $this->sellspread;
                     if ($startPrice > $sellPrice) {
                         $sellPrice = $startPrice + 0.01;
                     }

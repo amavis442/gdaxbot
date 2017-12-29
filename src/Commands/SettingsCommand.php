@@ -23,7 +23,8 @@ class SettingsCommand extends Command {
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Adjust the settings of the bot or show the current settings.')
-                ->addOption('spread', null, InputOption::VALUE_REQUIRED, 'Set the spread.')
+                ->addOption('spread', null, InputOption::VALUE_REQUIRED, 'Set the buy spread.')
+                ->addOption('sellspread', null, InputOption::VALUE_REQUIRED, 'Set the sell spread.')
                 ->addOption('size', null, InputOption::VALUE_REQUIRED, 'Set the size.')
                 ->addOption('bottom', null, InputOption::VALUE_REQUIRED, 'Set the bottom.')
                 ->addOption('top', null, InputOption::VALUE_REQUIRED, 'Set the top.')
@@ -46,7 +47,8 @@ class SettingsCommand extends Command {
             $result = $stmt->fetch();
 
             $output->writeln('<info>Size: ' . $result['size'] . '</info>');
-            $output->writeln('<info>Spread: ' . $result['spread'] . '</info>');
+            $output->writeln('<info>Buy Spread: ' . $result['spread'] . '</info>');
+            $output->writeln('<info>Sell Spread: ' . $result['sellspread'] . '</info>');
             $output->writeln('<info>Order size: ' . $result['size'] . '</info>');
             $output->writeln('<info>Bottom: ' . $result['bottom'] . '</info>');
             $output->writeln('<info>Top: ' . $result['top'] . '</info>');
@@ -60,9 +62,17 @@ class SettingsCommand extends Command {
             $stmt->bindValue('spread', $spread);
             $stmt->execute();
 
-            $output->writeln('<info>Spread is now : ' . $spread . '</info>');
+            $output->writeln('<info>Buy Spread is now : ' . $spread . '</info>');
         }
 
+        if ($sellspread = $input->getOption('sellspread')) {
+            $sql = "UPDATE settings SET sellspread = :sellspread";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue('sellspread', $sellspread);
+            $stmt->execute();
+            $output->writeln('<info>Sell Spread is now : ' . $sellspread . '</info>');
+        }
+        
         if ($max = $input->getOption('max')) {
             $sql = "UPDATE settings SET max_orders = :maxorders";
             $stmt = $this->conn->prepare($sql);
