@@ -13,7 +13,7 @@ $app->actualizeSells();
 $app->cancelOldBuyOrders();*/
 
 $result = $app->buy(1);
-var_dump($result);
+//var_dump($result);
 /*
 $app->cancelOrPurgeBuyOrders();
 

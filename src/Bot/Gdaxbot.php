@@ -58,7 +58,7 @@ class Gdaxbot {
 
         $this->bottomBuyingTreshold = $settings['bottom'];
         $this->topBuyingTreshold = $settings['top'];
-
+       
         $this->client = new \GDAX\Clients\AuthenticatedClient(
                 getenv('GDAX_API_KEY'), getenv('GDAX_API_SECRET'), getenv('GDAX_PASSWORD')
         );
@@ -534,7 +534,7 @@ class Gdaxbot {
                     if ($startPrice > $sellPrice) {
                         $sellPrice = $startPrice + 0.01;
                     }
-                    $sellPrice = number_format($sellPrice, 2);
+                    $sellPrice = number_format($sellPrice, 2,'.','');
 
                     echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
 
@@ -628,7 +628,8 @@ class Gdaxbot {
         }
 
         $startPrice = $this->getCurrentPrice();
-
+        
+        
         if ($startPrice > $this->topBuyingTreshold || $startPrice < $this->bottomBuyingTreshold) {
             printf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->bottomBuyingTreshold, $startPrice, $this->topBuyingTreshold);
             return;
@@ -642,7 +643,7 @@ class Gdaxbot {
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys
             $buyPrice = $oldBuyPrice - $this->spread;
-            $buyPrice = number_format($buyPrice, 2);
+            $buyPrice = number_format($buyPrice, 2,'.','');
 
             // Check if we already have a buy for this price, then try to find an open slot
             $hasBuyPrice = $this->buyPriceExists($buyPrice);
@@ -650,7 +651,7 @@ class Gdaxbot {
             $placeOrder = true;
             while ($hasBuyPrice) {
                 $buyPrice = $buyPrice - $n * $this->spread;
-                $buyPrice = number_format($buyPrice, 2);
+                $buyPrice = number_format($buyPrice, 2,'.','');
 
                 $hasBuyPrice = $this->buyPriceExists($buyPrice);
                 if ($n > 15) {
