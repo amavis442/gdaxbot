@@ -464,7 +464,7 @@ class Gdaxbot {
                     echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                     $this->updateOrderStatus($row['id'], $status);
                 } else {
-                    
+                    $this->insertOrder('sell', $order_id, $row['size'], $sellPrice, 'rejected', $row['id']);
                 }
             } else {
                 echo "Order not done " . $row['order_id'] . "\n";
@@ -556,7 +556,7 @@ class Gdaxbot {
 
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys
-            $buyPrice = $startPrice - 0.01 - $i * $this->spread;
+            $buyPrice = $startPrice - 0.01 - ( $i - 1) * $this->spread;
             $buyPrice = number_format($buyPrice, 2);
 
             if ($buyPrice < $lowestSellPrice) {
@@ -567,6 +567,7 @@ class Gdaxbot {
                 if ($order_id) {
                     $this->insertOrder('buy', $order_id, $this->order_size, $buyPrice);
                 } else {
+                    $this->insertOrder('buy', $order_id, $this->order_size, $buyPrice,'rejected');
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
             } else {
