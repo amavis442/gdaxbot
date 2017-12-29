@@ -45,11 +45,13 @@ class SettingsCommand extends Command {
             $stmt->execute();
             $result = $stmt->fetch();
 
+            $output->writeln('<info>Size: ' . $result['size'] . '</info>');
             $output->writeln('<info>Spread: ' . $result['spread'] . '</info>');
             $output->writeln('<info>Order size: ' . $result['size'] . '</info>');
             $output->writeln('<info>Bottom: ' . $result['bottom'] . '</info>');
             $output->writeln('<info>Top: ' . $result['top'] . '</info>');
             $output->writeln('<info>Max orders: ' . $result['max_orders'] . '</info>');
+            $output->writeln('<info>Lifetime: ' . $result['lifetime'] . '</info>');
         }
 
         if ($spread = $input->getOption('spread')) {
