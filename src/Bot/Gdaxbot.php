@@ -523,17 +523,18 @@ class Gdaxbot {
                 ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR);
 
         $orders = $this->client->getOrders($listOrders);
-        foreach ($orders as $order) {
-            $price = $order->getPrice();
-            if ($order->getSide() == 'sell') {
-                if ($price < $lowestSellPrice) {
-                    $lowestSellPrice = $price;
+        if (is_array($orders)) {
+            foreach ($orders as $order) {
+                $price = $order->getPrice();
+                if ($order->getSide() == 'sell') {
+                    if ($price < $lowestSellPrice) {
+                        $lowestSellPrice = $price;
+                    }
+                } else {
+                    $this->pendingBuyPrices[] = $price;
                 }
-            } else {
-                $this->pendingBuyPrices[] = $price;
             }
         }
-
         $restOrders = $this->max_orders - count($orders);
         echo "Maximum number of orders left to place: " . $restOrders . " of " . $this->max_orders . "\n";
         echo "Lowest sellprice " . $lowestSellPrice . "\n";
