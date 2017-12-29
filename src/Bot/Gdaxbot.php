@@ -30,7 +30,7 @@ class Gdaxbot {
     protected $pendingBuyPrices;
     protected $bottomBuyingTreshold;
     protected $topBuyingTreshold;
-    protected $cryptoCoin='LTC';
+    protected $cryptoCoin = 'LTC';
 
 // Get the number of open LTC orders 
 // Calc allowed number of order = max_orders - open orders.
@@ -43,7 +43,7 @@ class Gdaxbot {
         $stmt->execute();
         $settings = $stmt->fetch();
 
-        
+
         $this->cryptoCoin = getenv('CRYPTOCOIN');
         $this->endpoint = getenv('GDAX_ENDPOINT');
         $this->max_orders_per_run = getenv('MAX_ORDERS_PER_RUN');
@@ -306,15 +306,14 @@ class Gdaxbot {
             if ($currency == 'EUR') {
                 $this->accountEUR = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
             }
-            
+
             if ($currency == 'BTC') {
                 $this->accountBTC = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
             }
         }
     }
 
-    protected function getProductId()
-    {
+    protected function getProductId() {
         if ($this->cryptoCoin == 'LTC') {
             $product_id = \GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR;
         }
@@ -324,17 +323,17 @@ class Gdaxbot {
         if ($this->cryptoCoin == 'ETH') {
             $product_id = \GDAX\Utilities\GDAXConstants::PRODUCT_ID_ETH_EUR;
         }
-        
+
         return $product_id;
     }
-    
+
     /**
      * What is the current asking price
      * 
      * @return type
      */
     public function getCurrentPrice() {
- 
+
         $product = (new \GDAX\Types\Request\Market\Product())->setProductId($this->getProductId());
         $productTicker = $this->client->getProductTicker($product);
 
@@ -492,6 +491,26 @@ class Gdaxbot {
         }
     }
 
+    public function fixRejectedSells() {
+        $sql = "SELECT * FROM orders WHERE status = 'rejected' AND side='sell' AND parent_id > 0";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+
+        foreach ($result as $row) {
+            $sql = "UPDATE orders SET status='open' WHERE id=:id";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue('id', $row['parent_id']);
+            $stmt->execute();
+            
+            $sql = "UPDATE orders SET status='fixed' WHERE id=:id";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue('id', $row['id']);
+            $stmt->execute();
+            
+        }
+    }
+
     /**
      * Checks the open buys and if they are filled then place a buy order for the same size but higher price
      */
@@ -642,7 +661,7 @@ class Gdaxbot {
             }
 
 
-            if ( (is_null($lowestSellPrice) || $lowestSellPrice == 0  || $buyPrice < $lowestSellPrice) && $placeOrder) {
+            if ((is_null($lowestSellPrice) || $lowestSellPrice == 0 || $buyPrice < $lowestSellPrice) && $placeOrder) {
                 echo 'Buy ' . $this->order_size . ' for ' . $buyPrice . "\n";
 
                 $order_id = $this->placeBuyOrder($buyPrice);
@@ -669,6 +688,7 @@ class Gdaxbot {
 
         $this->actualize();
         $this->actualizeSells();
+        $this->fixRejectedSells();
         $this->sell();
 
 
