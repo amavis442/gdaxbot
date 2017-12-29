@@ -381,8 +381,11 @@ class Gdaxbot {
 
             if ($orderData->getStatus()) {
                 $this->updateOrderStatus($row['id'], $orderData->getStatus());
-
+                    
                 //echo "Actualize sells with order id: " . $order->getId() . "\n";
+            }
+            if ($orderData->getMessage() == 'NotFound') {
+                $this->updateOrderStatus($row['id'], $orderData->getStatus());
             }
         }
     }
