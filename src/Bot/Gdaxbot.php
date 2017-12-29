@@ -43,13 +43,13 @@ class Gdaxbot {
         $this->endpoint = getenv('GDAX_ENDPOINT');
         $this->max_orders_per_run = getenv('MAX_ORDERS_PER_RUN');
         $this->waitingtime = getenv('WAITINGTIME');
-        
+
         $this->spread = $settings['spread'];
         $this->order_size = $settings['size'];
         $this->max_orders = $settings['max_orders'];
 
         $this->lifetime = $settings['lifetime'];
-        
+
         $this->bottomBuyingTreshold = $settings['bottom'];
         $this->topBuyingTreshold = $settings['top'];
 
@@ -63,21 +63,21 @@ class Gdaxbot {
         $sql = "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTO_INCREMENT, parent_id integer, side varchar(10), size varchar(20), amount decimal(15,9),status varchar(10), order_id varchar(40), created_at datetime, updated_at timestamp)";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
-        
+
         $sql = "CREATE TABLE settings (id INTEGER PRIMARY KEY AUTO_INCREMENT, spread decimal(8,2), max_orders int, bottom decimal(10,2),top decimal(10,2) ,size varchar(10),lifetime int, created_at datetime, updated_at timestamp)";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
-        
+
         $sql = "INSERT INTO settings SET spread= :spread, max_orders=:maxorders, top=:top, bottom = :bottom, size=:size,lifetime =:lifetime, created_at = :createdat";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('spread',0.01);
-        $stmt->bindValue('maxorders',8);
-        $stmt->bindValue('top',220.0);
-        $stmt->bindValue('bottom',218.0);
-        $stmt->bindValue('size',0.02);
-        $stmt->bindValue('lifetime',90);
-        $stmt->bindValue('createdat',date('Y-m-d H:i:s'));
-        
+        $stmt->bindValue('spread', 0.01);
+        $stmt->bindValue('maxorders', 8);
+        $stmt->bindValue('top', 220.0);
+        $stmt->bindValue('bottom', 218.0);
+        $stmt->bindValue('size', 0.02);
+        $stmt->bindValue('lifetime', 90);
+        $stmt->bindValue('createdat', date('Y-m-d H:i:s'));
+
         $stmt->execute();
     }
 
@@ -251,7 +251,7 @@ class Gdaxbot {
 
         return $stmt->fetchAll();
     }
-    
+
     /**
      * Check of we already have a open buy order with that price
      * 
@@ -266,14 +266,14 @@ class Gdaxbot {
         $stmt->execute();
 
         $result = $stmt->fetch();
-        
+
         if ($result && $result['amount']) {
             return true;
         } else {
             return false;
         }
     }
-    
+
     /**
      * 
      */
@@ -283,8 +283,6 @@ class Gdaxbot {
             printf("%s| %s| %s| %s\n", $row['created_at'], $row['side'], $row['amount'], $row['order_id']);
         }
     }
-    
-    
 
     /**
      * Get acount data like balance (can be handy to check if there is enough funds left)
@@ -320,26 +318,27 @@ class Gdaxbot {
         return $startPrice;
     }
 
-    
     /**
      * Check if we have added orders manually and add them to the database.
      */
     public function actualize() {
-       
-        
+
+
         $listOrders = (new \GDAX\Types\Request\Authenticated\ListOrders())
                 ->setStatus(\GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)
                 ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR);
 
         $orders = $this->client->getOrders($listOrders);
-        foreach ($orders as $order) {
-            $order_id = $order->getId();
-            $row = $this->fetchOrderByOrderId($order_id);
-            if (!$row) {
-                $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
-            } else {
-                if ($row['status'] != 'done') {
-                    $this->updateOrderStatus($row['id'],$order->getStatus());
+        if (is_array($orders)) {
+            foreach ($orders as $order) {
+                $order_id = $order->getId();
+                $row = $this->fetchOrderByOrderId($order_id);
+                if (!$row) {
+                    $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
+                } else {
+                    if ($row['status'] != 'done') {
+                        $this->updateOrderStatus($row['id'], $order->getStatus());
+                    }
                 }
             }
         }
@@ -351,41 +350,45 @@ class Gdaxbot {
     public function actualizeBuys() {
         $rows = $this->getOrdersOpenBuys();
 
-        foreach ($rows as $row) {
-            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
-            $orderData = $this->client->getOrder($order);
-            
-            if ($orderData->getStatus()) {
-                $this->updateOrderStatus($row['id'], $orderData->getStatus());
+        if (is_array($rows)) {
+            foreach ($rows as $row) {
+                $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
+                $orderData = $this->client->getOrder($order);
 
-                //echo "Actualize sells with order id: " . $order->getId() . "\n";
-            }
-            
-            if ($orderData->getStatus()) {
-                $this->updateOrderStatus($row['id'], $orderData->getStatus());
-            } else {
-                $this->updateOrderStatus($row['id'], $orderData->getMessage());
+                if ($orderData->getStatus()) {
+                    $this->updateOrderStatus($row['id'], $orderData->getStatus());
+
+                    //echo "Actualize sells with order id: " . $order->getId() . "\n";
+                }
+
+                if ($orderData->getStatus()) {
+                    $this->updateOrderStatus($row['id'], $orderData->getStatus());
+                } else {
+                    $this->updateOrderStatus($row['id'], $orderData->getMessage());
+                }
             }
         }
     }
-    
+
     /**
      * Update the open Sells
      */
     public function actualizeSells() {
         $rows = $this->getOrdersOpenSells();
 
-        foreach ($rows as $row) {
-            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
-            $orderData = $this->client->getOrder($order);
+        if (is_array($rows)) {
+            foreach ($rows as $row) {
+                $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
+                $orderData = $this->client->getOrder($order);
 
-            if ($orderData->getStatus()) {
-                $this->updateOrderStatus($row['id'], $orderData->getStatus());
-                    
-                //echo "Actualize sells with order id: " . $order->getId() . "\n";
-            }
-            if ($orderData->getMessage() == 'NotFound') {
-                $this->updateOrderStatus($row['id'], $orderData->getStatus());
+                if ($orderData->getStatus()) {
+                    $this->updateOrderStatus($row['id'], $orderData->getStatus());
+
+                    //echo "Actualize sells with order id: " . $order->getId() . "\n";
+                }
+                if ($orderData->getMessage() == 'NotFound') {
+                    $this->updateOrderStatus($row['id'], $orderData->getStatus());
+                }
             }
         }
     }
@@ -396,43 +399,45 @@ class Gdaxbot {
     public function cancelOldBuyOrders() {
         $currentPendingOrders = $this->getPendingBuyOrders();
 
-        foreach ($currentPendingOrders as $row) {
-            
-            // Get the status of the buy order. You can only sell what you got.
-            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
-            
-            /** \GDAX\Types\Response\Authenticated\Order $orderData */
-            $orderData = $this->client->getOrder($order);
-            
-            if ($orderData instanceof \GDAX\Types\Response\Authenticated\Order) {
-                $status = $orderData->getStatus(); 
-            } else {
-                $status = null;
-            }
+        if (is_array($currentPendingOrders)) {
+            foreach ($currentPendingOrders as $row) {
 
-            // Check for old orders and if so cancel them to start over
-            if ($status == 'pending' || $status == 'open') {
-                $diffInSecs = Carbon::createFromFormat('Y-m-d H:i:s', $row['created_at'])->diffInSeconds(Carbon::now());
+                // Get the status of the buy order. You can only sell what you got.
+                $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
 
-                if (Carbon::createFromFormat('Y-m-d H:i:s', $row['created_at'])->diffInSeconds(Carbon::now()) > $this->lifetime) {
+                /** \GDAX\Types\Response\Authenticated\Order $orderData */
+                $orderData = $this->client->getOrder($order);
 
-                    $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
-                    $response = $this->client->cancelOrder($order);
+                if ($orderData instanceof \GDAX\Types\Response\Authenticated\Order) {
+                    $status = $orderData->getStatus();
+                } else {
+                    $status = null;
+                }
 
-                    echo $response->getMessage()."\n";
+                // Check for old orders and if so cancel them to start over
+                if ($status == 'pending' || $status == 'open') {
+                    $diffInSecs = Carbon::createFromFormat('Y-m-d H:i:s', $row['created_at'])->diffInSeconds(Carbon::now());
 
-                    if (isset($response)) {
-                        echo "Order " . $row['order_id'] . " is older then " . $this->lifetime . " seconds (" . $diffInSecs . ") and will be deleted\n";
-                        $this->updateOrderStatus($row['id'], 'deleted');
-                    } else {
-                        echo "Could not cancel order " . $row['order_id'] . " for " . $row['amount'] . "\n";
+                    if (Carbon::createFromFormat('Y-m-d H:i:s', $row['created_at'])->diffInSeconds(Carbon::now()) > $this->lifetime) {
+
+                        $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
+                        $response = $this->client->cancelOrder($order);
+
+                        echo $response->getMessage() . "\n";
+
+                        if (isset($response)) {
+                            echo "Order " . $row['order_id'] . " is older then " . $this->lifetime . " seconds (" . $diffInSecs . ") and will be deleted\n";
+                            $this->updateOrderStatus($row['id'], 'deleted');
+                        } else {
+                            echo "Could not cancel order " . $row['order_id'] . " for " . $row['amount'] . "\n";
+                        }
                     }
                 }
-            }
 
-            if (is_null($status)) {
-                echo "Order not found with order id: " . $row['order_id'] . "\n";
-                $this->updateOrderStatus($row['id'], $orderData->getMessage());
+                if (is_null($status)) {
+                    echo "Order not found with order id: " . $row['order_id'] . "\n";
+                    $this->updateOrderStatus($row['id'], $orderData->getMessage());
+                }
             }
         }
     }
@@ -469,40 +474,42 @@ class Gdaxbot {
         $currentPendingOrders = $this->getOrdersOpenBuys();
 
         $n = 1;
-        foreach ($currentPendingOrders as $row) {
-            // Get the status of the buy order. You can only sell what you got.
-            $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
-            $orderData = $this->client->getOrder($order);
+        if (is_array($currentPendingOrders)) {
+            foreach ($currentPendingOrders as $row) {
+                // Get the status of the buy order. You can only sell what you got.
+                $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($row['order_id']);
+                $orderData = $this->client->getOrder($order);
 
-            /** \GDAX\Types\Response\Authenticated\Order $orderData */
-            $status = $orderData->getStatus();
+                /** \GDAX\Types\Response\Authenticated\Order $orderData */
+                $status = $orderData->getStatus();
 
-            if ($status == 'done') {
-                $buyprice = $row['amount'];
-                $sellPrice = $buyprice + 0.01 + $this->spread;
-                if ($startPrice > $sellPrice) {
-                    $sellPrice = $startPrice + 0.01;
-                }
-                $sellPrice = number_format($sellPrice, 2);
+                if ($status == 'done') {
+                    $buyprice = $row['amount'];
+                    $sellPrice = $buyprice + 0.01 + $this->spread;
+                    if ($startPrice > $sellPrice) {
+                        $sellPrice = $startPrice + 0.01;
+                    }
+                    $sellPrice = number_format($sellPrice, 2);
 
-                echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
+                    echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
 
-                $order_id = $this->placeSellOrder($row['size'], $sellPrice);
+                    $order_id = $this->placeSellOrder($row['size'], $sellPrice);
 
-                if ($order_id) {
-                    $this->insertOrder('sell', $order_id, $row['size'], $sellPrice, 'open', $row['id']);
+                    if ($order_id) {
+                        $this->insertOrder('sell', $order_id, $row['size'], $sellPrice, 'open', $row['id']);
 
-                    echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
-                    $this->updateOrderStatus($row['id'], $status);
+                        echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
+                        $this->updateOrderStatus($row['id'], $status);
+                    } else {
+                        $this->insertOrder('sell', $order_id, $row['size'], $sellPrice, 'rejected', $row['id']);
+                    }
                 } else {
-                    $this->insertOrder('sell', $order_id, $row['size'], $sellPrice, 'rejected', $row['id']);
+                    echo "Order not done " . $row['order_id'] . "\n";
                 }
-            } else {
-                echo "Order not done " . $row['order_id'] . "\n";
             }
         }
     }
-    
+
     /**
      * Get the last lowest sell price (prevents crosstrading which is not allowed)
      * 
@@ -584,8 +591,8 @@ class Gdaxbot {
         if ($overrideMaxOrders > 0) {
             $restOrders = $overrideMaxOrders;
         }
-        
-        $oldBuyPrice= $startPrice - 0.01;
+
+        $oldBuyPrice = $startPrice - 0.01;
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys
             $buyPrice = $oldBuyPrice - $this->spread;
@@ -595,10 +602,10 @@ class Gdaxbot {
             $hasBuyPrice = $this->buyPriceExists($buyPrice);
             $n = 1;
             $placeOrder = true;
-            while($hasBuyPrice) {
+            while ($hasBuyPrice) {
                 $buyPrice = $buyPrice - $n * $this->spread;
                 $buyPrice = number_format($buyPrice, 2);
-                
+
                 $hasBuyPrice = $this->buyPriceExists($buyPrice);
                 if ($n > 15) {
                     $placeOrder = false;
@@ -606,8 +613,8 @@ class Gdaxbot {
                 }
                 $n++;
             }
-            
-            
+
+
             if ($buyPrice < $lowestSellPrice && $placeOrder) {
                 echo 'Buy ' . $this->order_size . ' for ' . $buyPrice . "\n";
 
@@ -616,10 +623,10 @@ class Gdaxbot {
                 if ($order_id) {
                     $this->insertOrder('buy', $order_id, $this->order_size, $buyPrice);
                 } else {
-                    $this->insertOrder('buy', $order_id, $this->order_size, $buyPrice,'rejected');
+                    $this->insertOrder('buy', $order_id, $this->order_size, $buyPrice, 'rejected');
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
-                
+
                 $oldBuyPrice = $buyPrice;
             } else {
                 echo "We have open sells that will cross the buys and that is not allowed:" . $buyPrice . "\n";
@@ -632,18 +639,18 @@ class Gdaxbot {
      */
     public function run() {
         $this->deleteOrdersWithoutOrderId();
-         
+
         $this->actualize();
         $this->actualizeSells();
         $this->sell();
-        
-        
+
+
         $this->actualizeBuys();
         $this->cancelOldBuyOrders();
         $this->buy();
-        
 
-        echo "\nDONE ".date('Y-m-d H:i:s')."\n";
+
+        echo "\nDONE " . date('Y-m-d H:i:s') . "\n";
     }
 
 }
