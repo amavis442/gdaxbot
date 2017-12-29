@@ -253,6 +253,28 @@ class Gdaxbot {
     }
     
     /**
+     * Check of we already have a open buy order with that price
+     * 
+     * @param type $price
+     * @return boolean
+     */
+    public function buyPriceExists($price) {
+        $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open') AND amount = :amount";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('side', 'buy');
+        $stmt->bindValue('side', $price);
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+        
+        if ($result && $result['amount']) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
      * 
      */
     public function listRowsFromDatabase() {
@@ -261,6 +283,8 @@ class Gdaxbot {
             printf("%s| %s| %s| %s\n", $row['created_at'], $row['side'], $row['amount'], $row['order_id']);
         }
     }
+    
+    
 
     /**
      * Get acount data like balance (can be handy to check if there is enough funds left)
@@ -553,13 +577,31 @@ class Gdaxbot {
         if ($overrideMaxOrders > 0) {
             $restOrders = $overrideMaxOrders;
         }
-
+        
+        $oldBuyPrice= $startPrice - 0.01;
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys
-            $buyPrice = $startPrice - 0.01 - ( $i - 1) * $this->spread;
+            $buyPrice = $oldBuyPrice - $this->spread;
             $buyPrice = number_format($buyPrice, 2);
 
-            if ($buyPrice < $lowestSellPrice) {
+            // Check if we already have a buy for this price, then try to find an open slot
+            $hasBuyPrice = $this->buyPriceExists($buyPrice);
+            $n = 1;
+            $placeOrder = true;
+            while($hasBuyPrice) {
+                $buyPrice = $buyPrice - $n * $this->spread;
+                $buyPrice = number_format($buyPrice, 2);
+                
+                $hasBuyPrice = $this->buyPriceExists($buyPrice);
+                if ($n > 15) {
+                    $placeOrder = false;
+                    $hasBuyPrice = false;
+                }
+                $n++;
+            }
+            
+            
+            if ($buyPrice < $lowestSellPrice && $placeOrder) {
                 echo 'Buy ' . $this->order_size . ' for ' . $buyPrice . "\n";
 
                 $order_id = $this->placeBuyOrder($buyPrice);
@@ -570,6 +612,8 @@ class Gdaxbot {
                     $this->insertOrder('buy', $order_id, $this->order_size, $buyPrice,'rejected');
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
+                
+                $oldBuyPrice = $buyPrice;
             } else {
                 echo "We have open sells that will cross the buys and that is not allowed:" . $buyPrice . "\n";
             }
