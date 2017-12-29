@@ -35,20 +35,23 @@ class Gdaxbot {
     public function __construct($conn) {
         $this->conn = $conn;
 
+        $sql = "SELECT * FROM settings order by id desc limit 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        $settings = $stmt->fetch();
 
         $this->endpoint = getenv('GDAX_ENDPOINT');
-        $this->spread = getenv('SPREAD');
-        $this->order_size = getenv('ORDER_SIZE');
-        $this->max_orders = getenv('MAX_ORDERS');
         $this->max_orders_per_run = getenv('MAX_ORDERS_PER_RUN');
         $this->waitingtime = getenv('WAITINGTIME');
-        $this->lifetime = getenv('LIFETIME');
         
-        $this->bottomBuyingTreshold = getenv('BOTTOMBUYINGTRHESHOLD');
-        $this->topBuyingTreshold = getenv('TOPBUYINGTRHESHOLD');
+        $this->spread = $settings['spread'];
+        $this->order_size = $settings['size'];
+        $this->max_orders = $settings['max_orders'];
 
-
-        $this->db = new \PDO('sqlite:orders.sqlite');
+        $this->lifetime = $settings['lifetime'];
+        
+        $this->bottomBuyingTreshold = $settings['bottom'];
+        $this->topBuyingTreshold = $settings['top'];
 
         $this->client = new \GDAX\Clients\AuthenticatedClient(
                 getenv('GDAX_API_KEY'), getenv('GDAX_API_SECRET'), getenv('GDAX_PASSWORD')
@@ -59,6 +62,22 @@ class Gdaxbot {
 
         $sql = "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTO_INCREMENT, parent_id integer, side varchar(10), size varchar(20), amount decimal(15,9),status varchar(10), order_id varchar(40), created_at datetime, updated_at timestamp)";
         $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        
+        $sql = "CREATE TABLE settings (id INTEGER PRIMARY KEY AUTO_INCREMENT, spread decimal(8,2), max_orders int, bottom decimal(10,2),top decimal(10,2) ,size varchar(10),lifetime int, created_at datetime, updated_at timestamp)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        
+        $sql = "INSERT INTO settings SET spread= :spread, max_orders=:maxorders, top=:top, bottom = :bottom, size=:size,lifetime =:lifetime, created_at = :createdat";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('spread',0.01);
+        $stmt->bindValue('maxorders',8);
+        $stmt->bindValue('top',220.0);
+        $stmt->bindValue('bottom',218.0);
+        $stmt->bindValue('size',0.02);
+        $stmt->bindValue('lifetime',90);
+        $stmt->bindValue('createdat',date('Y-m-d H:i:s'));
+        
         $stmt->execute();
     }
 
@@ -403,7 +422,7 @@ class Gdaxbot {
                 ->setPostOnly(true);
 
         $response = $this->client->placeOrder($order);
-        if (isset($response) && $response->getId()) {
+        if (isset($response) && $response->getId() && $response->getMessage() != 'rejected') {
             return $response->getId();
         } else {
             echo "Order not placed because : " . $response->getMessage() . "\n";
@@ -444,6 +463,8 @@ class Gdaxbot {
 
                     echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                     $this->updateOrderStatus($row['id'], $status);
+                } else {
+                    
                 }
             } else {
                 echo "Order not done " . $row['order_id'] . "\n";
@@ -499,7 +520,7 @@ class Gdaxbot {
 
         $response = $this->client->placeOrder($order);
 
-        if (isset($response) && $response->getId()) {
+        if (isset($response) && $response->getId() && $response->getMessage() != 'rejected') {
             return $response->getId();
         } else {
             echo "Order not placed because : " . $response->getMessage() . "\n";
