@@ -40,12 +40,12 @@ interface OrderServiceInterface {
     /**
      * Get the open sell orders (status = open or pending)
      */
-    public function getOrdersOpenSells(): array;
+    public function getOpenSellOrders(): array;
 
     /**
      * Get the buy orders with `status` open of `pending` 
      */
-    public function getOrdersOpenBuys(): array;
+    public function getOpenBuyOrders(): array;
 
     /**
      * Checks if a price is already in the active buy list
