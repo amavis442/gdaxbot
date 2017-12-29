@@ -337,6 +337,10 @@ class Gdaxbot {
             $row = $this->fetchOrderByOrderId($order_id);
             if (!$row) {
                 $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
+            } else {
+                if ($row['status'] != 'done') {
+                    $this->updateOrderStatus($row['id'],$order->getStatus());
+                }
             }
         }
     }
