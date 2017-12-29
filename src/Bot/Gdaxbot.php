@@ -25,9 +25,11 @@ class Gdaxbot {
     protected $client;
     protected $accountEUR;
     protected $accountLTC;
+    protected $accountBTC;
     protected $pendingBuyPrices;
     protected $bottomBuyingTreshold;
     protected $topBuyingTreshold;
+    protected $cryptoCoin='LTC';
 
 // Get the number of open LTC orders 
 // Calc allowed number of order = max_orders - open orders.
@@ -40,6 +42,8 @@ class Gdaxbot {
         $stmt->execute();
         $settings = $stmt->fetch();
 
+        
+        $this->cryptoCoin = getenv('CRYPTOCOIN');
         $this->endpoint = getenv('GDAX_ENDPOINT');
         $this->max_orders_per_run = getenv('MAX_ORDERS_PER_RUN');
         $this->waitingtime = getenv('WAITINGTIME');
@@ -300,16 +304,36 @@ class Gdaxbot {
             if ($currency == 'EUR') {
                 $this->accountEUR = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
             }
+            
+            if ($currency == 'BTC') {
+                $this->accountBTC = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
+            }
         }
     }
 
+    protected function getProductId()
+    {
+        if ($this->cryptoCoin == 'LTC') {
+            $product_id = \GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR;
+        }
+        if ($this->cryptoCoin == 'BTC') {
+            $product_id = \GDAX\Utilities\GDAXConstants::PRODUCT_ID_BTC_EUR;
+        }
+        if ($this->cryptoCoin == 'ETH') {
+            $product_id = \GDAX\Utilities\GDAXConstants::PRODUCT_ID_ETH_EUR;
+        }
+        
+        return $product_id;
+    }
+    
     /**
      * What is the current asking price
      * 
      * @return type
      */
     public function getCurrentPrice() {
-        $product = (new \GDAX\Types\Request\Market\Product())->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR);
+ 
+        $product = (new \GDAX\Types\Request\Market\Product())->setProductId($this->getProductId());
         $productTicker = $this->client->getProductTicker($product);
 
         //Current asking price
@@ -326,7 +350,7 @@ class Gdaxbot {
 
         $listOrders = (new \GDAX\Types\Request\Authenticated\ListOrders())
                 ->setStatus(\GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)
-                ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR);
+                ->setProductId($this->getProductId());
 
         $orders = $this->client->getOrders($listOrders);
         if (is_array($orders)) {
@@ -451,7 +475,7 @@ class Gdaxbot {
     protected function placeSellOrder($size, $price) {
         $order = (new \GDAX\Types\Request\Authenticated\Order())
                 ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
-                ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
+                ->setProductId($this->getProductId())
                 ->setSize($size)
                 ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_SELL)
                 ->setPrice($price)
@@ -516,18 +540,18 @@ class Gdaxbot {
      * @return array
      */
     public function getOpenOrders() {
-        $lowestSellPrice = 1000.0;
+        $lowestSellPrice = null;
 
         $listOrders = (new \GDAX\Types\Request\Authenticated\ListOrders())
                 ->setStatus(\GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)
-                ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR);
+                ->setProductId($this->getProductId());
 
         $orders = $this->client->getOrders($listOrders);
         if (is_array($orders)) {
             foreach ($orders as $order) {
                 $price = $order->getPrice();
                 if ($order->getSide() == 'sell') {
-                    if ($price < $lowestSellPrice) {
+                    if ($price < $lowestSellPrice || is_null($lowestSellPrice)) {
                         $lowestSellPrice = $price;
                     }
                 } else {
@@ -551,7 +575,7 @@ class Gdaxbot {
     protected function placeBuyOrder($price) {
         $order = (new \GDAX\Types\Request\Authenticated\Order())
                 ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
-                ->setProductId(\GDAX\Utilities\GDAXConstants::PRODUCT_ID_LTC_EUR)
+                ->setProductId($this->getProductId())
                 ->setSize($this->order_size)
                 ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_BUY)
                 ->setPrice($price)
