@@ -233,7 +233,7 @@ class Gdaxbot {
 
                         echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
 
-                        $sellOrder = $this->placeLimitSellOrder($row['size'], $sellPrice);
+                        $sellOrder = $this->gdaxService->placeLimitSellOrder($row['size'], $sellPrice);
 
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
                
