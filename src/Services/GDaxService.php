@@ -108,12 +108,6 @@ class GDaxService implements GdaxServiceInterface {
 
 
         return $response;
-        /* if (isset($response) && $response->getId() && $response->getMessage() != 'rejected') {
-          return $response->getId();
-          } else {
-          echo "Order not placed because : " . $response->getMessage() . "\n";
-          return false;
-          } */
     }
 
     /**
@@ -132,12 +126,8 @@ class GDaxService implements GdaxServiceInterface {
                 ->setPostOnly(true);
 
         $response = $this->client->placeOrder($order);
-        /* if (isset($response) && $response->getId() && $response->getMessage() != 'rejected') {
-          return $response->getId();
-          } else {
-          echo "Order not placed because : " . $response->getMessage() . "\n";
-          return false;
-          } */
+        
+        return $response;
     }
 
     /**
