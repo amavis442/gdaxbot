@@ -262,7 +262,7 @@ class Gdaxbot {
         $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open') AND amount = :amount";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue('side', 'buy');
-        $stmt->bindValue('side', $price);
+        $stmt->bindValue('amount', $price);
         $stmt->execute();
 
         $result = $stmt->fetch();
