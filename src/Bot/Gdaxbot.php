@@ -636,7 +636,7 @@ class Gdaxbot {
         $this->buy();
         
 
-        echo "\nDONE\n";
+        echo "\nDONE ".date('Y-m-d H:i:s')."\n";
     }
 
 }
