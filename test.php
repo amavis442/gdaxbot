@@ -12,7 +12,7 @@ $app->actualizeBuys();
 $app->actualizeSells();
 $app->cancelOldBuyOrders();*/
 
-$result = $app->buyPriceExists(221.85);
+$result = $app->buy(1);
 var_dump($result);
 /*
 $app->cancelOrPurgeBuyOrders();

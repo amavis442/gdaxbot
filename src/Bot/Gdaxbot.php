@@ -542,7 +542,7 @@ class Gdaxbot {
      * @return array
      */
     public function getOpenOrders() {
-        $lowestSellPrice = null;
+        $lowestSellPrice = 0;
 
         $listOrders = (new \GDAX\Types\Request\Authenticated\ListOrders())
                 ->setStatus(\GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)
@@ -642,7 +642,7 @@ class Gdaxbot {
             }
 
 
-            if ( (is_null($lowestSellPrice) || $buyPrice < $lowestSellPrice) && $placeOrder) {
+            if ( (is_null($lowestSellPrice) || $lowestSellPrice == 0  || $buyPrice < $lowestSellPrice) && $placeOrder) {
                 echo 'Buy ' . $this->order_size . ' for ' . $buyPrice . "\n";
 
                 $order_id = $this->placeBuyOrder($buyPrice);
