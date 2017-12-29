@@ -8,7 +8,9 @@ use Symfony\Component\Console\Application;
 
 $application = new Application();
 
-$application->add(new \App\Commands\SettingsCommand());
+$c = new \App\Commands\SettingsCommand();
+$application->add($c);
+$c->setConn($conn);
 // ... register commands
 
 $application->run();
