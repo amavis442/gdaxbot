@@ -28,6 +28,7 @@ class SettingsCommand extends Command {
                 ->addOption('bottom', null, InputOption::VALUE_REQUIRED, 'Set the bottom.')
                 ->addOption('top', null, InputOption::VALUE_REQUIRED, 'Set the top.')
                 ->addOption('max', null, InputOption::VALUE_REQUIRED, 'Set the max.')
+                 ->addOption('lifetime', null, InputOption::VALUE_REQUIRED, 'Set the lifetime.')
                 ->addOption('list', null, InputOption::VALUE_NONE, 'List current settings')
                 ->setHelp('This command allows you to tinker with the settings of the bot...')
         ;
@@ -94,6 +95,15 @@ class SettingsCommand extends Command {
             $stmt->execute();
 
             $output->writeln('<info>Top buy price is now : ' . $top . '</info>');
+        }
+        
+        if ($lifetime = $input->getOption('lifetime')) {
+            $sql = "UPDATE settings SET lifetime = :lifetime";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue('lifetime', $lifetime);
+            $stmt->execute();
+
+            $output->writeln('<info>Lifetime buyorder is now : ' . $lifetime . '</info>');
         }
     }
 
