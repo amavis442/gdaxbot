@@ -217,11 +217,11 @@ class Gdaxbot {
         if (is_array($currentPendingOrders)) {
             foreach ($currentPendingOrders as $row) {
                 // Get the status of the buy order. You can only sell what you got.
-                $order = $this->gdaxService->getOrder($row['order_id']);
+                $buyOrder = $this->gdaxService->getOrder($row['order_id']);
 
                 /** \GDAX\Types\Response\Authenticated\Order $orderData */
-                if ($order instanceof \GDAX\Types\Response\Authenticated\Order) {
-                    $status = $orderData->getStatus();
+                if ($buyOrder instanceof \GDAX\Types\Response\Authenticated\Order) {
+                    $status = $buyOrder->getStatus();
 
                     if ($status == 'done') {
                         $buyprice = $row['amount'];
@@ -233,22 +233,22 @@ class Gdaxbot {
 
                         echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
 
-                        $order = $this->placeLimitSellOrder($row['size'], $sellPrice);
+                        $sellOrder = $this->placeLimitSellOrder($row['size'], $sellPrice);
 
-                        if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
+                        if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
                
-                            $this->insertOrder('sell', $order->getId(), $row['size'], $sellPrice, 'open', $row['id']);
+                            $this->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, 'open', $row['id']);
 
                             echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                             $this->orderService->updateOrderStatus($row['id'], $status);
                         } else {
-                            $this->orderService->insertOrder('sell', $order->getId(), $row['size'], $sellPrice, $order->getMessage(), $row['id']);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, $sellOrder->getMessage(), $row['id']);
                         }
                     } else {
                         echo "Order not done " . $row['order_id'] . "\n";
                     }
                 } else {
-                    echo "Order sell not done because " . $order->getMessage() . "\n";
+                    echo "Order sell not done because " . $buyOrder->getMessage() . "\n";
                 }
             }
         }
