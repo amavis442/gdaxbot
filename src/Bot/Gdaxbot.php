@@ -237,7 +237,7 @@ class Gdaxbot {
 
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
                
-                            $this->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, 'open', $row['id']);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, 'open', $row['id']);
 
                             echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                             $this->orderService->updateOrderStatus($row['id'], $status);
