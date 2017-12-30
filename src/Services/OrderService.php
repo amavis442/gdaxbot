@@ -326,7 +326,7 @@ class OrderService implements OrderServiceInterface {
         }
         $date .= ' 00:00:00';
         
-        $sql = "SELECT b.side as buyside,b.size buysize,b.amount buyamount,s.side sellside,s.size sellsize,s.amount sellamount, (s.amount - b.amount) * s.size as profit FROM orders s, ".
+        $sql = "SELECT b.created_at,b.side as buyside,b.size buysize,b.amount buyamount,s.side sellside,s.size sellsize,s.amount sellamount, (s.amount - b.amount) * s.size as profit FROM orders s, ".
                 "(SELECT * FROM orders WHERE side='buy' AND `status`='done') b ".
                 " WHERE s.side='sell' AND s.status='done' AND b.id = s.parent_id AND b.created_at >= :createdat";
     

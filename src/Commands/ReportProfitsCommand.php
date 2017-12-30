@@ -36,7 +36,7 @@ class ReportProfitsCommand extends Command {
        
         $table = new Table($output);
         $table
-            ->setHeaders(['Side','Size','Amount', 'Side', 'Size','Amount', 'Profit'])
+            ->setHeaders(['BuyDate','Side','Size','Amount', 'Side', 'Size','Amount', 'Profit'])
             ->setRows($rows);
         $table->render();
 
