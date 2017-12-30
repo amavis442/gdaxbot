@@ -63,11 +63,15 @@ class ChangeSellOrderCommand extends Command {
         $parent_id = $sellOrder['parent_id'];
         if ($parent_id > 0) {
             $buyOrder = $orderService->fetchOrder($parent_id);
-            $buyvalue = number_format($buyOrder['size'] * $buyOrder['amount'], 3, '.', '');
-            $buyprice = $buyOrder['amount'];
+            
+            $buysize = number_format($buyOrder['size'],9,'.','');
+            $buyprice = number_format($buyOrder['amount'],3,'.','');
+            $buyvalue = number_format($buysize * $buyprice, 3, '.', '');
+           
         } else {
             $buyvalue = 0.0;
             $buyprice = 0.0;
+            $buysize = 0.0;
         }
         $size = number_format($sellOrder['size'], 9, '.', '');
 
@@ -81,6 +85,8 @@ class ChangeSellOrderCommand extends Command {
         $newprofit = number_format($newvalue - $buyvalue, 3, '.', '');
 
         $rows[] = ['Buy Price', $buyprice, 'Buy value', $buyvalue];
+        $rows[] = ['Buy size', $buysize, 'Sell size', $size];
+        
         $rows[] = ['Price', $currentprice, 'Price', $newprice];
         $rows[] = ['Value', $currentvalue, 'Value', $newvalue];
         $rows[] = ['Profit', $currentprofit, 'Profit', $newprofit];
