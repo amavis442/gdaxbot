@@ -320,4 +320,27 @@ class OrderService implements OrderServiceInterface {
         }
     }
 
+    public function getProfits(string $date = null): array {
+        if (is_null($date)) {
+            $date = date('Y-m-d');
+        }
+        $date .= ' 00:00:00';
+        
+        $sql = "SELECT b.side,b.size,b.amount,s.side,s.size,s.amount, (s.amount - b.amount) * s.size as profit FROM orders s, ".
+                "(SELECT * FROM orders WHERE side='buy' AND `status`='done') b ".
+                " WHERE s.side='sell' AND s.status='done' AND b.id = s.parent_id AND b.created_at >= :createdat";
+    
+        
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue('createdat', $date);
+        $stmt->execute();
+        $rows = $stmt->fetchAll();
+        
+        if ($rows) {
+            return $rows;
+        } else {
+            return [];
+        }
+    }
+    
 }

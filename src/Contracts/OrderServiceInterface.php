@@ -24,6 +24,8 @@ interface OrderServiceInterface {
 
     public function getNumOpenOrders(): int;
     
+    
+    public function getProfits(string $date = null) :array;
     /**
      * Get the lowest price of an open or pending sell
      */

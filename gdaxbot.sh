@@ -26,6 +26,9 @@ $changeSellOrder = new \App\Commands\ChangeSellOrderCommand();
 $changeSellOrder->setConn($conn);
 $application->add($changeSellOrder);
 
+$reportProfits = new \App\Commands\ReportProfitsCommand();
+$reportProfits->setConn($conn);
+$application->add($reportProfits);
 
 
 $application->run();
