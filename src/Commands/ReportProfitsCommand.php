@@ -23,6 +23,7 @@ class ReportProfitsCommand extends Command {
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Shows a table of profit/losses by the bot.')
+                ->addArgument('startdate', InputArgument::OPTIONAL,'Datet to start from default is today (YYYY-mm-dd)', date('Y-m-d'))
                 ->setHelp('Show profits/losses')
         ;
     }
@@ -30,8 +31,8 @@ class ReportProfitsCommand extends Command {
     protected function execute(InputInterface $input, OutputInterface $output) {
         $orderService = new \App\Services\OrderService($this->conn);
     
-        
-        $rows = $orderService->getProfits();
+        $startdate = $input->getArgument('startdate');
+        $rows = $orderService->getProfits($startdate);
        
         $table = new Table($output);
         $table
