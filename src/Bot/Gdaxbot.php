@@ -158,7 +158,7 @@ class Gdaxbot {
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $startPrice = $this->gdaxService->getCurrentPrice();
 
-        if ($startPrice > $this->topBuyingTreshold || $startPrice < $this->bottomBuyingTreshold) {
+        if (!$startPrice || $startPrice < 1 || $startPrice > $this->topBuyingTreshold || $startPrice < $this->bottomBuyingTreshold) {
             printf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->bottomBuyingTreshold, $startPrice, $this->topBuyingTreshold);
             return;
         }
