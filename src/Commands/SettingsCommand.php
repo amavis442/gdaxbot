@@ -30,7 +30,8 @@ class SettingsCommand extends Command {
                 ->addOption('top', null, InputOption::VALUE_REQUIRED, 'Set the top.')
                 ->addOption('max', null, InputOption::VALUE_REQUIRED, 'Set the max.')
                 ->addOption('lifetime', null, InputOption::VALUE_REQUIRED, 'Set the lifetime.')
-                ->addOption('active', null, InputOption::VALUE_REQUIRED, 'Turn bot on/off.')
+                ->addOption('on', null, InputOption::VALUE_NONE, 'Turn bot on.')
+                ->addOption('off', null, InputOption::VALUE_NONE, 'Turn bot off.')
                 ->addOption('list', null, InputOption::VALUE_NONE, 'List current settings')
                 ->setHelp('This command allows you to tinker with the settings of the bot...')
         ;
@@ -67,15 +68,24 @@ class SettingsCommand extends Command {
             $output->writeln('<info>Buy Spread is now : ' . $spread . '</info>');
         }
         
-        if ($active = $input->getOption('active')) {
-            $sql = "UPDATE settings SET botactive = :active";
+        if ($active = $input->getOption('on')) {
+            $sql = "UPDATE settings SET botactive = :botactive";
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('active', ($active == 'on' ? 1:0));
+            $stmt->bindValue('botactive', 1);
             $stmt->execute();
 
-            $output->writeln('<info>The bot is ' . $active . ' now</info>');
+            $output->writeln('<info>The bot is on now</info>');
         }
+       
+        if ($active = $input->getOption('off')) {
+            $sql = "UPDATE settings SET botactive = :botactive";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue('botactive', 0);
+            $stmt->execute();
 
+            $output->writeln('<info>The bot is off now</info>');
+        }
+        
         if ($sellspread = $input->getOption('sellspread')) {
             $sql = "UPDATE settings SET sellspread = :sellspread";
             $stmt = $this->conn->prepare($sql);
