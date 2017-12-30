@@ -39,6 +39,6 @@ SELLINGTRESHOLD=229.0 // When shoud the selling stop
 
 ## Step 4:
 
-php console.php
+php gdaxbot.sh bot:run
 
 If you are daring, you can put this in a cronjob.

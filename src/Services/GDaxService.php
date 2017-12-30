@@ -21,9 +21,27 @@ class GDaxService implements GdaxServiceInterface {
      * 
      * @param \GDAX\Clients\AuthenticatedClient $client
      */
-    public function __construct(\GDAX\Clients\AuthenticatedClient $client, string $cryptoCoin) {
-        $this->client = $client;
+    public function __construct() {
+        
+    }
+
+    public function setCoin(string $cryptoCoin) {
         $this->cryptoCoin = $cryptoCoin;
+    }
+    
+    /**
+     * Connects to the gdax API
+     * 
+     * @param type $sandbox
+     */
+    public function connect($sandbox = false) {
+        $this->client = new \GDAX\Clients\AuthenticatedClient(
+                getenv('GDAX_API_KEY'), getenv('GDAX_API_SECRET'), getenv('GDAX_PASSWORD')
+        );
+        
+        if ($sandbox) {
+            $this->client->setBaseURL(\GDAX\Utilities\GDAXConstants::GDAX_API_SANDBOX_URL);
+        }
     }
 
     /**
@@ -44,7 +62,7 @@ class GDaxService implements GdaxServiceInterface {
         return $product_id;
     }
 
-    public function getOrder($order_id): \GDAX\Types\Response\Authenticated\Order {
+    public function getOrder(string $order_id): \GDAX\Types\Response\Authenticated\Order {
         $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($order_id);
         $response = $this->client->getOrder($order);
 
@@ -82,7 +100,7 @@ class GDaxService implements GdaxServiceInterface {
         return $startPrice;
     }
 
-    public function cancelOrder($order_id): \GDAX\Types\Response\RawData {
+    public function cancelOrder(string $order_id): \GDAX\Types\Response\RawData {
         $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($order_id);
         $response = $this->client->cancelOrder($order);
 
@@ -126,7 +144,7 @@ class GDaxService implements GdaxServiceInterface {
                 ->setPostOnly(true);
 
         $response = $this->client->placeOrder($order);
-        
+
         return $response;
     }
 
@@ -151,6 +169,37 @@ class GDaxService implements GdaxServiceInterface {
                 $this->accountBTC = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
             }
         }
+    }
+    
+    public function getAccountReport(string $coin) {
+
+        $accounts = $this->client->getAccounts();
+
+        $portfolio = 0;
+        /** @var  \GDAX\Types\Response\Authenticated\Account $account */
+        foreach ($accounts as $account) {
+            $currency = $account->getCurrency();
+            $balance = $account->getBalance();
+
+            if ($currency != 'EUR') {
+                $product = (new \GDAX\Types\Request\Market\Product())->setProductId($currency . '-EUR');
+                $productTicker = $this->client->getProductTicker($product);
+                $koers = number_format($productTicker->getPrice(), 3, '.', '');
+            } else {
+                $koers = 0.0;
+            }
+            $waarde = 0.0;
+            if ($currency == 'EUR') {
+                $balance = number_format($balance, 4, '.', '');
+                $waarde = $balance;
+            } else {
+                $waarde = number_format($balance * $koers, 4, '.', '');
+            }
+            
+            $balances[$currency] = ['balance' => $balance, 'koers' => $koers, 'waarde' => $waarde];
+        }
+        
+        return $balances[$coin];
     }
 
     public function getFills(): array {

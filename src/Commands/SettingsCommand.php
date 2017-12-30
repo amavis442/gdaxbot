@@ -19,7 +19,7 @@ class SettingsCommand extends Command {
     }
 
     protected function configure() {
-        $this->setName('gdax:settings')
+        $this->setName('bot:settings')
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Adjust the settings of the bot or show the current settings.')
