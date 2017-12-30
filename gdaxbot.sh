@@ -17,9 +17,16 @@ $application->add($bot);
 $bot->setConn($conn);
 
 $application->add(new \App\Commands\ReportCommand());
+
 $openordersReports = new \App\Commands\ReportOpenOrdersCommand();
 $openordersReports->setConn($conn);
 $application->add($openordersReports);
+
+$changeSellOrder = new \App\Commands\ChangeSellOrderCommand();
+$changeSellOrder->setConn($conn);
+$application->add($changeSellOrder);
+
+
 
 $application->run();
 
