@@ -22,6 +22,7 @@ class Gdaxbot {
     protected $pendingBuyPrices;
     protected $bottomBuyingTreshold;
     protected $topBuyingTreshold;
+    protected $botactive = false;
 
     /**
      * Get the number of open LTC orders 
@@ -44,6 +45,8 @@ class Gdaxbot {
 
         $this->bottomBuyingTreshold = $settings['bottom'];
         $this->topBuyingTreshold = $settings['top'];
+
+        $this->botactive = ($settings['botactive'] == 1 ? true : false);
     }
 
     /**
@@ -236,7 +239,7 @@ class Gdaxbot {
                         $sellOrder = $this->gdaxService->placeLimitSellOrder($row['size'], $sellPrice);
 
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-               
+
                             $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, 'open', $row['id']);
 
                             echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
@@ -258,32 +261,36 @@ class Gdaxbot {
      * Main entry point
      */
     public function run() {
-        echo "Delete orders without order id\n";
-        $this->orderService->garbageCollection();
+        if ($this->botactive) {
+            echo "Delete orders without order id\n";
+            $this->orderService->garbageCollection();
 
-        echo "Check gdax exchange with database for orders in gdax but not in database\n";
-        $this->actualize();
-        
-        echo "Check gdax if sells have changed status from open to filled\n";
-        $this->actualizeSells();
-        
-        echo "Fix rejected sells so we can sell them\n";
-        $this->orderService->fixRejectedSells();
-        
-        echo "Place sell orders\n";
-        $this->sell();
+            echo "Check gdax exchange with database for orders in gdax but not in database\n";
+            $this->actualize();
 
-        echo "Check gdax if buys have changed status from open to filled\n";
-        $this->actualizeBuys();
-        
-        echo "A buy order has x seconds to complete before removed and new buy is placed\n";
-        $this->timeoutBuyOrders();
-        
-        echo "Place buy orders\n";
-        $this->buy();
+            echo "Check gdax if sells have changed status from open to filled\n";
+            $this->actualizeSells();
+
+            echo "Fix rejected sells so we can sell them\n";
+            $this->orderService->fixRejectedSells();
+
+            echo "Place sell orders\n";
+            $this->sell();
+
+            echo "Check gdax if buys have changed status from open to filled\n";
+            $this->actualizeBuys();
+
+            echo "A buy order has x seconds to complete before removed and new buy is placed\n";
+            $this->timeoutBuyOrders();
+
+            echo "Place buy orders\n";
+            $this->buy();
 
 
-        echo "\nDONE " . date('Y-m-d H:i:s') . "\n";
+            echo "\nDONE " . date('Y-m-d H:i:s') . "\n";
+        } else {
+            echo "Bot is not active at the moment\n";
+        }
     }
 
 }

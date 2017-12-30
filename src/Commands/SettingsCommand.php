@@ -29,7 +29,8 @@ class SettingsCommand extends Command {
                 ->addOption('bottom', null, InputOption::VALUE_REQUIRED, 'Set the bottom.')
                 ->addOption('top', null, InputOption::VALUE_REQUIRED, 'Set the top.')
                 ->addOption('max', null, InputOption::VALUE_REQUIRED, 'Set the max.')
-                 ->addOption('lifetime', null, InputOption::VALUE_REQUIRED, 'Set the lifetime.')
+                ->addOption('lifetime', null, InputOption::VALUE_REQUIRED, 'Set the lifetime.')
+                ->addOption('active', null, InputOption::VALUE_REQUIRED, 'Turn bot on/off.')
                 ->addOption('list', null, InputOption::VALUE_NONE, 'List current settings')
                 ->setHelp('This command allows you to tinker with the settings of the bot...')
         ;
@@ -63,6 +64,15 @@ class SettingsCommand extends Command {
             $stmt->execute();
 
             $output->writeln('<info>Buy Spread is now : ' . $spread . '</info>');
+        }
+        
+        if ($active = $input->getOption('active')) {
+            $sql = "UPDATE settings SET botactive = :active";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue('active', $active);
+            $stmt->execute();
+
+            $output->writeln('<info>The bot is : ' . ($active==1? 'on' :'off') . ' now</info>');
         }
 
         if ($sellspread = $input->getOption('sellspread')) {

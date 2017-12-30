@@ -17,22 +17,7 @@ class OrderService implements OrderServiceInterface {
         $sql = "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTO_INCREMENT, parent_id integer, side varchar(10), size varchar(20), amount decimal(15,9),status varchar(40), order_id varchar(40), created_at datetime, updated_at timestamp);";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
-
-        $sql = "CREATE TABLE settings (id INTEGER PRIMARY KEY AUTO_INCREMENT, spread decimal(8,2),sellspread decimal(8,2), max_orders int, bottom decimal(10,2),top decimal(10,2) ,size varchar(10),lifetime int, created_at datetime, updated_at timestamp);";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-
-        $sql = "INSERT INTO settings SET spread= :spread, max_orders=:maxorders, top=:top, bottom = :bottom, size=:size,lifetime =:lifetime, created_at = :createdat;";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('spread', 0.01);
-        $stmt->bindValue('maxorders', 8);
-        $stmt->bindValue('top', 220.0);
-        $stmt->bindValue('bottom', 218.0);
-        $stmt->bindValue('size', 0.02);
-        $stmt->bindValue('lifetime', 90);
-        $stmt->bindValue('createdat', date('Y-m-d H:i:s'));
-
-        $stmt->execute();
+        
     }
 
     public function purgeDatabase() {
