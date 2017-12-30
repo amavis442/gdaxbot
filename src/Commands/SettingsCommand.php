@@ -55,6 +55,7 @@ class SettingsCommand extends Command {
             $output->writeln('<info>Top: ' . $result['top'] . '</info>');
             $output->writeln('<info>Max orders: ' . $result['max_orders'] . '</info>');
             $output->writeln('<info>Lifetime: ' . $result['lifetime'] . '</info>');
+            $output->writeln('<info>Bot active: ' . $result['botactive'] . '</info>');
         }
 
         if ($spread = $input->getOption('spread')) {
