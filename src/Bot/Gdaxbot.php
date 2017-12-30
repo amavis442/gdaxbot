@@ -94,10 +94,8 @@ class Gdaxbot {
 
                 if ($order->getStatus()) {
                     $this->orderService->updateOrderStatus($row['id'], $order->getStatus());
-                }
-
-                if ($order->getMessage() == 'NotFound') {
-                    $this->orderService->updateOrderStatus($row['id'], $order->getStatus());
+                } else {
+                    $this->orderService->updateOrderStatus($row['id'], $order->getMessage());
                 }
             }
         }
