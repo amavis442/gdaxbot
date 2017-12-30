@@ -70,10 +70,10 @@ class SettingsCommand extends Command {
         if ($active = $input->getOption('active')) {
             $sql = "UPDATE settings SET botactive = :active";
             $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('active', $active);
+            $stmt->bindValue('active', ($active == 'on' ? 1:0));
             $stmt->execute();
 
-            $output->writeln('<info>The bot is : ' . ($active==1? 'on' :'off') . ' now</info>');
+            $output->writeln('<info>The bot is ' . $active . ' now</info>');
         }
 
         if ($sellspread = $input->getOption('sellspread')) {
