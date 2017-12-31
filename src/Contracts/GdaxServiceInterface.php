@@ -17,6 +17,16 @@ interface GdaxServiceInterface {
     public function connect($sandbox = false);
 
     /**
+     * Returns orderbook level 2
+     */
+    public function getOrderbook() : \GDAX\Types\Response\Market\ProductOrderBook;
+        
+    /**
+     * Get trades from starting from date
+     */
+    public function getTrades(string $date = null) : array;
+            
+    /**
      * Get an order by order_id which has a format like aaaaaa-aaaa-aaaa-aaaaa
      * 
      * @param type $order_id

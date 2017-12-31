@@ -44,6 +44,33 @@ class GDaxService implements GdaxServiceInterface {
         }
     }
 
+    public function getOrderbook() : \GDAX\Types\Response\Market\ProductOrderBook
+    {
+        $product = (new \GDAX\Types\Request\Market\Product())->setProductId($this->getProductId())->setLevel(2);
+        $productOrderBook = $this->client->getProductOrderBook($product);
+    
+        return $productOrderBook;
+    }
+    
+    public function getTrades(string $date = null) : array //\GDAX\Types\Response\Market\Trade[]
+    {
+        if (is_null($date)) {
+            $date = date('Y').'-01-01';
+        } 
+        
+        $publicClient = new \GDAX\Clients\PublicClient();
+        
+        $product = (new \GDAX\Types\Request\Market\Product())
+        ->setProductId($this->getProductId())
+        ->setStart(new \DateTime($date))
+        ->setEnd(new \DateTime())
+        ->setGranularity(1200);
+
+        $productTrades = $publicClient->getTrades($product);
+        
+        return $productTrades;
+    }
+    
     /**
      * 
      * @return type
