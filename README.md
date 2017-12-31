@@ -1,6 +1,10 @@
 # gdaxbot
 WIP: Gdax trading bot (DISCLAIMER: use at your own risc)
 
+Great thanks to https://medium.com/@joeldg/an-advanced-tutorial-a-new-crypto-currency-trading-bot-boilerplate-framework-e777733607ae (https://github.com/joeldg/bowhead),
+
+https://github.com/benfranke/gdax-php
+
 Initial trading bot.
 
 ## Step 1:
