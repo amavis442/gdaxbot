@@ -1,14 +1,25 @@
 {
+    "name": "gdaxtraderbot",
+    "description": "Bot for trading cryptocoin on gdax",
+    "license": "MIT",
+    "type" :"project",
     "require": {
+        "php": ">=7.1",
+        "ext-trader": "*",
         "symfony/console": "^4.0",
         "benfranke/gdax-php": "^0.0.6",
         "symfony/dotenv": "^4.0",
         "nesbot/carbon": "^1.22",
         "doctrine/orm": "v2.5.14",
         "symfony/dependency-injection": "^4.0",
-        "doctrine/dbal": "v2.5.13"
+        "doctrine/dbal": "v2.5.13",
+        "ratchet/pawl": "^0.3.1",
+        "predis/predis": "^1.1"
     },
      "autoload": {
         "psr-4": {"App\\": "src/"}
+    },
+    "require-dev": {
+        "fzaninotto/faker": "^1.7"
     }
 }
