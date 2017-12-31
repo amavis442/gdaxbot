@@ -11,15 +11,7 @@ class OrderService implements OrderServiceInterface {
     public function __construct($conn) {
         $this->conn = $conn;
     }
-
-    public function createDatabase() {
-
-        $sql = "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTO_INCREMENT, parent_id integer, side varchar(10), size varchar(20), amount decimal(15,9),status varchar(40), order_id varchar(40), created_at datetime, updated_at timestamp);";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        
-    }
-
+    
     public function purgeDatabase() {
         $sql = 'delete from orders';
         $stmt = $this->conn->prepare($sql);
