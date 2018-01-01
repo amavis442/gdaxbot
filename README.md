@@ -11,9 +11,9 @@ Initial trading bot.
 
 composer update
 
-## Step 2: sqllite database
+## Step 2: Create mysql database and dump 
 
-php migrate.php
+mysql -uroot -p whatever < database/create_tables.sql
 
 ## Step 3:
 
@@ -46,3 +46,15 @@ SELLINGTRESHOLD=229.0 // When shoud the selling stop
 php gdaxbot.sh bot:run
 
 If you are daring, you can put this in a cronjob.
+
+
+Run th eticker
+
+#~$ more /etc/supervisor/conf.d/crypt.conf
+
+[program:wsgdax]
+command=/usr/bin/php gdax.sh bot:websocket
+directory=/home/ubuntu/gdax
+startretries=3
+stopwaitsecs=10
+autostart=true
