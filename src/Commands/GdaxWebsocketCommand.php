@@ -49,6 +49,8 @@ class GdaxWebsocketCommand extends Command {
         $check_time = time() - $len;
         $current_mtime = time();
         $cacheItem = $this->cache->getItem($key);
+        
+        
 
         if ($cacheItem->isHit()) {
             $value = $cacheItem->get();
@@ -119,29 +121,36 @@ class GdaxWebsocketCommand extends Command {
                             }
 
                             $lastPrice->set($data['price']);
+                            $lastPrice->expiresAfter(180);
                             $cache->save($lastPrice);
 
                             $low = $cache->getItem('gdax.ticker.low');
+                            $low->expiresAfter(180);
                             $low->set($data['low_24h']);
                             $cache->save($low);
 
                             $high = $cache->getItem('gdax.ticker.high');
+                            $high->expiresAfter(180);
                             $low->set($data['high_24h']);
                             $cache->save($high);
 
                             $open = $cache->getItem('gdax.ticker.open');
+                            $open->expiresAfter(180);
                             $open->set($data['open_24h']);
                             $cache->save($open);
 
                             $bid = $cache->getItem('gdax.ticker.bid');
+                            $bid->expiresAfter(180);
                             $bid->set($data['best_bid']);
                             $cache->save($bid);
 
                             $ask = $cache->getItem('gdax.ticker.ask');
+                            $ask->expiresAfter(180);
                             $ask->set($data['best_ask']);
                             $cache->save($ask);
 
                             $volume = $cache->getItem('gdax.ticker.volume');
+                            $volume->expiresAfter(180);
                             $volume->set($data['volume_24h']);
                             $cache->save($volume);
 
