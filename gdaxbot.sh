@@ -42,6 +42,18 @@ $testCandles = new \App\Commands\TestCandlesCommand();
 $testCandles->setCache($cache);
 $application->add($testCandles);
 
+$testTrends = new \App\Commands\TestTrendsCommand();
+$testTrends->setCache($cache);
+$application->add($testTrends);
+
+$testSignals = new \App\Commands\TestSignalsCommand();
+$testSignals->setCache($cache);
+$application->add($testSignals);
+
+$testStrategies = new \App\Commands\TestStrategiesCommand();
+$testStrategies->setCache($cache);
+$application->add($testStrategies);
+
 
 /**
  * Run the console app

@@ -45,14 +45,14 @@ class Indicators {
      * @var array
      *      array with the available types of moving averages
      */
-    public $mas = array('sma', 'ema', 'wma', 'dema', 'tema', 'trima', 'kama', 'mama', 't3');
+    public $mas = ['sma', 'ema', 'wma', 'dema', 'tema', 'trima', 'kama', 'mama', 't3'];
 
     /**
      * @var array
      *      array with the available types of buy/sell signals
      *      'aroonosc','cmo','cci','mfi' = a good group with volume
      */
-    public $available_signals = array('adx', 'aroonosc', 'cmo', 'sar', 'cci', 'mfi', 'obv', 'stoch', 'rsi', 'macd', 'bollingerBands', 'atr', 'er', 'hli', 'ultosc', 'willr', 'roc', 'stochrsi');
+    public $available_signals = ['adx', 'aroonosc', 'cmo', 'sar', 'cci', 'mfi', 'obv', 'stoch', 'rsi', 'macd', 'bollingerBands', 'atr', 'er', 'hli', 'ultosc', 'willr', 'roc', 'stochrsi'];
 
     /**
      * @param $ma
@@ -67,7 +67,7 @@ class Indicators {
             return 0; // simple
         }
         
-        $types = array(
+        $types = [
             'sma'   => TRADER_MA_TYPE_SMA, // simple moving average
             'ema'   => TRADER_MA_TYPE_EMA, // exponential moving average
             'wma'   => TRADER_MA_TYPE_WMA, // weighted moving average
@@ -77,7 +77,8 @@ class Indicators {
             'kama'  => TRADER_MA_TYPE_KAMA, // Kaufman's Adaptive Moving Average
             'mama'  => TRADER_MA_TYPE_MAMA, // The Mother of Adaptive Moving Average
             't3'    => TRADER_MA_TYPE_T3     // The Triple Exponential Moving Average
-        );
+        ];
+        
         return $types[$ma];
     }
 
@@ -124,6 +125,7 @@ class Indicators {
         } elseif ($downside_signal > 0) {
             return -1; // sell
         }
+        
         return 0;
     }
 
@@ -1106,11 +1108,16 @@ class Indicators {
      *      Hilbert Transform - Trend vs Cycle Mode
      *      if > 1 then in trend mode ???
      */
-    public function httc($pair = 'BTC-EUR', $data = null, $numperiods = false) {
+    public function httc(string $pair = 'BTC-EUR', array $data = null, bool $numperiods = false) {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
+
         $a_htm = trader_ht_trendmode($data['close']);
+        if (!$a_htm) {
+            throw new RuntimeException('Not enough data points. Maybe clear cache and start over.');
+        }
+
         $htm   = array_pop($a_htm);
 
         /**

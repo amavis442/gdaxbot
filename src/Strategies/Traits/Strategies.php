@@ -12,7 +12,7 @@ use App\Util\Indicators;
 
 /**
  * Class Strategies
- * @package Bowhead\Traits
+ * @package App\Strategies\Traits
  */
 trait Strategies
 {

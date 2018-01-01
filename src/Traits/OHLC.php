@@ -417,7 +417,8 @@ trait OHLC {
         $ret['close']  = [];
         $ret['volume'] = [];
 
-        $ret = array();
+        $ret = [];
+        
         foreach ($datas as $data) {
             $ret['date'][]   = $data->buckettime;
             $ret['low'][]    = $data->low;
@@ -451,38 +452,36 @@ trait OHLC {
          */
         $key       = 'recent.' . $product_id . '.' . $limit . ".$day_data.$hour.$periodSize";
         $cacheItem = $this->cache->getItem($key);
+       
 
         if ($cacheItem->isHit()) {
             $c = $cacheItem->get();
             return $c;
         }
 
-        $a = DB::table('ohlc_' . $periodSize)
+        $rows = DB::table('ohlc_' . $periodSize)
                 ->select(DB::raw('*, unix_timestamp(ctime) as buckettime'))
                 ->where('product_id', $product_id)
                 ->orderby('timeid', 'DESC')
                 ->limit($limit)
                 ->get();
 
-        if ($returnResultSet) {
-            $ret = $a;
-        } else {
-            $ret = $this->transformPairData($a);
-        }
+        
 
-        $ptime        = null;
+        $starttime        = null;
         $validperiods = 0;
-        foreach ($a as $ab) {
-            #echo print_r($ab,1);
-            $array = (array) $ab;
-            $ftime = $array['buckettime'];
-            if ($ptime == null) {
-                $ptime = $ftime;
-                echo "Starting at $array[ctime]...\n";
+        $oldrow = null;
+        foreach ($rows as $row) {
+            
+            $endtime = $row->buckettime;
+
+            if ($starttime == null) {
+                $starttime = $endtime;
+                echo "Starting at ".$row->ctime."...\n";
             } else {
                 /** Check for missing periods * */
                 if ($periodSize == '1m') {
-                    $variance = (int) 80;
+                    $variance = (int) 119;
                 } else if ($periodSize == '5m') {
                     $variance = (int) 375;
                 } else if ($periodSize == '15m') {
@@ -494,19 +493,30 @@ trait OHLC {
                 } else if ($periodSize == '1d') {
                     $variance = (int) 108000;
                 }
-                #echo 'Past Time is '.$ptime.' and current time is '.$ftime."\n";
-                $periodcheck = $ptime - $ftime;
+                
+                $periodcheck = $starttime - $endtime;
+                
                 if ((int) $periodcheck > (int) $variance) {
-                    echo 'YOU HAVE ' . $validperiods . ' PERIODS OF VALID PRICE DATA OUT OF ' . $limit . '. Please ensure price sync is running and wait for additional data to be logged before trying again. Additionally you could use a smaller time period if available.' . "\n";
-                    die();
+                    dump($starttime, $endtime,$periodcheck, $oldrow,$row);
+                    throw new \RuntimeException('YOU HAVE ' . $validperiods . ' PERIODS OF VALID PRICE DATA OUT OF ' . $limit . '. Please ensure price sync is running and wait for additional data to be logged before trying again. Additionally you could use a smaller time period if available.');
                 }
+                
                 $validperiods++;
             }
-            $ptime = $ftime;
+            $starttime = $endtime;
+            $oldrow = $row;
         }
-
+        
+        if ($returnResultSet) {
+            $ret = $rows;
+        } else {
+            $ret = $this->transformPairData($rows);
+        }
+        
+        $cacheItem->expiresAfter(60); // 60 seconds
         $cacheItem->set($ret);
         $this->cache->save($cacheItem);
+        
         return $ret;
     }
 

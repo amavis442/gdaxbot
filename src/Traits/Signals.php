@@ -42,20 +42,18 @@ trait Signals {
      * @param bool $return
      * @param bool $compile
      */
-    public function signals($return = false, $compile = false, $instruments = null) {
-        $lines = [];
+    public function signals($instruments = null) {
         $inds  = ['rsi', 'stoch', 'stochrsi', 'macd', 'adx', 'willr', 'cci', 'atr', 'hli', 'ultosc', 'roc', 'er'];
-        
-        if (empty($instruments)) {
-            $instruments = ['BTC-EUR'];
-        }
-        
-        $indicators = new Indicators();
-        $console    = new Console();
-        $util       = new BrokersUtil();
 
+        if (empty($instruments)) {
+            $instruments = [getenv('CRYPTOCOIN')];
+        }
+
+        $indicators = new Indicators();
+ 
         foreach ($instruments as $pair) {
             $data              = $this->getRecentData($pair);
+            
             $flags             = [];
             $flags['rsi']      = $indicators->rsi($pair, $data);
             $flags['stoch']    = $indicators->stoch($pair, $data);
@@ -73,60 +71,32 @@ trait Signals {
             $symbollines[$pair] = $flags;
         }
 
-        if ($compile) {
-            $return = $ret    = [];
-            foreach ($symbollines as $symbol => $datas) {
-                $ret[$symbol]         = [];
-                $ret[$symbol]['buy']  = 0;
-                $ret[$symbol]['sell'] = 0;
 
-                foreach ($datas as $data) {
-                    $ret[$symbol]['buy']  += ($data == 1 ? 1 : 0);
-                    $ret[$symbol]['sell'] += ($data == -1 ? 1 : 0);
-                }
-            }
-            
-            foreach ($ret as $k => $r) {
-                $return[$k] = 'NONE';
-                $return[$k] = ($r['buy'] > 6 ? 'WEAK BUY' : $return[$k]);
-                $return[$k] = ($r['buy'] > 8 ? 'GOOD BUY' : $return[$k]);
-                $return[$k] = ($r['buy'] > 9 ? 'STRONG BUY' : $return[$k]);
-                $return[$k] = ($r['buy'] > 10 ? 'VERY STRONG BUY' : $return[$k]);
-                $return[$k] = ($r['sell'] > 6 ? 'WEAK SELL' : $return[$k]);
-                $return[$k] = ($r['sell'] > 8 ? 'GOOD SELL' : $return[$k]);
-                $return[$k] = ($r['sell'] > 9 ? 'STRONG SELL' : $return[$k]);
-                $return[$k] = ($r['sell'] > 10 ? 'VERY STRONG SELL' : $return[$k]);
-            }
-            return $return;
-        }
+        $return = $ret    = [];
+        foreach ($symbollines as $symbol => $datas) {
+            $ret[$symbol]         = [];
+            $ret[$symbol]['buy']  = 0;
+            $ret[$symbol]['sell'] = 0;
 
-        // if return is set we just return the raw data.
-        if ($return) {
-            return $symbollines;
-        }
-
-        $lines        = [];
-        $lines['top'] = '';
-        $output       = '';
-        
-        foreach ($instruments as $instrument) {
-            $lines['top'] .= str_pad($instrument, 10);
-            
-            foreach ($inds as $ind) {
-                if (!isset($lines[$ind])) {
-                    $lines[$ind] = '';
-                }
-                $color       = ($symbollines[$instrument][$ind] > 0 ? 'bg_green' : ($symbollines[$instrument][$ind] < 0 ? 'bg_red' : 'bg_black'));
-                $lines[$ind] .= $console->colorize(str_pad($ind, 10), $color);
+            foreach ($datas as $data) {
+                $ret[$symbol]['buy']  += ($data == 1 ? 1 : 0);
+                $ret[$symbol]['sell'] += ($data == -1 ? 1 : 0);
             }
         }
-        
-        echo "\n" . @$lines['top'];
-        foreach ($inds as $ind) {
-            echo "\n" . $lines[$ind];
+
+        foreach ($ret as $k => $r) {
+            $return[$k] = 'NONE';
+            $return[$k] = ($r['buy'] > 6 ? 'WEAK BUY' : $return[$k]);
+            $return[$k] = ($r['buy'] > 8 ? 'GOOD BUY' : $return[$k]);
+            $return[$k] = ($r['buy'] > 9 ? 'STRONG BUY' : $return[$k]);
+            $return[$k] = ($r['buy'] > 10 ? 'VERY STRONG BUY' : $return[$k]);
+            $return[$k] = ($r['sell'] > 6 ? 'WEAK SELL' : $return[$k]);
+            $return[$k] = ($r['sell'] > 8 ? 'GOOD SELL' : $return[$k]);
+            $return[$k] = ($r['sell'] > 9 ? 'STRONG SELL' : $return[$k]);
+            $return[$k] = ($r['sell'] > 10 ? 'VERY STRONG SELL' : $return[$k]);
         }
-        echo "\n\n";
-        return null;
+
+        return ['symbol'=>$symbollines,'ret' => $ret, 'strength' => $return];
     }
 
 }
