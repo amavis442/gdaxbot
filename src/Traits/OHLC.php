@@ -38,6 +38,7 @@ trait OHLC {
             `close`  = VALUES(`close`)
         ");
 
+        $timeid = date("YmdHi", strtotime($timeid));
 
         $this->update1MinuteOHLC($product_id, $timeid, $volume);
         $this->update5MinuteOHLC($product_id, $timeid, $volume);
@@ -56,15 +57,17 @@ trait OHLC {
         $high1 = null;
         $low1 = null;
 
-        $timeid = date("YmdHi", strtotime($timeid));
+        
 
         $last1m = DB::table('ohlc_1m')->select(DB::raw('MAX(timeid) AS timeid'))
                 ->where('product_id', $product_id)
                 ->first();
 
-        $last1timeid = $last1m->timeid;
-        $last1timeid = date("YmdHi", strtotime($last1timeid));
-
+        if($last1m) {
+            $last1timeid = $last1m->timeid;
+            $last1timeid = date("YmdHi", strtotime($last1timeid));
+        }
+        
         if ($last1timeid < $timeid) {
 
             /* Get High and Low from ticker data for insertion */
