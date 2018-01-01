@@ -35,6 +35,13 @@ $websocketClient->setCache($cache);
 $websocketClient->setConn($conn);
 $application->add($websocketClient);
 
+/** 
+ * For testing
+ */
+$testCandles = new \App\Commands\TestCandlesCommand();
+$testCandles->setCache($cache);
+$application->add($testCandles);
+
 
 /**
  * Run the console app

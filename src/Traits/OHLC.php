@@ -23,7 +23,7 @@ trait OHLC {
 
         $last_price = $ticker['best_bid'];
         $product_id = $ticker['product_id'];
-        $volume = 0;
+        $volume     = $ticker['volume_24h'];
 
         /** tick table update */
         DB::insert("
@@ -52,34 +52,34 @@ trait OHLC {
     }
 
     public function update1MinuteOHLC($product_id, $timeid, $volume) {
-        $open1 = null;
+        $open1  = null;
         $close1 = null;
-        $high1 = null;
-        $low1 = null;
+        $high1  = null;
+        $low1   = null;
 
-        
+
 
         $last1m = DB::table('ohlc_1m')->select(DB::raw('MAX(timeid) AS timeid'))
                 ->where('product_id', $product_id)
                 ->first();
 
-        if($last1m) {
+        if ($last1m) {
             $last1timeid = $last1m->timeid;
             $last1timeid = date("YmdHi", strtotime($last1timeid));
         }
-        
+
         if ($last1timeid < $timeid) {
 
             /* Get High and Low from ticker data for insertion */
             $last1timeids = date("YmdHis", strtotime(date("YmdHi", strtotime("-1 minutes", strtotime("now")))));
-            $accum1ma = DB::table('ohlc_tick')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
+            $accum1ma     = DB::table('ohlc_tick')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
                     ->where('product_id', $product_id)
                     ->where('timeid', '>=', $last1timeids)
                     ->where('timeid', '<=', ($last1timeids + 59))
                     ->first();
 
             $high1 = $accum1ma->high;
-            $low1 = $accum1ma->low;
+            $low1  = $accum1ma->low;
 
 
             /* Get Open price from ticker data and last minute */
@@ -123,10 +123,10 @@ trait OHLC {
     }
 
     public function update5MinuteOHLC($product_id, $timeid, $volume) {
-        $open5 = null;
+        $open5  = null;
         $close5 = null;
-        $high5 = null;
-        $low5 = null;
+        $high5  = null;
+        $low5   = null;
 
         $last5m = DB::table('ohlc_5m')->select(DB::raw('MAX(timeid) AS timeid'))
                 ->where('product_id', $product_id)
@@ -140,14 +140,14 @@ trait OHLC {
         if ($last5timeid < $timeid) {
             /* Get High and Low from 1m data for insertion */
             $last5timeids = date("YmdHi", strtotime("-5 minutes", strtotime("now")));
-            $accum5ma = DB::table('ohlc_1m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
+            $accum5ma     = DB::table('ohlc_1m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
                     ->where('product_id', $product_id)
                     ->where('timeid', '>=', $last5timeids)
                     ->where('timeid', '<=', ($timeid))
                     ->first();
             if ($accum5ma) {
                 $high5 = $accum5ma->high;
-                $low5 = $accum5ma->low;
+                $low5  = $accum5ma->low;
             }
 
             /* Get Open price from 1m data and last 5 minutes */
@@ -192,10 +192,10 @@ trait OHLC {
 
     public function update15MinutOHLC($product_id, $timeid, $volume) {
         /** 15m table update * */
-        $open15 = null;
+        $open15  = null;
         $close15 = null;
-        $high15 = null;
-        $low15 = null;
+        $high15  = null;
+        $low15   = null;
 
         $last15m = DB::table('ohlc_15m')->select(DB::raw('MAX(timeid) AS timeid'))
                 ->where('product_id', $product_id)
@@ -209,7 +209,7 @@ trait OHLC {
         if ($last15timeid < $timeid) {
             /* Get High and Low from 5m data for insertion */
             $last15timeids = date("YmdHi", strtotime("-15 minutes", strtotime("now")));
-            $accum15ma = DB::table('ohlc_5m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
+            $accum15ma     = DB::table('ohlc_5m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
                     ->where('product_id', $product_id)
                     ->where('timeid', '>=', $last15timeids)
                     ->where('timeid', '<=', ($timeid))
@@ -217,7 +217,7 @@ trait OHLC {
 
             if ($accum15ma) {
                 $high15 = $accum15ma->high;
-                $low15 = $accum15ma->low;
+                $low15  = $accum15ma->low;
             }
 
             /* Get Open price from 5m data and last 15 minutes */
@@ -262,10 +262,10 @@ trait OHLC {
 
     public function update30MinuteOHLC($product_id, $timeid, $volume) {
         /** 30m table update * */
-        $open30 = null;
+        $open30  = null;
         $close30 = null;
-        $high30 = null;
-        $low30 = null;
+        $high30  = null;
+        $low30   = null;
 
         $last30m = DB::table('ohlc_30m')->select(DB::raw('MAX(timeid) AS timeid'))
                 ->where('product_id', $product_id)
@@ -279,7 +279,7 @@ trait OHLC {
         if ($last30timeid < $timeid) {
             /* Get High and Low from 15m data for insertion */
             $last30timeids = date("YmdHi", strtotime("-30 minutes", strtotime("now")));
-            $accum30ma = DB::table('ohlc_15m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
+            $accum30ma     = DB::table('ohlc_15m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
                     ->where('product_id', $product_id)
                     ->where('timeid', '>=', $last30timeids)
                     ->where('timeid', '<=', ($timeid))
@@ -287,7 +287,7 @@ trait OHLC {
 
             if ($accum30ma) {
                 $high30 = $accum30ma->high;
-                $low30 = $accum30ma->low;
+                $low30  = $accum30ma->low;
             }
 
             /* Get Open price from 15m data and last 30 minutes */
@@ -332,10 +332,10 @@ trait OHLC {
 
     public function update1HourOHLC($product_id, $timeid, $volume) {
         /** 1h table update * */
-        $open60 = null;
+        $open60  = null;
         $close60 = null;
-        $high60 = null;
-        $low60 = null;
+        $high60  = null;
+        $low60   = null;
 
         $last60m = DB::table('ohlc_1h')->select(DB::raw('MAX(timeid) AS timeid'))
                 ->where('product_id', $product_id)
@@ -349,7 +349,7 @@ trait OHLC {
         if ($last60timeid < $timeid) {
             /* Get High and Low from 30m data for insertion */
             $last60timeids = date("YmdHi", strtotime("-60 minutes", strtotime("now")));
-            $accum60ma = DB::table('ohlc_30m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
+            $accum60ma     = DB::table('ohlc_30m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
                     ->where('product_id', $product_id)
                     ->where('timeid', '>=', $last60timeids)
                     ->where('timeid', '<=', ($timeid))
@@ -357,7 +357,7 @@ trait OHLC {
 
             if ($accum60ma) {
                 $high60 = $accum60ma->high;
-                $low60 = $accum60ma->low;
+                $low60  = $accum60ma->low;
             }
 
             /* Get Open price from 30m data and last 60 minutes */
@@ -384,7 +384,7 @@ trait OHLC {
             if ($accum60mc) {
                 $close60 = $accum60mc->close;
             }
-            
+
             if ($open60 && $close60 && $low60 && $high60) {
                 DB::insert("
             INSERT INTO ohlc_1h 
@@ -401,30 +401,36 @@ trait OHLC {
     }
 
     /**
+     * Transform data for the trader functions
+     * vb array trader_cdl2crows ( array $open , array $high , array $low , array $close )
+     * 
+     * 
      * @param $datas
      *
      * @return array
      */
-    public function organizePairData($datas) {
-        $ret['date'] = [];
-        $ret['low'] = [];
-        $ret['high'] = [];
-        $ret['open'] = [];
-        $ret['close'] = [];
+    public function transformPairData($datas) {
+        $ret['date']   = [];
+        $ret['low']    = [];
+        $ret['high']   = [];
+        $ret['open']   = [];
+        $ret['close']  = [];
         $ret['volume'] = [];
 
         $ret = array();
         foreach ($datas as $data) {
-            $ret['date'][] = $data->buckettime;
-            $ret['low'][] = $data->low;
-            $ret['high'][] = $data->high;
-            $ret['open'][] = $data->open;
-            $ret['close'][] = $data->close;
+            $ret['date'][]   = $data->buckettime;
+            $ret['low'][]    = $data->low;
+            $ret['high'][]   = $data->high;
+            $ret['open'][]   = $data->open;
+            $ret['close'][]  = $data->close;
             $ret['volume'][] = $data->volume;
         }
+        
         foreach ($ret as $key => $rettemmp) {
             $ret[$key] = array_reverse($rettemmp);
         }
+        
         return $ret;
     }
 
@@ -443,11 +449,12 @@ trait OHLC {
          *  we need to cache this as many strategies will be
          *  doing identical pulls for signals.
          */
-        $key = 'recent.' . $product_id . '.' . $limit . ".$day_data.$hour.$periodSize";
+        $key       = 'recent.' . $product_id . '.' . $limit . ".$day_data.$hour.$periodSize";
         $cacheItem = $this->cache->getItem($key);
 
         if ($cacheItem->isHit()) {
-            return $cacheItem->get();
+            $c = $cacheItem->get();
+            return $c;
         }
 
         $a = DB::table('ohlc_' . $periodSize)
@@ -460,10 +467,10 @@ trait OHLC {
         if ($returnResultSet) {
             $ret = $a;
         } else {
-            $ret = $this->organizePairData($a);
+            $ret = $this->transformPairData($a);
         }
 
-        $ptime = null;
+        $ptime        = null;
         $validperiods = 0;
         foreach ($a as $ab) {
             #echo print_r($ab,1);
