@@ -134,7 +134,7 @@ CREATE TABLE `ohlc_tick` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Create syntax for TABLE 'bowhead_strategy'
-CREATE TABLE `bowhead_strategy` (
+CREATE TABLE `strategy` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `ctime` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `position_id` varchar(68) DEFAULT NULL,
@@ -187,5 +187,5 @@ CREATE TABLE `symbols` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `symbol` (`symbol`),
   KEY `category` (`category`)
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

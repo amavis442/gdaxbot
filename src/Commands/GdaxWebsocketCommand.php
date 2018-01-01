@@ -14,19 +14,61 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
+use Illuminate\Database\Query\Builder;
+use App\Traits\OHLC;
+
 /**
  * Description of GdaxWebsocketCommand
  *
  * @author patrick
  */
 class GdaxWebsocketCommand extends Command {
-
+    
+    use OHLC;
+    
     protected $product_id;
+    protected $cache;
+    protected $conn;
 
     protected function configure() {
         $this->setName('bot:websocket')
                 ->setDescription('Get data from websocket')
                 ->setHelp('Get data from websocket.');
+    }
+
+    public function setCache($cache) {
+        $this->cache = $cache;
+    }
+
+    public function setConn($conn) {
+        $this->conn = $conn;
+    }
+
+    public function manageCacheArray($key, $item, $len = 60) {
+        $storeArr = array();
+        $check_time = time() - $len;
+        $current_mtime = time();
+        $cacheItem = $this->cache->getItem($key);
+
+        if ($cacheItem->isHit()) {
+            $value = $cacheItem->get();
+            $value_arr = unserialize(base64_decode($value));
+
+            foreach ($value_arr as $k => $v) {
+                if (floatval($k) > floatval($check_time)) {
+                    $storeArr[$k] = $v;
+                }
+            }
+            $storeArr[$current_mtime] = $item;
+            krsort($storeArr);
+            $value = base64_encode(serialize($storeArr));
+        } else {
+            $value = array("$current_mtime" => $item);
+            $value = base64_encode(serialize($value));
+        }
+
+        $cacheItem->set($value);
+        $this->cache->save($cacheItem);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
@@ -35,21 +77,84 @@ class GdaxWebsocketCommand extends Command {
 
         $this->product_id = 'BTC-EUR';
 
+
         $connector('wss://ws-feed.gdax.com')
                 ->then(function(\Ratchet\Client\WebSocket $conn) {
-                    $conn->send('{"type": "subscribe","product_id": "' . $this->product_id . '"}');
+                    $subscribe = json_encode(["type" => "subscribe",
+                        "channels" => [
+                            [
+                                "name" => "ticker",
+                                "product_ids" => [
+                                    $this->product_id
+                                ]
+                            ]
+                        ]
+                    ]);
+                    $conn->send($subscribe);
+
+                    $subscribe = json_encode(["type" => "subscribe",
+                        "channels" => [
+                            [
+                                "name" => "heartbeat",
+                                "product_ids" => [
+                                    $this->product_id
+                                ]
+                            ]
+                        ]
+                    ]);
+
+                    $conn->send($subscribe);
 
                     $conn->on('message', function(\Ratchet\RFC6455\Messaging\MessageInterface $msg) use ($conn) {
-                        /**
-                         *   DO ALL PROCESSING HERE
-                         *   match up sequence and keep the book up to date.
-                         */
-                        /* if (empty($this->book)) {
-                            $this->book = $this->getBook($this->product_id);
-                            $this->processBook();
-                        } */
                         $data = json_decode($msg, 1);
-                        echo print_r($data);
+                        $cache = $this->cache;
+                        if ($data['type'] == 'ticker') {
+                            #echo "TICKER\n";
+                            $lastPrice = $cache->getItem('gdax.ticker.last_price');
+
+                            if ($lastPrice->isHit()) {
+                                $last = $lastPrice->get('gdax.ticker.last_price');
+                            } else {
+                                $last = $data['price'];
+                            }
+
+                            $lastPrice->set($data['price']);
+                            $cache->save($lastPrice);
+
+                            $low = $cache->getItem('gdax.ticker.low');
+                            $low->set($data['low_24h']);
+                            $cache->save($low);
+
+                            $high = $cache->getItem('gdax.ticker.high');
+                            $low->set($data['high_24h']);
+                            $cache->save($high);
+
+                            $open = $cache->getItem('gdax.ticker.open');
+                            $open->set($data['open_24h']);
+                            $cache->save($open);
+
+                            $bid = $cache->getItem('gdax.ticker.bid');
+                            $bid->set($data['best_bid']);
+                            $cache->save($bid);
+
+                            $ask = $cache->getItem('gdax.ticker.ask');
+                            $ask->set($data['best_ask']);
+                            $cache->save($ask);
+
+                            $volume = $cache->getItem('gdax.ticker.volume');
+                            $volume->set($data['volume_24h']);
+                            $cache->save($volume);
+
+                            $this->manageCacheArray('gdax.ticker.last_price.array', $data['price']);
+                            $this->manageCacheArray('gdax.ticker.volume.array', $data['volume_24h']);
+                            $this->manageCacheArray('gdax.ticker.ask.array', $data['best_ask']);
+                            $this->manageCacheArray('gdax.ticker.bid.array', $data['best_bid']);
+                            $this->manageCacheArray('gdax.ticker.last_price_diff.array', ($data['price'] - $last));
+                            //print_r($data);
+                            
+                            $this->markOHLC($data);
+                            
+                        }
                     });
 
                     $conn->on('close', function($code = null, $reason = null) {

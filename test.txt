@@ -1,0 +1,1 @@
+{"type":"subscribe","channels":[{"name":"heartbeat","product_ids":["BTC-EUR"]}]}

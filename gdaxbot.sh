@@ -30,6 +30,14 @@ $reportProfits = new \App\Commands\ReportProfitsCommand();
 $reportProfits->setConn($conn);
 $application->add($reportProfits);
 
-$application->add(new \App\Commands\GdaxWebsocketCommand());
+$websocketClient = new \App\Commands\GdaxWebsocketCommand();
+$websocketClient->setCache($cache);
+$websocketClient->setConn($conn);
+$application->add($websocketClient);
+
+
+/**
+ * Run the console app
+ */
 $application->run();
 
