@@ -438,7 +438,7 @@ trait OHLC {
      *
      * @return array
      */
-    public function getRecentData($product_id = 'BTC-EUR', $limit = 168, $day_data = false, $hour = 12, $periodSize = '1m', $returnRS = false) {
+    public function getRecentData($product_id = 'BTC-EUR', $limit = 168, $day_data = false, $hour = 12, $periodSize = '1m', $returnResultSet = false) {
         /**
          *  we need to cache this as many strategies will be
          *  doing identical pulls for signals.
@@ -457,7 +457,7 @@ trait OHLC {
                 ->limit($limit)
                 ->get();
 
-        if ($returnRS) {
+        if ($returnResultSet) {
             $ret = $a;
         } else {
             $ret = $this->organizePairData($a);
