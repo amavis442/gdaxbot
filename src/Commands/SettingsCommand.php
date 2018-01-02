@@ -9,16 +9,13 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use Illuminate\Database\Capsule\Manager as DB;
 
-class SettingsCommand extends Command {
+class SettingsCommand extends Command
+{
 
-    protected $conn;
-
-    public function setConn($conn) {
-        $this->conn = $conn;
-    }
-
-    protected function configure() {
+    protected function configure()
+    {
         $this->setName('bot:settings')
 
                 // the short description shown while running "php bin/console list"
@@ -37,106 +34,67 @@ class SettingsCommand extends Command {
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) {
-        // $input->getArgument('username'))
-
-
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
 
         if ($input->getOption('list')) {
-            $sql = "SELECT * FROM settings order by id limit 1";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute();
-            $result = $stmt->fetch();
+            $result = DB::table('settings')->orderBy('id')->limit(1)->first();
 
-            $output->writeln('<info>Size: ' . $result['size'] . '</info>');
-            $output->writeln('<info>Buy Spread: ' . $result['spread'] . '</info>');
-            $output->writeln('<info>Sell Spread: ' . $result['sellspread'] . '</info>');
-            $output->writeln('<info>Order size: ' . $result['size'] . '</info>');
-            $output->writeln('<info>Bottom: ' . $result['bottom'] . '</info>');
-            $output->writeln('<info>Top: ' . $result['top'] . '</info>');
-            $output->writeln('<info>Max orders: ' . $result['max_orders'] . '</info>');
-            $output->writeln('<info>Lifetime: ' . $result['lifetime'] . '</info>');
-            $output->writeln('<info>Bot active: ' . $result['botactive'] . '</info>');
+
+            $output->writeln('<info>Size: ' . $result->size . '</info>');
+            $output->writeln('<info>Buy Spread: ' . $result->spread . '</info>');
+            $output->writeln('<info>Sell Spread: ' . $result->sellspread . '</info>');
+            $output->writeln('<info>Order size: ' . $result->size . '</info>');
+            $output->writeln('<info>Bottom: ' . $result->bottom . '</info>');
+            $output->writeln('<info>Top: ' . $result->top . '</info>');
+            $output->writeln('<info>Max orders: ' . $result->max_orders . '</info>');
+            $output->writeln('<info>Lifetime: ' . $result->lifetime . '</info>');
+            $output->writeln('<info>Bot active: ' . $result->botactive . '</info>');
         }
 
         if ($spread = $input->getOption('spread')) {
-            $sql = "UPDATE settings SET spread = :spread";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('spread', $spread);
-            $stmt->execute();
-
+            DB::table('settings')->where('id', 1)->update(['spread' => $spread]);
             $output->writeln('<info>Buy Spread is now : ' . $spread . '</info>');
         }
-        
-        if ($active = $input->getOption('on')) {
-            $sql = "UPDATE settings SET botactive = :botactive";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('botactive', 1);
-            $stmt->execute();
 
+        if ($active = $input->getOption('on')) {
+            DB::table('settings')->where('id', 1)->update(['botactive' => 1]);
             $output->writeln('<info>The bot is on now</info>');
         }
-       
-        if ($active = $input->getOption('off')) {
-            $sql = "UPDATE settings SET botactive = :botactive";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('botactive', 0);
-            $stmt->execute();
 
-            $output->writeln('<info>The bot is off now</info>');
+        if ($active = $input->getOption('off')) {
+            DB::table('settings')->where('id', 1)->update(['botactive' => 0]);
+           $output->writeln('<info>The bot is off now</info>');
         }
-        
+
         if ($sellspread = $input->getOption('sellspread')) {
-            $sql = "UPDATE settings SET sellspread = :sellspread";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('sellspread', $sellspread);
-            $stmt->execute();
+            DB::table('settings')->where('id', 1)->update(['sellspread' => $sellspread]);
             $output->writeln('<info>Sell Spread is now : ' . $sellspread . '</info>');
         }
-        
-        if ($max = $input->getOption('max')) {
-            $sql = "UPDATE settings SET max_orders = :maxorders";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('maxorders', $max);
-            $stmt->execute();
 
+        if ($max = $input->getOption('max')) {
+            DB::table('settings')->where('id', 1)->update(['max_orders' => $max]);
             $output->writeln('<info>Max orders is now : ' . $max . '</info>');
         }
 
         if ($size = $input->getOption('size')) {
-            $sql = "UPDATE settings SET size = :size";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('size', $size);
-            $stmt->execute();
-
+            DB::table('settings')->where('id', 1)->update(['size' => $size]);
             $output->writeln('<info>Order size is now : ' . $size . '</info>');
         }
 
         if ($bottom = $input->getOption('bottom')) {
-            $sql = "UPDATE settings SET bottom = :bottom";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('bottom', $bottom);
-            $stmt->execute();
-
+            DB::table('settings')->where('id', 1)->update(['bottom' => $bottom]);
             $output->writeln('<info>Bottom buy price is now : ' . $bottom . '</info>');
         }
 
         if ($top = $input->getOption('top')) {
-            $sql = "UPDATE settings SET top = :top";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('top', $top);
-            $stmt->execute();
-
+            DB::table('settings')->where('id', 1)->update(['top' => $top]);
             $output->writeln('<info>Top buy price is now : ' . $top . '</info>');
         }
-        
-        if ($lifetime = $input->getOption('lifetime')) {
-            $sql = "UPDATE settings SET lifetime = :lifetime";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('lifetime', $lifetime);
-            $stmt->execute();
 
-            $output->writeln('<info>Lifetime buyorder is now : ' . $lifetime . '</info>');
+        if ($lifetime = $input->getOption('lifetime')) {
+            DB::table('settings')->where('id', 1)->update(['lifetime' => $lifetime]);
+             $output->writeln('<info>Lifetime buyorder is now : ' . $lifetime . '</info>');
         }
     }
 

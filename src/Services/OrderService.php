@@ -3,42 +3,31 @@
 namespace App\Services;
 
 use App\Contracts\OrderServiceInterface;
+use Illuminate\Database\Capsule\Manager as DB;
+use App\Util\Transform;
 
-class OrderService implements OrderServiceInterface {
 
-    protected $conn;
+class OrderService implements OrderServiceInterface
+{
 
-    public function __construct($conn) {
-        $this->conn = $conn;
-    }
-    
-    public function purgeDatabase() {
-        $sql = 'delete from orders';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
+    public function purgeDatabase()
+    {
+        DB::table('orders')->delete();
     }
 
-    public function deleteOrder($id) {
-        $sql = 'delete from orders WHERE id = :id';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('id', $id);
-        $stmt->execute();
+    public function deleteOrder($id)
+    {
+        DB::table('orders')->delete($id);
     }
 
-    public function updateOrder($id, $side) {
-        $sql = 'update orders SET side = :side WHERE id = :id';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('id', $id);
-        $stmt->bindValue('side', $side);
-        $stmt->execute();
+    public function updateOrder($id, $side)
+    {
+        DB::table('orders')->where('id', $id)->update(['side' => $side]);
     }
 
-    public function updateOrderStatus($id, $status) {
-        $sql = 'update orders SET status = :status WHERE id = :id';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('id', $id);
-        $stmt->bindValue('status', $status);
-        $stmt->execute();
+    public function updateOrderStatus($id, $status)
+    {
+        DB::table('orders')->where('id', $id)->update(['status' => $status]);
     }
 
     /**
@@ -52,51 +41,41 @@ class OrderService implements OrderServiceInterface {
      * @param int $parent_id
      * @return int
      */
-    public function insertOrder($side, $order_id, $size, $amount, $status = 'pending', $parent_id = 0): int {
-        $sql = 'insert into orders SET side = :side, order_id = :orderid, size = :size, amount = :amount,status = :status, parent_id = :parentid, created_at = :createdat';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('side', $side);
-        $stmt->bindValue('orderid', $order_id);
-        $stmt->bindValue('size', $size);
-        $stmt->bindValue('amount', $amount);
-        $stmt->bindValue('status', $status);
-        $stmt->bindValue('parentid', $parent_id);
+    public function insertOrder($side, $order_id, $size, $amount, $status = 'pending', $parent_id = 0): int
+    {
+        $id = DB::table('orders')->insertGetId([
+            'side'       => $side,
+            'order_id'    => $order_id,
+            'size'       => $size,
+            'amount'     => $amount,
+            'status'     => $status,
+            'parent_id'  => $parent_id,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
 
-        $stmt->bindValue('createdat', date('Y-m-d H:i:s'));
-
-        $stmt->execute();
-
-        $lastId = $this->conn->query('SELECT max(id) as insertid FROM orders')->fetch();
-
-        return (int) $lastId['insertid'];
+        return $id;
     }
 
     /**
      * Get rid of the failures.
      */
-    public function garbageCollection() {
-        $sql = "update orders SET status = :status WHERE order_id = '' AND status <> :status";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('status', 'deleted');
-        $stmt->execute();
+    public function garbageCollection()
+    {
+        DB::table('orders')->where('order_id', '')->where('status', '<>', 'deleted')->update(['status' => 'deleted']);
     }
+
+    
 
     /**
      * Get the open buy orders
      * 
      * @return array
      */
-    public function getPendingBuyOrders(): array {
-        $sql = "SELECT * FROM orders WHERE side='buy' AND (status = 'pending' or status='open')";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-
-        $result = $stmt->fetchAll();
-        if (is_array($result)) {
-            return $result;
-        } else {
-            return [];
-        }
+    public function getPendingBuyOrders(): array
+    {
+        $result      = DB::table('orders')->select('*')->where('side', 'buy')->where('status', 'IN', ['pending', 'open'])->get();
+        
+        return Transform::toArray($result);
     }
 
     /**
@@ -105,18 +84,11 @@ class OrderService implements OrderServiceInterface {
      * @param string $status
      * @return array
      */
-    public function fetchAllOrders($status = 'pending'): array {
-        $sql = 'SELECT * FROM orders WHERE status = :status';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('status', $status);
-        $stmt->execute();
-
-        $result = $stmt->fetchAll();
-        if (is_array($result)) {
-            return $result;
-        } else {
-            return [];
-        }
+    public function fetchAllOrders($status = 'pending'): array
+    {
+        $result      = DB::table('orders')->select('*')->where('status', $status)->get();
+        
+        return Transform::toArray($result);
     }
 
     /**
@@ -125,18 +97,11 @@ class OrderService implements OrderServiceInterface {
      * @param int $id
      * @return array
      */
-    public function fetchOrder($id): array {
-        $sql = 'SELECT * FROM orders WHERE id = :id';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('id', $id);
-        $stmt->execute();
-
-        $result = $stmt->fetch();
-        if (is_array($result)) {
-            return $result;
-        } else {
-            return [];
-        }
+    public function fetchOrder($id): \Illuminate\Database\Eloquent\Model
+    {
+        $result = DB::table('orders')->select('*')->where('id', $id)->first();
+        
+        return $result;
     }
 
     /**
@@ -145,36 +110,26 @@ class OrderService implements OrderServiceInterface {
      * @param type $order_id
      * @return type
      */
-    public function fetchOrderByOrderId($order_id): array {
-        $sql = 'SELECT * FROM orders WHERE order_id = :orderid';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('orderid', $order_id);
-        $stmt->execute();
+    public function fetchOrderByOrderId($order_id): \Illuminate\Database\Eloquent\Model
+    {
+        $result = DB::table('orders')->select('*')->where('order_id', $order_id)->first();
 
-        $result = $stmt->fetch();
-        if (is_array($result)) {
-            return $result;
-        } else {
-            return [];
-        }
+        return $result;
     }
 
-    public function getNumOpenOrders(): int {
-        $sql = "SELECT count(*) total FROM orders WHERE status = 'open' OR status = 'pending'";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        $result = $stmt->fetch();
-        
-        return isset($result['total']) ? $result['total'] : 0;
+    public function getNumOpenOrders(): int
+    {
+        $result = DB::table('orders')->select(DB::raw('count(*) total'))->where('status', 'open')->orWhere('status', 'pending')->first();
+
+        return isset($result->total) ? $result->total : 0;
     }
-    
-    public function getLowestSellPrice() {
-        $sql = "SELECT min(amount) minprice FROM orders WHERE side='sell' AND status = 'open' OR status = 'pending'";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        $result = $stmt->fetch();
+
+    public function getLowestSellPrice()
+    {
+        $result = DB::select("SELECT min(amount) minprice FROM orders WHERE side='sell' AND status = 'open' OR status = 'pending'");
+        $row = $result[0];
         
-        return isset($result['minprice']) ? $result['minprice'] : 0.0;
+        return isset($row->minprice) ? $row->minprice : 0.0;
     }
 
     /**
@@ -183,19 +138,11 @@ class OrderService implements OrderServiceInterface {
      * @param string $status
      * @return array
      */
-    public function getOrdersBySide($side, $status = 'pending'): array {
-        $sql = "SELECT * FROM orders WHERE side = :side AND status = :status";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('side', $side);
-        $stmt->bindValue('status', $status);
-        $stmt->execute();
-
-        $result = $stmt->fetchAll();
-        if (is_array($result)) {
-            return $result;
-        } else {
-            return [];
-        }
+    public function getOrdersBySide($side, $status = 'pending'): array
+    {
+        $result =  DB::table('order')->where('side',$side)->where('status', $status)->get();
+    
+        return Transform::toArray($result);
     }
 
     /**
@@ -203,18 +150,11 @@ class OrderService implements OrderServiceInterface {
      * 
      * @return array
      */
-    public function getOpenSellOrders(): array {
-        $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open')";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('side', 'sell');
-        $stmt->execute();
-
-        $result = $stmt->fetchAll();
-        if (is_array($result)) {
-            return $result;
-        } else {
-            return [];
-        }
+    public function getOpenSellOrders(): array
+    {
+        $result = DB::select("SELECT * FROM orders WHERE side = 'sell' AND (status = 'pending' OR status = 'open')");
+        
+        return Transform::toArray($result);
     }
 
     /**
@@ -222,18 +162,11 @@ class OrderService implements OrderServiceInterface {
      * 
      * @return array
      */
-    public function getOpenBuyOrders(): array {
-        $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open')";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('side', 'buy');
-        $stmt->execute();
-
-        $result = $stmt->fetchAll();
-        if (is_array($result)) {
-            return $result;
-        } else {
-            return [];
-        }
+    public function getOpenBuyOrders(): array
+    {
+        $result =  DB::select("SELECT * FROM orders WHERE side = 'buy' AND (status = 'pending' OR status = 'open')");
+        
+        return Transform::toArray($result);
     }
 
     /**
@@ -242,29 +175,25 @@ class OrderService implements OrderServiceInterface {
      * @param type $price
      * @return boolean
      */
-    public function buyPriceExists($price): bool {
-        $sql = "SELECT * FROM orders WHERE side = :side AND (status = 'pending' OR status = 'open') AND amount = :amount";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('side', 'buy');
-        $stmt->bindValue('amount', $price);
-        $stmt->execute();
-
-        $result = $stmt->fetch();
-
-        if ($result && $result['amount']) {
-            return true;
-        } else {
-            return false;
+    public function buyPriceExists($price): bool
+    {
+        $result = DB::select("SELECT * FROM orders WHERE side = 'buy' AND (status = 'pending' OR status = 'open') AND amount = $price");
+        foreach ($result as $row) {
+            if ($row->amount) {
+                return true;
+            }
         }
+        return false;
     }
 
     /**
      * 
      */
-    public function listRowsFromDatabase() {
+    public function listRowsFromDatabase()
+    {
         $currentPendingOrders = $this->fetchAllOrders();
         foreach ($currentPendingOrders as $row) {
-            printf("%s| %s| %s| %s\n", $row['created_at'], $row['side'], $row['amount'], $row['order_id']);
+            printf("%s| %s| %s| %s\n", $row->created_at, $row->side, $row->amount, $row->order_id);
         }
     }
 
@@ -272,22 +201,13 @@ class OrderService implements OrderServiceInterface {
      * Sometimes the price fluctuates to much and can result in a rejected order.
      * 
      */
-    public function fixRejectedSells() {
-        $sql = "SELECT * FROM orders WHERE status = 'rejected' AND side='sell' AND parent_id > 0";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        $result = $stmt->fetchAll();
+    public function fixRejectedSells()
+    {
+        $result = DB::select("SELECT * FROM orders WHERE status = 'rejected' AND side='sell' AND parent_id > 0");
 
         foreach ($result as $row) {
-            $sql = "UPDATE orders SET status='open' WHERE id=:id";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('id', $row['parent_id']);
-            $stmt->execute();
-
-            $sql = "UPDATE orders SET status='fixed' WHERE id=:id";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue('id', $row['id']);
-            $stmt->execute();
+            DB::table('orders')->where('id', $row->parent_id)->update(['status' => 'open']);
+            DB::table('orders')->where('id', $row->id)->update(['status' => 'fixed']);
         }
     }
 
@@ -296,43 +216,35 @@ class OrderService implements OrderServiceInterface {
      * 
      * @param type $orders
      */
-    public function fixUnknownOrdersFromGdax($orders) {
+    public function fixUnknownOrdersFromGdax($orders)
+    {
         if (is_array($orders)) {
             foreach ($orders as $order) {
                 $order_id = $order->getId();
-                $row = $this->fetchOrderByOrderId($order_id);
+                $row      = $this->fetchOrderByOrderId($order_id);
                 if (!$row) {
                     $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
                 } else {
-                    if ($row['status'] != 'done') {
-                        $this->updateOrderStatus($row['id'], $order->getStatus());
+                    if ($row->status != 'done') {
+                        $this->updateOrderStatus($row->id, $order->getStatus());
                     }
                 }
             }
         }
     }
 
-    public function getProfits(string $date = null): array {
+    public function getProfits(string $date = null): array
+    {
         if (is_null($date)) {
             $date = date('Y-m-d');
         }
         $date .= ' 00:00:00';
-        
-        $sql = "SELECT b.created_at buydate,b.side as buyside,b.size buysize,b.amount buyamount,s.created_at selldate,s.side sellside,s.size sellsize,s.amount sellamount, (s.amount - b.amount) * s.size as profit FROM orders s, ".
-                "(SELECT * FROM orders WHERE side='buy' AND `status`='done') b ".
-                " WHERE s.side='sell' AND s.status='done' AND b.id = s.parent_id AND b.created_at >= :createdat";
-    
-        
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue('createdat', $date);
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-        
-        if ($rows) {
-            return $rows;
-        } else {
-            return [];
-        }
+
+        $result = DB::select("SELECT b.created_at buydate,b.side as buyside,b.size buysize,b.amount buyamount,s.created_at selldate,s.side sellside,s.size sellsize,s.amount sellamount, (s.amount - b.amount) * s.size as profit FROM orders s, " .
+                        "(SELECT * FROM orders WHERE side='buy' AND `status`='done') b " .
+                        " WHERE s.side='sell' AND s.status='done' AND b.id = s.parent_id AND b.created_at >= '$date'");
+
+        return Transform::toArray($result);
     }
-    
+
 }

@@ -8,32 +8,13 @@ use Symfony\Component\Console\Application;
 
 $application = new Application();
 
-$settings = new \App\Commands\SettingsCommand();
-$application->add($settings);
-$settings->setConn($conn);
-
-$bot = new \App\Commands\RunBotCommand();
-$application->add($bot);
-$bot->setConn($conn);
-
+$application->add(new \App\Commands\SettingsCommand());
+$application->add(new \App\Commands\RunBotCommand());
 $application->add(new \App\Commands\ReportCommand());
-
-$openordersReports = new \App\Commands\ReportOpenOrdersCommand();
-$openordersReports->setConn($conn);
-$application->add($openordersReports);
-
-$changeSellOrder = new \App\Commands\ChangeSellOrderCommand();
-$changeSellOrder->setConn($conn);
-$application->add($changeSellOrder);
-
-$reportProfits = new \App\Commands\ReportProfitsCommand();
-$reportProfits->setConn($conn);
-$application->add($reportProfits);
-
-$websocketClient = new \App\Commands\GdaxWebsocketCommand();
-$websocketClient->setCache($cache);
-$websocketClient->setConn($conn);
-$application->add($websocketClient);
+$application->add(new \App\Commands\ReportOpenOrdersCommand());
+$application->add(new \App\Commands\ChangeSellOrderCommand());
+$application->add(new \App\Commands\ReportProfitsCommand());
+$application->add(new \App\Commands\GdaxWebsocketCommand());
 
 /** 
  * For testing

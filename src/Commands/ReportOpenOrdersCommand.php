@@ -14,6 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Helper\Table;
+use App\Util\Transform;
 
 /**
  * Description of ReportOpenOrders
@@ -21,12 +22,6 @@ use Symfony\Component\Console\Helper\Table;
  * @author patrick
  */
 class ReportOpenOrdersCommand  extends Command {
-    
-    protected $conn;
-
-    public function setConn($conn) {
-        $this->conn = $conn;
-    }
     
     protected function configure() {
         $this->setName('bot:report:openorders')
@@ -38,7 +33,7 @@ class ReportOpenOrdersCommand  extends Command {
     }
     
      protected function execute(InputInterface $input, OutputInterface $output) {
-        $orderService = new \App\Services\OrderService($this->conn);
+        $orderService = new \App\Services\OrderService();
         
         $rows = $orderService->getOpenBuyOrders();
         $rows += $orderService->getOpenSellOrders();

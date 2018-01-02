@@ -33,11 +33,17 @@ class ReportProfitsCommand extends Command {
     
         $startdate = $input->getArgument('startdate');
         $rows = $orderService->getProfits($startdate);
-       
+        
+        $tableRows = [];
+        foreach ($rows as $row) {
+            $tableRows[] = (array)$row;
+        }
+        
+
         $table = new Table($output);
         $table
             ->setHeaders(['BuyDate','Side','Size','Amount','SellDate','Side', 'Size','Amount', 'Profit'])
-            ->setRows($rows);
+            ->setRows($tableRows);
         $table->render();
 
      }

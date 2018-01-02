@@ -147,6 +147,8 @@ class GDaxService implements GdaxServiceInterface {
                 ->setSize($size)
                 ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_BUY)
                 ->setPrice($price)
+                ->setTimeInForce(\GDAX\Utilities\GDAXConstants::TIME_IN_FORCE_GTT)
+                ->setCancelAfter(\GDAX\Utilities\GDAXConstants::CANCEL_AFTER_MIN)
                 ->setPostOnly(true);
 
         $response = $this->client->placeOrder($order);

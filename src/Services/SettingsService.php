@@ -4,21 +4,14 @@ namespace App\Services;
 
 use App\Contracts\SettingsServiceInterface;
 
+use Illuminate\Database\Capsule\Manager as DB;
+
 class SettingsService implements SettingsServiceInterface {
 
-    protected $conn;
-
-    public function __construct($conn) {
-        $this->conn = $conn;
-    }
-
     public function getSettings() : array {
-        $sql = "SELECT * FROM settings order by id desc limit 1";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        $settings = $stmt->fetch();
+        $settings = DB::table('settings')->orderby('id','desc')->limit(1)->first();
 
-        return $settings;
+        return (array)$settings;
     }
 
 }

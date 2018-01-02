@@ -18,14 +18,14 @@ interface OrderServiceInterface {
 
     public function fetchAllOrders($status = 'pending'): array;
 
-    public function fetchOrder($id): array;
+    public function fetchOrder($id): \Illuminate\Database\Eloquent\Model;
 
-    public function fetchOrderByOrderId($order_id): array;
+    public function fetchOrderByOrderId($order_id): \Illuminate\Database\Eloquent\Model;
 
     public function getNumOpenOrders(): int;
     
     
-    public function getProfits(string $date = null) :array;
+    public function getProfits(string $date = null) : array;
     /**
      * Get the lowest price of an open or pending sell
      */
@@ -37,7 +37,7 @@ interface OrderServiceInterface {
      * @param type $side
      * @param type $status
      */
-    public function getOrdersBySide($side, $status = 'pending');
+    public function getOrdersBySide($side, $status = 'pending'): array;
 
     /**
      * Get the open sell orders (status = open or pending)

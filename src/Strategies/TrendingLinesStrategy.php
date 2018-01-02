@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Created by PhpStorm.
  * User: patrickteunissen
@@ -6,12 +7,31 @@
  * Time: 15:18
  */
 
-namespace App\Strategies\Traits;
+namespace App\Strategies;
 
+use App\Contracts\StrategyInterface;
 
-trait TrendingLinesStrategy
+class TrendingLinesStrategy implements StrategyInterface
 {
-    public function getStrategy()
+
+    protected $indictors;
+    protected $orderService;
+    protected $gdaxService;
+    protected $config;
+
+    public function __construct($indicators, $orderService, $gdaxService)
+    {
+        $this->indicators   = $indicators;
+        $this->orderService = $orderService;
+        $this->gdaxService  = $gdaxService;
+    }
+
+    public function settings(array $config = null)
+    {
+        $this->config = $config;
+    }
+
+    public function getSignal()
     {
         $indicators = $this->indicators;
 
@@ -21,49 +41,55 @@ trait TrendingLinesStrategy
         $cmo        = $indicators->cmo($instrument, $recentData);
         $mfi        = $indicators->mfi($instrument, $recentData);
 
-        switch ($indicators->httc($instrument, $recentData)) {     # Hilbert Transform - Trend vs Cycle Mode
+        //Trends
+        $httc = $indicators->httc($instrument, $recentData); // Hilbert Transform - Trend vs Cycle Mode
+        $htl  = $indicators->htl($instrument, $recentData); // Hilbert Transform - Trend vs Cycle Mode
+        $hts  = $indicators->hts($instrument, $recentData);
+        $mmi  = $indicators->mmi($instrument, $recentData);
+
+        switch ($httc) {
             case 0:
-                $httc = 'Cycling mode';
+                echo "httc: Cycling mode\n";
                 break;
             case 1:
-                $httc = 'Trending mode';
+                echo "httc: Trending mode\n";
                 break;
         }
 
-        switch ($indicators->htl($instrument, $recentData)) {     # Hilbert Transform - Trend vs Cycle Mode
+        switch ($htl) {
             case -1:
-                $htl = 'Downtrend';
+                echo "htl: Downtrend\n";
                 break;
             case 0:
-                $htl = 'Hold';
+                echo "htl: Hold\n";
                 break;
             case 1:
-                $htl = 'Uptrend';
+                echo "htl: Uptrend\n";
                 break;
         }
 
-        switch ($indicators->hts($instrument, $recentData)) {
+        switch ($hts) {
             case -1:
-                $hts = 'Sell';
+                echo "hts: Sell\n";
                 break;
             case 0:
-                $hts = 'Hold';
+                echo "hts: Hold\n";
                 break;
             case 1:
-                $hts = 'Buy';
+                echo "hts: Buy\n";
                 break;
         }
 
 
         switch ($indicators->mmi($instrument, $recentData)) {     # Hilbert Transform - Trend vs Cycle Mode
             case -1:
-                $mmi = 'Not trending';
+                echo "mmi: Not trending\n";
                 break;
             case 0:
-                $mmi = 'Hold';
+                echo "mmi: Hold\n";
                 break;
             case 1:
-                $mmi = 'Trending';
+                echo "mmi: Trending\n";
                 break;
         }
 
@@ -71,13 +97,13 @@ trait TrendingLinesStrategy
         /** instrument is overbought, we will short */
         if ($cci == -1 && $cmo == -1 && $mfi == -1) {
             $overbought = 1;
-            echo "Overbought \n";
+            echo "Overbought going Short (sell)\n";
         }
 
         /** It is underbought, we will go LONG */
         if ($cci == 1 && $cmo == 1 && $mfi == 1) {
             $underbought = 1;
-            echo "Underbought \n";
+            echo "Underbought going LONG (buy)\n";
         }
 
         $adx         = $indicators->adx($instrument, $recentData);
@@ -94,23 +120,25 @@ trait TrendingLinesStrategy
 
         $buy = 0;
         if ($adx == 1 && $down_cross) {
+            echo "adx down_cross -> buy";
             $buy = 1;
         }
+
         $sell = 0;
         if ($adx == 1 && $up_cross) {
+            echo "adx up_cross -> sell";
             $sell = 1;
         }
-
-
-        if ($httc == 'Trending mode' && $htl == 'Uptrend' && $mmi == 'Trending') {
+        
+        if ($httc == 1 && $htl == 1 && $mmi == 1) {
             return 'buy';
-        } else {
-            if ($httc == 'Trending mode' && $htl == 'Downtrend' && $mmi == 'Trending') {
-                return 'sell';
-            } else {
-                return 'hold';
-            }
         }
+
+        if ($httc == 1 && $htl == -1 && $mmi == 1) {
+            return 'sell';
+        }
+
+        return 'hold';
     }
 
     /**
@@ -119,46 +147,46 @@ trait TrendingLinesStrategy
      * @param int $overrideMaxOrders
      * @return type
      */
-    public function buy($overrideMaxOrders = 0, $strategy = 'hold') {
+    public function createPosition()
+    {
+        $spread      = $this->config['spread'];
+        $size        = $this->config['size'];
+        $max_orders  = (int) $this->config['max_orders'];
+        $topLimit    = $this->config['top'];
+        $bottomLimit = $this->config['bottom'];
 
-        $restOrders = $this->max_orders - $this->orderService->getNumOpenOrders();
+        $restOrders      = $max_orders - (int) $this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
-        $startPrice = $this->gdaxService->getCurrentPrice();
+        $startPrice      = $this->gdaxService->getCurrentPrice();
+        $signal          = $this->getSignal();
 
-
-        if ($strategy == 'hold' || $strategy == 'sell') {
-            $this->outputConsole->writeln("<info>Strategy says: ". $strategy. ". So we will not buy for now.</info>");
+        if ($signal == 'hold' || $signal == 'sell') {
+            echo "-- Strategy says: " . $signal . ". So we will not buy for now.\n";
             return;
         }
 
-        if (!$startPrice || $startPrice < 1 || $startPrice > $this->topBuyingTreshold || $startPrice < $this->bottomBuyingTreshold) {
-            $this->outputConsole->writeln("<info>".sprintf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->bottomBuyingTreshold, $startPrice, $this->topBuyingTreshold)."</info>");
+        if (!$startPrice || $startPrice < 1 || $startPrice > $topLimit || $startPrice < $bottomLimit) {
+            printf("Treshold reached %s  [%s]  %s so no buying for now\n", $bottomLimit, $startPrice, $topLimit);
             return;
         }
-
-        if ($overrideMaxOrders > 0) {
-            $restOrders = $overrideMaxOrders;
-        }
-
-
 
         $oldBuyPrice = $startPrice - 0.01;
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys
-            $buyPrice = $oldBuyPrice - $this->spread;
+            $buyPrice = $oldBuyPrice - $spread;
             $buyPrice = number_format($buyPrice, 2, '.', '');
 
             // Check if we already have a buy for this price, then try to find an open slot
             $hasBuyPrice = $this->orderService->buyPriceExists($buyPrice);
-            $n = 1;
-            $placeOrder = true;
+            $n           = 1;
+            $placeOrder  = true;
             while ($hasBuyPrice) {
                 $buyPrice = $buyPrice - $n * $this->spread;
                 $buyPrice = number_format($buyPrice, 2, '.', '');
 
                 $hasBuyPrice = $this->orderService->buyPriceExists($buyPrice);
                 if ($n > 15) {
-                    $placeOrder = false;
+                    $placeOrder  = false;
                     $hasBuyPrice = false;
                 }
                 $n++;
@@ -166,14 +194,14 @@ trait TrendingLinesStrategy
 
 
             if ((is_null($lowestSellPrice) || $lowestSellPrice == 0 || $buyPrice < $lowestSellPrice) && $placeOrder) {
-                echo 'Buy ' . $this->order_size . ' for ' . $buyPrice . "\n";
+                echo 'Buy ' . $size . ' for ' . $buyPrice . "\n";
 
-                $order = $this->gdaxService->placeLimitBuyOrder($this->order_size, $buyPrice);
+                $order = $this->gdaxService->placeLimitBuyOrder($size, $buyPrice);
 
                 if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-                    $this->orderService->insertOrder('buy', $order->getId(), $this->order_size, $buyPrice);
+                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice);
                 } else {
-                    $this->orderService->insertOrder('buy', $order->getId(), $this->order_size, $buyPrice, $order->getMessage());
+                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $order->getMessage());
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
 
@@ -187,8 +215,12 @@ trait TrendingLinesStrategy
     /**
      * Checks the open buys and if they are filled then place a buy order for the same size but higher price
      */
-    public function sell() {
-        $startPrice = $this->gdaxService->getCurrentPrice();
+    public function closePosition()
+    {
+        $sellspread = $this->config['sellspread'];
+
+
+        $startPrice           = $this->gdaxService->getCurrentPrice();
         $currentPendingOrders = $this->orderService->getOpenBuyOrders();
 
         $n = 1;
@@ -202,14 +234,14 @@ trait TrendingLinesStrategy
                     $status = $buyOrder->getStatus();
 
                     if ($status == 'done') {
-                        $buyprice = $row['amount'];
-                        $sellPrice = $buyprice + $this->sellspread;
+                        $buyprice  = $row['amount'];
+                        $sellPrice = $buyprice + $sellspread;
                         if ($startPrice > $sellPrice) {
                             $sellPrice = $startPrice + 0.01;
                         }
                         $sellPrice = number_format($sellPrice, 2, '.', '');
 
-                        echo 'Sell ' . $this->order_size . ' for ' . $sellPrice . "\n";
+                        echo 'Sell ' . $row['size'] . ' for ' . $sellPrice . "\n";
 
                         $sellOrder = $this->gdaxService->placeLimitSellOrder($row['size'], $sellPrice);
 
@@ -231,4 +263,5 @@ trait TrendingLinesStrategy
             }
         }
     }
+
 }
