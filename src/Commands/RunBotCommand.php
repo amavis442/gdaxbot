@@ -25,6 +25,7 @@ use App\Bot\Gdaxbot;
  * @author patrick
  */
 class RunBotCommand extends Command {
+    use TrendingLinesStrategy;
 
     protected $conn;
     protected $indicators;
