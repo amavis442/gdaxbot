@@ -10,6 +10,7 @@
 namespace App\Traits;
 
 use Illuminate\Database\Capsule\Manager as DB;
+use \App\Util\Cache;
 
 trait OHLC {
 
