@@ -21,3 +21,4 @@ orders.sqlite
 gdax.log
 test.php
 test*.php
+.idea
