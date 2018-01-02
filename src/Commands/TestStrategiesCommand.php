@@ -100,7 +100,7 @@ class TestStrategiesCommand extends Command
          *  GET ALL OUR SIGNALS HERE
          */
         $signalsA = $this->signals($instruments); // get the full list
-        $signals  = $signalsA['symbol'];
+        $signals  = $signalsA['symbols'];
 
         /**
          *  First up we loop through the strategies dynamically run the strategies
