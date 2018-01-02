@@ -451,12 +451,11 @@ trait OHLC {
          *  doing identical pulls for signals.
          */
         $key       = 'recent.' . $product_id . '.' . $limit . ".$day_data.$hour.$periodSize";
-        $cacheItem = $this->cache->getItem($key);
+        $value = Cache::get($key);
        
 
-        if ($cacheItem->isHit()) {
-            $c = $cacheItem->get();
-            return $c;
+        if ($value) {
+            return $value;
         }
 
         $rows = DB::table('ohlc_' . $periodSize)
@@ -512,11 +511,9 @@ trait OHLC {
         } else {
             $ret = $this->transformPairData($rows);
         }
-        
-        $cacheItem->expiresAfter(60); // 60 seconds
-        $cacheItem->set($ret);
-        $this->cache->save($cacheItem);
-        
+
+        Cache::put($key,$ret, 60);
+
         return $ret;
     }
 
