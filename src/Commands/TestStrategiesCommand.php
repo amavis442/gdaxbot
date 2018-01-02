@@ -122,7 +122,7 @@ class TestStrategiesCommand extends Command
             }
             $pair_strategies[$instrument] = $flags;
         }
-
+        dump($pair_strategies);
 
         foreach ($pair_strategies as $pair => $strategies) {
 
@@ -146,7 +146,7 @@ class TestStrategiesCommand extends Command
                 $output->writeln("Create $direction for $pair $strategy. Lev $lev");
             }
         }
-
+        $output->writeln("Done");
 
         return null;
     }
