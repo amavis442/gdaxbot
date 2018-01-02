@@ -12,6 +12,7 @@ use Symfony\Component\Console\Helper\Table;
 use App\Util\Indicators;
 use App\Traits\Signals;
 use App\Traits\OHLC;
+use App\Util\Cache;
 
 /**
  * Class ExampleCommand

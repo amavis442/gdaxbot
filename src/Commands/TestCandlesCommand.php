@@ -13,6 +13,7 @@ use App\Traits\OHLC;
 use App\Util\Candles;
 use App\Util\Console;
 use App\Util\Indicators;
+use App\Util\Cache;
 
 /**
  * Description of TestCandlesCommand
@@ -26,16 +27,13 @@ class TestCandlesCommand extends Command {
         CandleMap;
 
     protected $candles;
-    protected $cache;
+    protected $indicators;
 
     public function __construct(string $name = null) {
         parent::__construct($name);
         $this->candles = new Candles();
     }
 
-    public function setCache($cache) {
-        $this->cache = $cache;
-    }
 
     protected function configure() {
         $this->setName('bot:test:candles')
@@ -47,7 +45,7 @@ class TestCandlesCommand extends Command {
     }
 
     protected function execute(InputInterface $input, OutputInterface $output) {
-        $ind        = new Indicators();
+        $this->indicators = $ind = new Indicators();
         $instrument = 'BTC-EUR';
         $data       = $this->getRecentData($instrument, 70);
 

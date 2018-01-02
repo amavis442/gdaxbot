@@ -11,12 +11,14 @@ use Symfony\Component\Console\Helper\Table;
 use App\Traits\OHLC;
 use App\Util\Indicators;
 use App\Util\Console;
+use App\Util\Cache;
 
 class TestTrendsCommand extends Command {
 
     use OHLC;
 
     protected $cache;
+    protected $indicators;
 
     public function setCache($cache) {
         $this->cache = $cache;
@@ -37,8 +39,7 @@ class TestTrendsCommand extends Command {
      * @return mixed
      */
     public function execute(InputInterface $input, OutputInterface $output) {
-        $console     = new Console();
-        $ind         = new Indicators();
+        $this->indicators = $ind = new Indicators();
         $instrument = 'BTC-EUR';
 
         while (1) {

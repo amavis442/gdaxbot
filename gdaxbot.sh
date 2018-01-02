@@ -38,17 +38,11 @@ $application->add($websocketClient);
 /** 
  * For testing
  */
-$testCandles = new \App\Commands\TestCandlesCommand();
-$testCandles->setCache($cache);
-$application->add($testCandles);
+$application->add(new \App\Commands\TestCandlesCommand());
 
-$testTrends = new \App\Commands\TestTrendsCommand();
-$testTrends->setCache($cache);
-$application->add($testTrends);
+$application->add(new \App\Commands\TestTrendsCommand());
 
-$testSignals = new \App\Commands\TestSignalsCommand();
-$testSignals->setCache($cache);
-$application->add($testSignals);
+$application->add(new \App\Commands\TestSignalsCommand());
 
 $application->add(new \App\Commands\TestStrategiesCommand());
 
