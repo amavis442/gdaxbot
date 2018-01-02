@@ -50,9 +50,7 @@ $testSignals = new \App\Commands\TestSignalsCommand();
 $testSignals->setCache($cache);
 $application->add($testSignals);
 
-$testStrategies = new \App\Commands\TestStrategiesCommand();
-$testStrategies->setCache($cache);
-$application->add($testStrategies);
+$application->add(new \App\Commands\TestStrategiesCommand());
 
 
 /**
