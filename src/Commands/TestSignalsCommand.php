@@ -21,6 +21,7 @@ class TestSignalsCommand extends Command {
         OHLC;
 
     protected $cache;
+    protected $indicators = null;
 
     public function setCache($cache) {
         $this->cache = $cache;
@@ -31,8 +32,7 @@ class TestSignalsCommand extends Command {
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Test the signals.')
-                ->setHelp('Test the signals.')
-        ;
+                ->setHelp('Test the signals.');
     }
 
     /**
@@ -41,17 +41,12 @@ class TestSignalsCommand extends Command {
      *  this is the part of the command that executes.
      */
     public function execute(InputInterface $input, OutputInterface $output) {
-
+        $this->indicators = new Indicators();
 
         while (1) {
             $instruments = ['BTC-EUR'];
-
-            $console    = new \App\Util\Console();
-            $indicators = new \App\Util\Indicators();
-
             $signalData = $this->signals($instruments);
 
-            //$back = $this->signals(1, 2, $instruments);
             $s = ['symbols','ret'];
             foreach ($s as $nametype) {
                 $data = $signalData[$nametype];

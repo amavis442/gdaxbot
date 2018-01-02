@@ -12,9 +12,11 @@ namespace App\Traits;
 use App\Util\BrokersUtil;
 use App\Util\Console;
 use App\Util\Indicators;
+use Symfony\Component\Console\Exception\RuntimeException;
 
 /**
  * Class Signals
+ *
  * @package Bowhead\Traits
  *          Forex signals
  *
@@ -31,29 +33,45 @@ use App\Util\Indicators;
  *          ROC
  *          Bull/Bear Power(13) Elder-Ray
  */
-trait Signals {
+trait Signals
+{
 
     /**
      * @var
      */
     protected $indicators;
 
-    /**
-     * @param bool $return
-     * @param bool $compile
-     */
-    public function signals($instruments = null) {
-        $inds  = ['rsi', 'stoch', 'stochrsi', 'macd', 'adx', 'willr', 'cci', 'atr', 'hli', 'ultosc', 'roc', 'er'];
 
+    /**
+     * @param array|null $instruments
+     *
+     * @return array
+     */
+    public function signals(array $instruments = null)
+    {
         if (empty($instruments)) {
-            $instruments = [getenv('CRYPTOCOIN')];
+            $instruments = ['BTC-EUR'];
         }
 
-        $indicators = new Indicators();
- 
+        $symbollines        = $this->getSymbols($instruments);
+        $transformedSymbols = $this->transformSymbols($symbollines);
+        $transformedSymbols = $this->transformSymbolsToText($transformedSymbols);
+
+
+        return ['symbol' => $symbollines, 'ret' => $transformedSymbols, 'strength' => $transformedSymbols];
+    }
+
+    public function getSymbols(array $instruments)
+    {
+        if (is_null($this->indicators)) {
+            throw new RuntimeException('Need App\Util\Indicators::class to work');
+        }
+
+        $indicators = $this->indicators;
+
         foreach ($instruments as $pair) {
-            $data              = $this->getRecentData($pair);
-            
+            $data = $this->getRecentData($pair);
+
             $flags             = [];
             $flags['rsi']      = $indicators->rsi($pair, $data);
             $flags['stoch']    = $indicators->stoch($pair, $data);
@@ -71,8 +89,11 @@ trait Signals {
             $symbollines[$pair] = $flags;
         }
 
+        return $symbollines;
+    }
 
-        $return = $ret    = [];
+    public function transformSymbols(array $symbollines)
+    {
         foreach ($symbollines as $symbol => $datas) {
             $ret[$symbol]         = [];
             $ret[$symbol]['buy']  = 0;
@@ -84,6 +105,11 @@ trait Signals {
             }
         }
 
+        return $ret;
+    }
+
+    public function transformSymbolsToText(array $ret)
+    {
         foreach ($ret as $k => $r) {
             $return[$k] = 'NONE';
             $return[$k] = ($r['buy'] > 6 ? 'WEAK BUY' : $return[$k]);
@@ -95,8 +121,7 @@ trait Signals {
             $return[$k] = ($r['sell'] > 9 ? 'STRONG SELL' : $return[$k]);
             $return[$k] = ($r['sell'] > 10 ? 'VERY STRONG SELL' : $return[$k]);
         }
-
-        return ['symbol'=>$symbollines,'ret' => $ret, 'strength' => $return];
     }
+
 
 }
