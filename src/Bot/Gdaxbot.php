@@ -151,7 +151,8 @@ class Gdaxbot {
      * @param int $overrideMaxOrders
      * @return type
      */
-    public function buy($overrideMaxOrders = 0) {
+    public function buy($overrideMaxOrders = 0, $strategy = 'hold') {
+
         $restOrders = $this->max_orders - $this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $startPrice = $this->gdaxService->getCurrentPrice();
@@ -163,6 +164,11 @@ class Gdaxbot {
 
         if ($overrideMaxOrders > 0) {
             $restOrders = $overrideMaxOrders;
+        }
+
+        if ($strategy == 'hold' || $strategy == 'sell') {
+            echo "Strategy says: ". $strategy. ". So we will not buy for now.";
+            return;
         }
 
         $oldBuyPrice = $startPrice - 0.01;
@@ -258,7 +264,7 @@ class Gdaxbot {
     /**
      * Main entry point
      */
-    public function run() {
+    public function run($strategy = 'hold') {
         if ($this->botactive) {
             echo "Delete orders without order id\n";
             $this->orderService->garbageCollection();
@@ -282,7 +288,7 @@ class Gdaxbot {
             $this->timeoutBuyOrders();
 
             echo "Place buy orders\n";
-            $this->buy();
+            $this->buy($strategy);
 
 
             echo "\nDONE " . date('Y-m-d H:i:s') . "\n";

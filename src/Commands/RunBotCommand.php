@@ -8,11 +8,14 @@
 
 namespace App\Commands;
 
+use App\Util\Indicators;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+
+use App\Strategies\Traits\TrendingLinesStrategy;
 
 use App\Bot\Gdaxbot;
 
@@ -24,6 +27,7 @@ use App\Bot\Gdaxbot;
 class RunBotCommand extends Command {
 
     protected $conn;
+    protected $indicators;
 
     public function setConn($conn) {
         $this->conn = $conn;
@@ -38,6 +42,9 @@ class RunBotCommand extends Command {
 
 
     protected function execute(InputInterface $input, OutputInterface $output) {
+        $this->indicators = new Indicators();
+
+
         $settingsService = new \App\Services\SettingsService($this->conn);
         $orderService = new \App\Services\OrderService($this->conn);
         $gdaxService = new \App\Services\GDaxService(); 
@@ -56,7 +63,7 @@ class RunBotCommand extends Command {
         $output->writeln($gdaxService->getProductId());
         $output->writeln("Ready to run");
 
-        $app->run();
+        $app->run($this->getStrategy());
     }
 
 }
