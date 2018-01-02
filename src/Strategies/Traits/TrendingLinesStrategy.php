@@ -171,12 +171,12 @@ trait TrendingLinesStrategy
 
 
         if ($strategy == 'hold' || $strategy == 'sell') {
-            echo "Strategy says: ". $strategy. ". So we will not buy for now.";
+            $this->outputConsole->writeln("<info>Strategy says: ". $strategy. ". So we will not buy for now.</info>");
             return;
         }
 
         if (!$startPrice || $startPrice < 1 || $startPrice > $this->topBuyingTreshold || $startPrice < $this->bottomBuyingTreshold) {
-            printf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->bottomBuyingTreshold, $startPrice, $this->topBuyingTreshold);
+            $this->outputConsole->writeln("<info>".sprintf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->bottomBuyingTreshold, $startPrice, $this->topBuyingTreshold)."</info>");
             return;
         }
 

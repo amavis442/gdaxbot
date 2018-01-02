@@ -42,6 +42,8 @@ class RunBotCommand extends Command {
     protected $bottomBuyingTreshold;
     protected $topBuyingTreshold;
 
+    protected $outputConsole;
+
     public function setConn($conn) {
         $this->conn = $conn;
     }
@@ -55,6 +57,8 @@ class RunBotCommand extends Command {
 
 
     protected function execute(InputInterface $input, OutputInterface $output) {
+        $this->outputConsole = $output;
+
         $this->indicators = new Indicators();
 
         $this->settingsService = new \App\Services\SettingsService($this->conn);
