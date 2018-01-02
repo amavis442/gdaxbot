@@ -1027,7 +1027,7 @@ class Indicators {
      *      If leadSine crosses over DCSine then buy
      *      If leadSine crosses under DCSine then sell
      *
-     *      This is correct to the best of my knowledge, the TAlib funcitons are a little
+     *      This is correct to the best of my knowledge, the TAlib functions are a little
      *      different than the Mesa one I think.
      *
      *      If this is incorrect, please let me know.
