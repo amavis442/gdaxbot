@@ -55,10 +55,10 @@ trait Signals
 
         $symbollines        = $this->getSymbols($instruments);
         $transformedSymbols = $this->transformSymbols($symbollines);
-        $transformedSymbols = $this->transformSymbolsToText($transformedSymbols);
+        $transformedSymbolsToText = $this->transformSymbolsToText($transformedSymbols);
 
 
-        return ['symbol' => $symbollines, 'ret' => $transformedSymbols, 'strength' => $transformedSymbols];
+        return ['symbol' => $symbollines, 'ret' => $transformedSymbols, 'strength' => $transformedSymbolsToText];
     }
 
     public function getSymbols(array $instruments) : array
