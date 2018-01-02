@@ -7,6 +7,7 @@ use Symfony\Component\Console\Application;
 use App\Bot\Gdaxbot;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use App\Util\Cache;
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 
@@ -43,6 +44,7 @@ $capsule->bootEloquent();
 //RedisAdapter::createConnection('redis://127.0.0.1:6379');
 $client = new \Predis\Client();
 $cache = new RedisAdapter($client, 300);
+Cache::setCache($cache);
 
 //$container = new ContainerBuilder();
 //$container->register('mailer', 'Mailer');
