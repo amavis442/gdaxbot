@@ -52,15 +52,9 @@ class TestCandlesCommand extends Command {
         $all                  = [];
         while (1) {
             $candles              = [];
-            $data                 = $this->getRecentData($instrument, 70);
+            $data                 = $this->getRecentData($instrument, 200);
             $cand                 = $this->candles->allCandles($instrument, $data);
             $candles[$instrument] = $cand['current'] ?? [];
-            
-            $all                  = array_merge($all, $cand['current'] ?? []);
-
-            foreach ($all as $allof => $val) {
-                $candles[$instrument][$allof] = $candles[$instrument][$allof] ?? 0;
-            }
 
             dump($candles);
             sleep(5);

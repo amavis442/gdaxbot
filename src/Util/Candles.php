@@ -10,6 +10,7 @@
 namespace App\Util;
 
 use App\Traits\OHLC;
+use App\Util\Cache;
 
 /**
  * Class Candles
@@ -127,7 +128,7 @@ class Candles {
      *          - current   = candle found in the single most recent
      *          - datafor   = close data surrounding the candle on either side
      */
-    public function allCandles($pair = 'BTC-EUR', $data = null) {
+    public function allCandles($pair = 'BTC-EUR', array $data = null) {
         $ret = [];
 
         if (empty($data)) {
@@ -190,8 +191,6 @@ class Candles {
                 $ret['undefined'][] = $cdlfunc;
             }
         }
-        #$ret['close'] = $data['close']; #array_pop($data['close']);
-        #$ret['data'] = $data; // maybe useful for graphs?
 
         return $ret;
     }
