@@ -61,13 +61,14 @@ trait Signals
         return ['symbol' => $symbollines, 'ret' => $transformedSymbols, 'strength' => $transformedSymbols];
     }
 
-    public function getSymbols(array $instruments)
+    public function getSymbols(array $instruments) : array
     {
         if (is_null($this->indicators)) {
             throw new RuntimeException('Need App\Util\Indicators::class to work');
         }
 
         $indicators = $this->indicators;
+        $symbollines = [];
 
         foreach ($instruments as $pair) {
             $data = $this->getRecentData($pair);
@@ -92,7 +93,7 @@ trait Signals
         return $symbollines;
     }
 
-    public function transformSymbols(array $symbollines)
+    public function transformSymbols(array $symbollines) : array
     {
         foreach ($symbollines as $symbol => $datas) {
             $ret[$symbol]         = [];
@@ -108,8 +109,9 @@ trait Signals
         return $ret;
     }
 
-    public function transformSymbolsToText(array $ret)
+    public function transformSymbolsToText(array $ret) : array
     {
+        $return = [];
         foreach ($ret as $k => $r) {
             $return[$k] = 'NONE';
             $return[$k] = ($r['buy'] > 6 ? 'WEAK BUY' : $return[$k]);
@@ -121,6 +123,8 @@ trait Signals
             $return[$k] = ($r['sell'] > 9 ? 'STRONG SELL' : $return[$k]);
             $return[$k] = ($r['sell'] > 10 ? 'VERY STRONG SELL' : $return[$k]);
         }
+
+        return $return;
     }
 
 
