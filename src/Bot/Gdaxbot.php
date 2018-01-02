@@ -157,6 +157,12 @@ class Gdaxbot {
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $startPrice = $this->gdaxService->getCurrentPrice();
 
+
+        if ($strategy == 'hold' || $strategy == 'sell') {
+            echo "Strategy says: ". $strategy. ". So we will not buy for now.";
+            return;
+        }
+        
         if (!$startPrice || $startPrice < 1 || $startPrice > $this->topBuyingTreshold || $startPrice < $this->bottomBuyingTreshold) {
             printf("Treshold reached %s  [%s]  %s so no buying for now\n", $this->bottomBuyingTreshold, $startPrice, $this->topBuyingTreshold);
             return;
@@ -166,10 +172,7 @@ class Gdaxbot {
             $restOrders = $overrideMaxOrders;
         }
 
-        if ($strategy == 'hold' || $strategy == 'sell') {
-            echo "Strategy says: ". $strategy. ". So we will not buy for now.";
-            return;
-        }
+
 
         $oldBuyPrice = $startPrice - 0.01;
         for ($i = 1; $i <= $restOrders; $i++) {
