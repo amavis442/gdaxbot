@@ -81,19 +81,19 @@ class TrendingLinesStrategy implements StrategyInterface
          * Commodity channel index (cci)
          * The Commodity Channel Index (CCI) is a versatile indicator that can be used to identify a new trend or warn of extreme conditions.
          */
-        $cci = $indicators->cci($instrument, $recentData);
+        $cci = $indicators->cci($recentData);
 
         /**
          * Chande momentum oscillator (cmo)
          * The chande momentum oscillator (CMO) was developed by Tushar Chande and is a technical indicator that attempts to capture the momentum of a security.
          */
-        $cmo = $indicators->cmo($instrument, $recentData);
+        $cmo = $indicators->cmo($recentData);
 
         /**
          * Money flow index (mfi)
          * The Money Flow Index (MFI) is an oscillator that uses both price and volume to measure buying and selling pressure.
          */
-        $mfi = $indicators->mfi($instrument, $recentData);
+        $mfi = $indicators->mfi($recentData);
 
         //Trends
         /**
@@ -101,13 +101,13 @@ class TrendingLinesStrategy implements StrategyInterface
          * either trending or cycling, with an additional parameter the method returns
          * the number of days we have been in a trend or a cycle.
          */
-        $httc = $indicators->httc($instrument, $recentData);
+        $httc = $indicators->httc($recentData);
 
         /**
          * Hilbert Transform - Instantaneous Trendline — smoothed trendline, if the
          * price moves 1.5% away from the trendline we can declare a trend.
          */
-        $htl = $indicators->htl($instrument, $recentData);
+        $htl = $indicators->htl($recentData);
 
         /**
          * Hilbert Transform - Sinewave (MESA indicator)— We are actually using DSP
@@ -115,14 +115,14 @@ class TrendingLinesStrategy implements StrategyInterface
          * This indicator can be passed an extra parameter and it will tell you in
          * we are in a trend or not. (when used as an indicator do not use in a trending market)
          */
-        $hts = $indicators->hts($instrument, $recentData);
+        $hts = $indicators->hts($recentData);
 
         /**
          * Market Meanness Index (link) — This indicator is not a measure of how
          * grumpy the market is, it shows if we are currently in or out of a trend
          * based on price reverting to the mean.
          */
-        $mmi = $indicators->mmi($instrument, $recentData);
+        $mmi = $indicators->mmi($recentData);
 
         switch ($httc) {
             case 0:
@@ -159,7 +159,7 @@ class TrendingLinesStrategy implements StrategyInterface
         }
 
 
-        switch ($indicators->mmi($instrument, $recentData)) {     # Hilbert Transform - Trend vs Cycle Mode
+        switch ($mmi) {     # Hilbert Transform - Trend vs Cycle Mode
             case -1:
                 echo "mmi: Not trending\n";
                 break;
@@ -182,7 +182,7 @@ class TrendingLinesStrategy implements StrategyInterface
             echo "Underbought going LONG (buy)\n";
         }
 
-        $adx         = $indicators->adx($instrument, $recentData);
+        $adx         = $indicators->adx($recentData);
         $_sma6       = trader_sma($recentData['close'], 6);
         $sma6        = array_pop($_sma6);
         $prior_sma6  = array_pop($_sma6);
