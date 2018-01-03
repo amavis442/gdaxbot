@@ -440,11 +440,11 @@ trait OHLC
      * Transform data for the trader functions
      * vb array trader_cdl2crows ( array $open , array $high , array $low , array $close )
      *
-     * @param array $datas
+     * @param \Illuminate\Support\Collection $datas
      *
      * @return array
      */
-    public function transformPairData(array $datas): array
+    public function transformPairData(\Illuminate\Support\Collection $datas): array
     {
         $ret['date']   = [];
         $ret['low']    = [];
@@ -501,8 +501,6 @@ trait OHLC
                   ->orderby('timeid', 'DESC')
                   ->limit($limit)
                   ->get();
-
-        $rows = Transform::toArray($rows);
 
         $starttime    = null;
         $validperiods = 0;
