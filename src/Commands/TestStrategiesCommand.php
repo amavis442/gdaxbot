@@ -9,7 +9,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Helper\Table;
-
 use App\Util\Cache;
 use App\Traits\Signals;
 use App\Traits\OHLC;
@@ -34,16 +33,14 @@ class TestStrategiesCommand extends Command
 
     protected $indicators;
 
-
     protected function configure()
     {
         $this->setName('bot:test:strategies')
-            // the short description shown while running "php bin/console list"
-             ->setDescription('Testing out the strategies we have.')
-             ->addOption('runtest', null, InputOption::VALUE_NONE)
-             ->setHelp('Testing out the strategies we have.');
+                // the short description shown while running "php bin/console list"
+                ->setDescription('Testing out the strategies we have.')
+                ->addOption('runtest', null, InputOption::VALUE_NONE)
+                ->setHelp('Testing out the strategies we have.');
     }
-
 
     /**
      * @param      $arr
@@ -67,7 +64,6 @@ class TestStrategiesCommand extends Command
         return "$pos/-$neg";
     }
 
-
     /** -------------------------------------------------------------------
      * @return null
      *
@@ -76,9 +72,9 @@ class TestStrategiesCommand extends Command
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $pair_strategies = $recentprices = [];
+        $pair_strategies  = $recentprices     = [];
         $this->indicators = new Indicators();
-        $instruments = ['BTC-EUR'];
+        $instrument       = 'BTC-EUR';
 
         /**
          *  $strategies = $this->strategies_all = every single strategy.
@@ -99,53 +95,50 @@ class TestStrategiesCommand extends Command
         /**
          *  GET ALL OUR SIGNALS HERE
          */
-        $recentData                = $this->getRecentData($instrument, 220);
+        $recentData = $this->getRecentData($instrument, 220);
 
         $signalsA = $this->signals($recentData); // get the full list
-        $signals  = $signalsA['symbols'];
+        $signals  = $signalsA['flags'];
 
         /**
          *  First up we loop through the strategies dynamically run the strategies
          *  using $this->${'strategy'}(param1, param2)
          *  $pair_strategies just has [pair][strategy] = {-1/1/0}
          */
+        $recentData_copy           = $recentData['close'];
+        $recentprices[$instrument] = array_pop($recentData_copy);
+        $flags                     = [];
 
-            $recentData_copy           = $recentData['close'];
-            $recentprices[$instrument] = array_pop($recentData_copy);
-            $flags                     = [];
+        /**
+         *  Using $strategies_all from strategies trait
+         */
+        foreach ($strategies as $strategy) {
+            $function_name    = 'bowhead_' . $strategy;
+            $flags[$strategy] = $this->$function_name($recentData);
+        }
+
+
+
+
+        foreach ($flags as $strategy => $result) {
+            $sigs = $this->compileSignals($signals, 1);
+            $output->writeln($strategy. ':'.$result);
+
+            if ($result == 0) {
+                continue; // not a short or a long
+            }
+
+            $direction = ($result > 0 ? 'long' : 'short');
 
             /**
-             *  Using $strategies_all from strategies trait
+             *  Here we determine the leverage based on signals.
+             *  There are only a certain leverage steps we can use
+             *  so we need to fit into the closest 222,200,100,88,50,25,1
              */
-            foreach ($strategies as $strategy) {
-                $function_name    = 'bowhead_' . $strategy;
-                $flags[$strategy] = $this->$function_name($instrument, $recentData);
-            }
-            $pair_strategies[$instrument] = $flags;
+            $lev = 220;
+            $lev = ($direction == 'long' ? $lev - ($sigs['neg'] * 20) : $lev - ($sigs['pos'] * 20));
 
-  
-
-        foreach ($pair_strategies as $pair => $strategies) {
-
-            $sigs = $this->compileSignals($signals[$pair], 1);
-
-            foreach ($strategies as $strategy => $flag) {
-                if ($flag == 0) {
-                    continue; // not a short or a long
-                }
-
-                $direction = ($pair_strategies[$pair][$strategy] > 0 ? 'long' : 'short');
-
-                /**
-                 *  Here we determine the leverage based on signals.
-                 *  There are only a certain leverage steps we can use
-                 *  so we need to fit into the closest 222,200,100,88,50,25,1
-                 */
-                $lev     = 220;
-                $lev     = ($direction == 'long' ? $lev - ($sigs['neg'] * 20) : $lev - ($sigs['pos'] * 20));
-
-                $output->writeln("Create $direction for $pair $strategy. Lev $lev");
-            }
+            $output->writeln("Create $direction for $strategy. Lev $lev");
         }
         $output->writeln("Done");
 
