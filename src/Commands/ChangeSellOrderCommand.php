@@ -112,14 +112,14 @@ class ChangeSellOrderCommand extends Command {
 
         $gdaxService->connect(false);
 
-        $order = $gdaxService->getOrder($sellOrder['order_id']);
+        $order = $gdaxService->getOrder($sellOrder->order_id);
         if ($order->getMessage() !== 'NotFound' && ($order->getStatus() == 'open' || $order->getStatus() == 'pending')) {
-            $gdaxService->cancelOrder($sellOrder['order_id']);
+            $gdaxService->cancelOrder($sellOrder->order_id);
             $order = $gdaxService->placeLimitSellOrder($size, $newprice);
 
             if ($order->getMessage() != 'rejected' && ($order->getStatus() == 'pending' || $order->getStatus() == 'open')) {
                 $order_id = $order->getId();
-                $orderService->insertOrder('sell', $order_id, $size, $price, $order->getStatus(), $parent_id);
+                $orderService->insertOrder('sell', $order_id, $size, $price, $sellOrder->strategy, 0.0, 0,0, $order->getStatus(),$parent_id);
                 $output->writeln('Placed new cell order with order id: ' . $order_id);
      
                 $orderService->updateOrderStatus($id, 'deleted');                
