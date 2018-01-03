@@ -202,6 +202,20 @@ class TrendingLinesStrategy implements StrategyInterface
             echo "adx up_cross -> sell";
         }
 
+        // Check what On Balance Volume (OBV) does
+        $obv = $indicators->obv($recentData);
+        if ($obv  == 1) {
+            echo "On Balance Volume (OBV): Upwards (buy)";
+        }
+
+        if ($obv  == 0) {
+            echo "On Balance Volume (OBV): Hold";
+        }
+
+        if ($obv  == -1) {
+            echo "On Balance Volume (OBV): Downwards (sell)";
+        }
+
         if ($httc == 1 && $htl == 1 && $mmi == 1) {
             return 'buy';
         }
