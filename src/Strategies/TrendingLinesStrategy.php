@@ -237,6 +237,11 @@ class TrendingLinesStrategy implements StrategyInterface
             return;
         }
 
+        if ($restOrders < 1) {
+            echo "-- Reached number of allowed orders: ".$max_orders."\n";
+
+            return;
+        }
 
         $oldBuyPrice = $currentPrice - 0.02;
         for ($i = 0; $i < $restOrders; $i++) {
