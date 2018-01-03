@@ -97,7 +97,7 @@ class OrderService implements OrderServiceInterface
      * @param int $id
      * @return array
      */
-    public function fetchOrder($id): \Illuminate\Database\Eloquent\Model
+    public function fetchOrder($id): stdClass
     {
         $result = DB::table('orders')->select('*')->where('id', $id)->first();
         
@@ -110,7 +110,7 @@ class OrderService implements OrderServiceInterface
      * @param type $order_id
      * @return type
      */
-    public function fetchOrderByOrderId($order_id): \Illuminate\Database\Eloquent\Model
+    public function fetchOrderByOrderId($order_id): stdClass
     {
         $result = DB::table('orders')->select('*')->where('order_id', $order_id)->first();
 
