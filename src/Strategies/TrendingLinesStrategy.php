@@ -238,10 +238,10 @@ class TrendingLinesStrategy implements StrategyInterface
         }
 
 
-        $oldBuyPrice = $currentPrice - 0.01;
-        for ($i = 1; $i <= $restOrders; $i++) {
+        $oldBuyPrice = $currentPrice - 0.02;
+        for ($i = 0; $i < $restOrders; $i++) {
             // for buys
-            $buyPrice = $oldBuyPrice - $spread;
+            $buyPrice = $oldBuyPrice - ($i * $spread);
             $buyPrice = number_format($buyPrice, 2, '.', '');
 
             // Check if we already have a buy for this price, then try to find an open slot
