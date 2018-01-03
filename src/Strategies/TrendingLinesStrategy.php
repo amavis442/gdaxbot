@@ -124,60 +124,60 @@ class TrendingLinesStrategy implements StrategyInterface
 
         switch ($httc) {
             case 0:
-                echo "httc: Cycling mode\n";
+                echo "..httc: Cycling mode\n";
                 break;
             case 1:
-                echo "httc: Trending mode\n";
+                echo "..httc: Trending mode\n";
                 break;
         }
 
         switch ($htl) {
             case -1:
-                echo "htl: Downtrend\n";
+                echo "..htl: Downtrend\n";
                 break;
             case 0:
-                echo "htl: Hold\n";
+                echo "..htl: Hold\n";
                 break;
             case 1:
-                echo "htl: Uptrend\n";
+                echo "..htl: Uptrend\n";
                 break;
         }
 
 
         switch ($hts) {
             case -1:
-                echo "hts: Sell (Only usefull when not trending)\n";
+                echo "..hts: Sell (Only usefull when not trending)\n";
                 break;
             case 0:
-                echo "hts: Hold (Only usefull when not trending)\n";
+                echo "..hts: Hold (Only usefull when not trending)\n";
                 break;
             case 1:
-                echo "hts: Buy (Only usefull when not trending)\n";
+                echo "..hts: Buy (Only usefull when not trending)\n";
                 break;
         }
 
 
         switch ($mmi) {     # Hilbert Transform - Trend vs Cycle Mode
             case -1:
-                echo "mmi: Not trending\n";
+                echo "..mmi: Not trending\n";
                 break;
             case 0:
-                echo "mmi: Hold\n";
+                echo "..mmi: Hold\n";
                 break;
             case 1:
-                echo "mmi: Trending\n";
+                echo "..mmi: Trending\n";
                 break;
         }
 
 
         /** instrument is overbought, we will short */
         if ($cci == -1 && $cmo == -1 && $mfi == -1) {
-            echo "Overbought going Short (sell)\n";
+            echo "..Overbought going Short (sell)\n";
         }
 
         /** It is underbought, we will go LONG */
         if ($cci == 1 && $cmo == 1 && $mfi == 1) {
-            echo "Underbought going LONG (buy)\n";
+            echo "..Underbought going LONG (buy)\n";
         }
 
         $adx         = $indicators->adx($recentData);
@@ -193,25 +193,25 @@ class TrendingLinesStrategy implements StrategyInterface
         $up_cross   = (($prior_sma40 <= $sma6 && $sma40 > $sma6) ? 1 : 0);
 
         if ($adx == 1 && $down_cross) {
-            echo "adx down_cross -> buy";
+            echo "..adx down_cross -> buy";
         }
 
         if ($adx == 1 && $up_cross) {
-            echo "adx up_cross -> sell";
+            echo "..adx up_cross -> sell";
         }
 
         // Check what On Balance Volume (OBV) does
         $obv = $indicators->obv($recentData);
         if ($obv == 1) {
-            echo "On Balance Volume (OBV): Upwards (buy)\n";
+            echo "..On Balance Volume (OBV): Upwards (buy)\n";
         }
 
         if ($obv == 0) {
-            echo "On Balance Volume (OBV): Hold\n";
+            echo "..On Balance Volume (OBV): Hold\n";
         }
 
         if ($obv == -1) {
-            echo "On Balance Volume (OBV): Downwards (sell)\n";
+            echo "..On Balance Volume (OBV): Downwards (sell)\n";
         }
 
         if ($httc == 1 && $htl == 1 && $mmi == 1 && $obv == 1) {
