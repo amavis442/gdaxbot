@@ -18,9 +18,9 @@ interface OrderServiceInterface {
 
     public function fetchAllOrders($status = 'pending'): array;
 
-    public function fetchOrder($id): \Illuminate\Database\Eloquent\Model;
+    public function fetchOrder($id): \stdClass;
 
-    public function fetchOrderByOrderId($order_id): \Illuminate\Database\Eloquent\Model;
+    public function fetchOrderByOrderId($order_id): \stdClass;
 
     public function getNumOpenOrders(): int;
     
