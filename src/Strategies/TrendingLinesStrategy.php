@@ -18,13 +18,22 @@ class TrendingLinesStrategy implements StrategyInterface
     protected $orderService;
     protected $gdaxService;
     protected $config;
+    protected $name;
 
     public function __construct($indicators, $orderService, $gdaxService)
     {
         $this->indicators   = $indicators;
         $this->orderService = $orderService;
         $this->gdaxService  = $gdaxService;
+
+        $this->name = get_called_class();
     }
+
+    public function getName() : string
+    {
+        return $this->name;
+    }
+
 
     public function settings(array $config = null)
     {
@@ -129,7 +138,7 @@ class TrendingLinesStrategy implements StrategyInterface
             echo "adx up_cross -> sell";
             $sell = 1;
         }
-        
+
         if ($httc == 1 && $htl == 1 && $mmi == 1) {
             return 'buy';
         }
@@ -145,26 +154,26 @@ class TrendingLinesStrategy implements StrategyInterface
      * Checks if there are slots open to place a buy order an if so places x amount of orders
      *
      * @param int $overrideMaxOrders
+     *
      * @return type
      */
     public function createPosition($currentPrice)
     {
         $spread      = $this->config['spread'];
         $size        = $this->config['size'];
-        $max_orders  = (int) $this->config['max_orders'];
-        $topLimit    = $this->config['top'];
-        $bottomLimit = $this->config['bottom'];
+        $max_orders  = (int)$this->config['max_orders'];
 
-        $restOrders      = $max_orders - (int) $this->orderService->getNumOpenOrders();
+        $restOrders      = $max_orders - (int)$this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $signal          = $this->getSignal();
 
         if ($signal == 'hold' || $signal == 'sell') {
             echo "-- Strategy says: " . $signal . ". So we will not buy for now.\n";
+
             return;
         }
 
-       
+
         $oldBuyPrice = $currentPrice - 0.01;
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys

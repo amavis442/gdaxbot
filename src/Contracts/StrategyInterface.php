@@ -13,7 +13,9 @@ namespace App\Contracts;
  * @author patrick
  */
 interface StrategyInterface {
-    
+
+    public function  getName(): string;
+
     /**
      * Settings can be how many orders to place, spread, sellspread etc
      * @param array $settings
