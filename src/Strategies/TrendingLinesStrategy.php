@@ -245,8 +245,9 @@ class TrendingLinesStrategy implements StrategyInterface
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $signal          = $this->getSignal();
 
+        echo "-- Strategy: " . $signal . "\n";
         if ($signal == 'hold' || $signal == 'sell') {
-            echo "-- Strategy says: " . $signal . ". So we will not buy for now.\n";
+            echo "Not buying at the moment.\n";
 
             return;
         }
