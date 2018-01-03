@@ -55,6 +55,8 @@ class RunBotCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $output->writeln("=== RUN [" . date('Y-m-d H:i:s') . "] ===");
+        
         // Settings
         $settingsService = new \App\Services\SettingsService();
 
