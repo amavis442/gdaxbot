@@ -216,11 +216,11 @@ class TrendingLinesStrategy implements StrategyInterface
             echo "On Balance Volume (OBV): Downwards (sell)\n";
         }
 
-        if ($httc == 1 && $htl == 1 && $mmi == 1) {
+        if ($httc == 1 && $htl == 1 && $mmi == 1 && $obv == 1) {
             return 'buy';
         }
 
-        if ($httc == 1 && $htl == -1 && $mmi == 1) {
+        if ($httc == 1 && $htl == -1 && $mmi == 1 && $obv == -1) {
             return 'sell';
         }
 
