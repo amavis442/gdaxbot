@@ -270,9 +270,9 @@ class TrendingLinesStrategy implements StrategyInterface
                 $order = $this->gdaxService->placeLimitBuyOrder($size, $buyPrice);
 
                 if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->name, $takeProfitAt);
+                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->getName(), $takeProfitAt);
                 } else {
-                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->name, 0.0, 0, 0, $order->getMessage());
+                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->getName(), 0.0, 0, 0, $order->getMessage());
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
 
@@ -312,12 +312,12 @@ class TrendingLinesStrategy implements StrategyInterface
 
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
 
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->name, 0.0, 0, 0, 'open', $parent_id);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->getName(), 0.0, 0, 0, 'open', $parent_id);
 
                             echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                             $this->orderService->updateOrderStatus($row['id'], $status);
                         } else {
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->name, 0.0, 0, 0, $sellOrder->getMessage(), $parent_id);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->getName(), 0.0, 0, 0, $sellOrder->getMessage(), $parent_id);
                         }
                     } else {
                         echo "Order not done " . $row['order_id'] . "\n";
