@@ -84,6 +84,7 @@ class TrendingLinesStrategy implements StrategyInterface
                 break;
         }
 
+
         switch ($hts) {
             case -1:
                 echo "hts: Sell\n";
@@ -134,16 +135,12 @@ class TrendingLinesStrategy implements StrategyInterface
         $down_cross = (($prior_sma6 <= $sma40 && $sma6 > $sma40) ? 1 : 0);
         $up_cross   = (($prior_sma40 <= $sma6 && $sma40 > $sma6) ? 1 : 0);
 
-        $buy = 0;
         if ($adx == 1 && $down_cross) {
             echo "adx down_cross -> buy";
-            $buy = 1;
         }
 
-        $sell = 0;
         if ($adx == 1 && $up_cross) {
             echo "adx up_cross -> sell";
-            $sell = 1;
         }
 
         if ($httc == 1 && $htl == 1 && $mmi == 1) {
