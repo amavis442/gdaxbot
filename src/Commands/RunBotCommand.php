@@ -39,6 +39,20 @@ class RunBotCommand extends Command
                 ->setHelp('Runs the bot for 1 cycle use cron to call this command.');
     }
 
+    protected function getStrategy()
+    {
+        /**
+         * Available strategy's
+         */
+        $strategies = [
+            'Trendlines' => new \App\Strategies\TrendingLinesStrategy()
+        ];
+
+        return $strategies['Trendlines'];
+    }
+
+
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         // Settings
@@ -87,7 +101,7 @@ class RunBotCommand extends Command
         $this->orderService->fixRejectedSells();
 
         $indicators = new Indicators();
-        $strategy   = new \App\Strategies\TrendingLinesStrategy();
+        $strategy   = $this->getStrategy();
         $strategy->setIndicicators($indicators);
         $strategy->setOrderService($orderService);
         $strategy->setGdaxService($gdaxService);

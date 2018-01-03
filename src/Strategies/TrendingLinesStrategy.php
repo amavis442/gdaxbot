@@ -21,20 +21,23 @@ class TrendingLinesStrategy implements StrategyInterface
     protected $name;
 
 
-    public function getName() : string
+    public function getName(): string
     {
-        return get_called_class();
+        return 'TrendingLines';
     }
 
-    public function setIndicicators($indicators){
-        $this->indicators =$indicators;
+    public function setIndicicators($indicators)
+    {
+        $this->indicators = $indicators;
     }
 
-    public function setOrderService($orderService){
+    public function setOrderService($orderService)
+    {
         $this->orderService = $orderService;
     }
 
-    public function setGdaxService($gdaxService){
+    public function setGdaxService($gdaxService)
+    {
         $this->gdaxService = $gdaxService;
     }
 
@@ -163,9 +166,10 @@ class TrendingLinesStrategy implements StrategyInterface
      */
     public function createPosition($currentPrice)
     {
-        $spread      = $this->config['spread'];
-        $size        = $this->config['size'];
-        $max_orders  = (int)$this->config['max_orders'];
+        $spread     = $this->config['spread'];
+        $size       = $this->config['size'];
+        $max_orders = (int)$this->config['max_orders'];
+        $profit     = $this->config['sellspread'];
 
         $restOrders      = $max_orders - (int)$this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
@@ -202,14 +206,17 @@ class TrendingLinesStrategy implements StrategyInterface
 
 
             if ((is_null($lowestSellPrice) || $lowestSellPrice == 0 || $buyPrice < $lowestSellPrice) && $placeOrder) {
-                echo 'Buy ' . $size . ' for ' . $buyPrice . "\n";
+                $takeProfitAt = $buyPrice + $profit;
+                echo "Buy at: " . $buyPrice . "\n";
+                echo "Buy size: " . $size . "\n";
+                echo 'Take profit at: ' . $takeProfitAt . "\n";
 
                 $order = $this->gdaxService->placeLimitBuyOrder($size, $buyPrice);
 
                 if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice);
+                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->name, $takeProfitAt);
                 } else {
-                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $order->getMessage());
+                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->name, 0, 0, 0, $order->getMessage());
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
 
@@ -225,13 +232,7 @@ class TrendingLinesStrategy implements StrategyInterface
      */
     public function closePosition()
     {
-        $sellspread = $this->config['sellspread'];
-
-
-        $startPrice           = $this->gdaxService->getCurrentPrice();
         $currentPendingOrders = $this->orderService->getOpenBuyOrders();
-
-        $n = 1;
         if (is_array($currentPendingOrders)) {
             foreach ($currentPendingOrders as $row) {
                 // Get the status of the buy order. You can only sell what you got.
@@ -242,25 +243,22 @@ class TrendingLinesStrategy implements StrategyInterface
                     $status = $buyOrder->getStatus();
 
                     if ($status == 'done') {
-                        $buyprice  = $row['amount'];
-                        $sellPrice = $buyprice + $sellspread;
-                        if ($startPrice > $sellPrice) {
-                            $sellPrice = $startPrice + 0.01;
-                        }
+                        $sellPrice = $row['take_profit'];
                         $sellPrice = number_format($sellPrice, 2, '.', '');
 
-                        echo 'Sell ' . $row['size'] . ' for ' . $sellPrice . "\n";
+                        echo 'Sell at: ' . $sellPrice . "\n";
+                        echo 'Sell size: ' . $row['size'] . "\n";
 
                         $sellOrder = $this->gdaxService->placeLimitSellOrder($row['size'], $sellPrice);
 
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
 
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, 'open', $row['id']);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, $this->name, 0, 0, 0, 'open', $row['id']);
 
                             echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                             $this->orderService->updateOrderStatus($row['id'], $status);
                         } else {
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, $sellOrder->getMessage(), $row['id']);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, $this->name, 0, 0, 0, $sellOrder->getMessage(), $row['id']);
                         }
                     } else {
                         echo "Order not done " . $row['order_id'] . "\n";

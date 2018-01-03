@@ -8,7 +8,7 @@ CREATE TABLE `orders` (
     `status` varchar(40), 
     `order_id` varchar(40),
     `strategy` varchar(40),
-    `profit` int,
+    `take_profit` decimal(10,2),
     `signalpos` int(11) DEFAULT NULL,
     `signalneg` int(11) DEFAULT NULL,
     `close_reason` varchar(20) DEFAULT NULL,
