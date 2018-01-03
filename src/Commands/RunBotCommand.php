@@ -72,7 +72,7 @@ class RunBotCommand extends Command
         $topLimit    = $config['top'];
         $bottomLimit = $config['bottom'];
          if (!$currentPrice || $currentPrice < 1 || $currentPrice > $topLimit || $currentPrice < $bottomLimit) {
-            $output->writeln(printf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
+            $output->writeln(sprintf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
             return;
         }
         
