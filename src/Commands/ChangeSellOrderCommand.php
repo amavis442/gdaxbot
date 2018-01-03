@@ -41,7 +41,7 @@ class ChangeSellOrderCommand extends Command {
 
 
 
-        $orderService = new \App\Services\OrderService($this->conn);
+        $orderService = new \App\Services\OrderService();
         $sellOrder = $orderService->fetchOrder($id);
 
         if (!count($sellOrder)) {
@@ -49,23 +49,23 @@ class ChangeSellOrderCommand extends Command {
             return false;
         }
 
-        if ($sellOrder['side'] != 'sell') {
+        if ($sellOrder->side != 'sell') {
             $output->writeln('<error>Order is not a sell order</error>');
             return false;
         }
 
 
-        if ($sellOrder['status'] != 'open' && $sellOrder['status'] != 'pending') {
+        if ($sellOrder->status != 'open' && $sellOrder->status != 'pending') {
             $output->writeln('<error>Order is not an open or pending order</error>');
             return false;
         }
 
-        $parent_id = $sellOrder['parent_id'];
+        $parent_id = $sellOrder->parent_id;
         if ($parent_id > 0) {
             $buyOrder = $orderService->fetchOrder($parent_id);
             
-            $buysize = number_format($buyOrder['size'],9,'.','');
-            $buyprice = number_format($buyOrder['amount'],3,'.','');
+            $buysize = number_format($buyOrder->size,9,'.','');
+            $buyprice = number_format($buyOrder->amount,3,'.','');
             $buyvalue = number_format($buysize * $buyprice, 3, '.', '');
            
         } else {
@@ -73,9 +73,9 @@ class ChangeSellOrderCommand extends Command {
             $buyprice = 0.0;
             $buysize = 0.0;
         }
-        $size = number_format($sellOrder['size'], 9, '.', '');
+        $size = number_format($sellOrder->size, 9, '.', '');
 
-        $currentprice = number_format($sellOrder['amount'], 2, '.', '');
+        $currentprice = number_format($sellOrder->amount, 2, '.', '');
         $newprice = number_format($price, 2, '.', '');
 
         $currentvalue = number_format($currentprice * $size, 4, '.', '');
