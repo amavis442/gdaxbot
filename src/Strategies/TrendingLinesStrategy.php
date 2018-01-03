@@ -147,7 +147,7 @@ class TrendingLinesStrategy implements StrategyInterface
      * @param int $overrideMaxOrders
      * @return type
      */
-    public function createPosition()
+    public function createPosition($currentPrice)
     {
         $spread      = $this->config['spread'];
         $size        = $this->config['size'];
@@ -157,7 +157,6 @@ class TrendingLinesStrategy implements StrategyInterface
 
         $restOrders      = $max_orders - (int) $this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
-        $startPrice      = $this->gdaxService->getCurrentPrice();
         $signal          = $this->getSignal();
 
         if ($signal == 'hold' || $signal == 'sell') {
@@ -165,12 +164,8 @@ class TrendingLinesStrategy implements StrategyInterface
             return;
         }
 
-        if (!$startPrice || $startPrice < 1 || $startPrice > $topLimit || $startPrice < $bottomLimit) {
-            printf("Treshold reached %s  [%s]  %s so no buying for now\n", $bottomLimit, $startPrice, $topLimit);
-            return;
-        }
-
-        $oldBuyPrice = $startPrice - 0.01;
+       
+        $oldBuyPrice = $currentPrice - 0.01;
         for ($i = 1; $i <= $restOrders; $i++) {
             // for buys
             $buyPrice = $oldBuyPrice - $spread;

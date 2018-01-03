@@ -28,7 +28,7 @@ interface StrategyInterface {
     /**
      * Buy 
      */
-    public function createPosition();
+    public function createPosition($currentPrice);
     
     /**
      * Sell

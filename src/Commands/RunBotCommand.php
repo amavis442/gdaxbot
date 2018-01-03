@@ -68,6 +68,17 @@ class RunBotCommand extends Command
 
         $gdaxService->connect($sandbox);
 
+        // Create safe limits
+        $currentPrice      = $this->gdaxService->getCurrentPrice();
+        $topLimit    = $config['top'];
+        $bottomLimit = $config['bottom'];
+         if (!$currentPrice || $currentPrice < 1 || $currentPrice > $topLimit || $currentPrice < $bottomLimit) {
+            $output->writeln(printf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
+            return;
+        }
+        
+        
+        
         $this->gdaxService  = $gdaxService;
         $this->orderService = $orderService;
 
@@ -86,7 +97,7 @@ class RunBotCommand extends Command
         $this->actualizeBuys();
        
         $output->writeln("** Place buy orders");
-        $strategy->createPosition();
+        $strategy->createPosition($startPrice);
 
         $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
     }
