@@ -11,13 +11,32 @@ namespace App\Strategies;
 
 use App\Contracts\StrategyInterface;
 
+
+/**
+ * Class TrendingLinesStrategy
+ *
+ *
+ * @see https://www.quantopian.com/posts/trading-on-multiple-ta-lib-signals
+ * @see https://www.quantopian.com/posts/stocks-on-the-move-by-andreas-clenow
+ *
+ * @see http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:money_flow_index_mfi
+ * @see https://tradingsim.com/blog/chande-momentum-oscillator-cmo-technical-indicator/
+ * @see http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
+ *
+ * @package App\Strategies
+ *
+ */
 class TrendingLinesStrategy implements StrategyInterface
 {
-
-    protected $indictors;
+    /** @var \App\Util\Indicators */
+    protected $indicators;
+    /** @var \App\Services\OrderService */
     protected $orderService;
+    /** @var \App\Services\GDaxService */
     protected $gdaxService;
+    /** @var array */
     protected $config;
+    /** @var string */
     protected $name;
 
 
@@ -53,14 +72,52 @@ class TrendingLinesStrategy implements StrategyInterface
 
         $instrument = 'BTC-EUR';
         $recentData = $indicators->getRecentData($instrument);
+
+        /**
+         * Commodity channel index (cci)
+         * The Commodity Channel Index (CCI) is a versatile indicator that can be used to identify a new trend or warn of extreme conditions.
+         */
         $cci        = $indicators->cci($instrument, $recentData);
+
+        /**
+         * Chande momentum oscillator (cmo)
+         * The chande momentum oscillator (CMO) was developed by Tushar Chande and is a technical indicator that attempts to capture the momentum of a security.
+         */
         $cmo        = $indicators->cmo($instrument, $recentData);
+
+        /**
+         * Money flow index (mfi)
+         * The Money Flow Index (MFI) is an oscillator that uses both price and volume to measure buying and selling pressure.
+         */
         $mfi        = $indicators->mfi($instrument, $recentData);
 
         //Trends
-        $httc = $indicators->httc($instrument, $recentData); // Hilbert Transform - Trend vs Cycle Mode
-        $htl  = $indicators->htl($instrument, $recentData); // Hilbert Transform - Trend vs Cycle Mode
+        /**
+         * Hilbert Transform - Trend vs Cycle Mode — Simply tell us if the market is
+         * either trending or cycling, with an additional parameter the method returns
+         * the number of days we have been in a trend or a cycle.
+         */
+        $httc = $indicators->httc($instrument, $recentData);
+
+        /**
+         * Hilbert Transform - Instantaneous Trendline — smoothed trendline, if the
+         * price moves 1.5% away from the trendline we can declare a trend.
+         */
+        $htl  = $indicators->htl($instrument, $recentData);
+
+        /**
+         * Hilbert Transform - Sinewave (MESA indicator)— We are actually using DSP
+         * on the prices to attempt to get a lag-free/low-lag indicator.
+         * This indicator can be passed an extra parameter and it will tell you in
+         * we are in a trend or not. (when used as an indicator do not use in a trending market)
+         */
         $hts  = $indicators->hts($instrument, $recentData);
+
+        /**
+         * Market Meanness Index (link) — This indicator is not a measure of how
+         * grumpy the market is, it shows if we are currently in or out of a trend
+         * based on price reverting to the mean.
+         */
         $mmi  = $indicators->mmi($instrument, $recentData);
 
         switch ($httc) {
@@ -87,13 +144,13 @@ class TrendingLinesStrategy implements StrategyInterface
 
         switch ($hts) {
             case -1:
-                echo "hts: Sell\n";
+                echo "hts: Sell (Only usefull when not trending)\n";
                 break;
             case 0:
-                echo "hts: Hold\n";
+                echo "hts: Hold (Only usefull when not trending)\n";
                 break;
             case 1:
-                echo "hts: Buy\n";
+                echo "hts: Buy (Only usefull when not trending)\n";
                 break;
         }
 
@@ -113,13 +170,11 @@ class TrendingLinesStrategy implements StrategyInterface
 
         /** instrument is overbought, we will short */
         if ($cci == -1 && $cmo == -1 && $mfi == -1) {
-            $overbought = 1;
             echo "Overbought going Short (sell)\n";
         }
 
         /** It is underbought, we will go LONG */
         if ($cci == 1 && $cmo == 1 && $mfi == 1) {
-            $underbought = 1;
             echo "Underbought going LONG (buy)\n";
         }
 

@@ -10,12 +10,10 @@
 namespace App\Util;
 
 use App\Traits\OHLC;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Illuminate\Database\Capsule\Manager as DB;
 
 /**
  * Class Indicators
+ *
  * @package Bowhead\Util
  *
  *          signal functions should return 1 for buy -1 for sell and 0 for no change
@@ -37,7 +35,8 @@ use Illuminate\Database\Capsule\Manager as DB;
  *          volatility indicators: ATR,NATR,TRANGE
  *          cycle indicators: HT_DCPERIOD,HT_DCPHASE,HT_PHASOR,HT_SINE,HT_TRENDMODE
  */
-class Indicators {
+class Indicators
+{
 
     use OHLC;
 
@@ -62,11 +61,12 @@ class Indicators {
      * http://php.net/manual/en/trader.constants.php
      * 'sma','ema','wma','dema','tema','trima','kama','mama','t3'
      */
-    public function ma_type($ma) {
+    public function ma_type($ma)
+    {
         if (!in_array($ma, $this->mas)) {
             return 0; // simple
         }
-        
+
         $types = [
             'sma'   => TRADER_MA_TYPE_SMA, // simple moving average
             'ema'   => TRADER_MA_TYPE_EMA, // exponential moving average
@@ -78,7 +78,7 @@ class Indicators {
             'mama'  => TRADER_MA_TYPE_MAMA, // The Mother of Adaptive Moving Average
             't3'    => TRADER_MA_TYPE_T3     // The Triple Exponential Moving Average
         ];
-        
+
         return $types[$ma];
     }
 
@@ -99,15 +99,16 @@ class Indicators {
      * This algorithm uses ATR as a momentum strategy, but the same signal can be used for
      * a reversion strategy, since ATR doesn't indicate the price direction (like adx below)
      */
-    public function atr($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function atr($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
-        
+
         if ($period > count($data['close'])) {
             $period = round(count($data['close']) / 2);
         }
-        
+
         $data2      = $data;
         $current    = array_pop($data2['close']); #[count($data['close']) - 1];    // we assume this is current
         $prev_close = array_pop($data2['close']); #[count($data['close']) - 2]; // prior close
@@ -125,7 +126,7 @@ class Indicators {
         } elseif ($downside_signal > 0) {
             return -1; // sell
         }
-        
+
         return 0;
     }
 
@@ -157,18 +158,19 @@ class Indicators {
      * When the Bollinger bands “squeeze”, it means that the market is very quiet, and a breakout is eminent.
      * Once a breakout occurs, we enter a trade on whatever side the price makes its breakout.
      */
-    public function bollingerBands($pair = 'BTC-EUR', $data = null, $period = 10, $devup = 2, $devdn = 2) {
+    public function bollingerBands($pair = 'BTC-EUR', $data = null, $period = 10, $devup = 2, $devdn = 2)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
-        $data2   = $data;
+        $data2 = $data;
         #$prev_close = array_pop($data2['close']); #[count($data['close']) - 2]; // prior close
         $current = array_pop($data2['close']); #[count($data['close']) - 1];    // we assume this is current
         # array $real [, integer $timePeriod [, float $nbDevUp [, float $nbDevDn [, integer $mAType ]]]]
         $bbands = trader_bbands($data['close'], $period, $devup, $devdn, 0);
         $upper  = $bbands[0];
         #$middle = $bbands[1]; // we'll find a use for you, one day
-        $lower  = $bbands[2];
+        $lower = $bbands[2];
 
         # If price is below the recent lower band
         if ($current <= array_pop($lower)) {
@@ -201,7 +203,8 @@ class Indicators {
      * One way to use MACD is to wait for the fast line to “cross over” or “cross under” the slow line and
      * enter the trade accordingly because it signals a new trend.
      */
-    public function macd($pair = 'BTC-EUR', $data = null, $period1 = 12, $period2 = 26, $period3 = 9) {
+    public function macd($pair = 'BTC-EUR', $data = null, $period1 = 12, $period2 = 26, $period3 = 9)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -250,7 +253,8 @@ class Indicators {
      *      TODO This will be for various backtesting and tests
      *      all periods are ranges of 2 to 100,000
      */
-    public function macdext($pair = 'BTC-EUR', $data = null, $fastPeriod = 12, $fastMAType = 0, $slowPeriod = 26, $slowMAType = 0, $signalPeriod = 9, $signalMAType = 0) {
+    public function macdext($pair = 'BTC-EUR', $data = null, $fastPeriod = 12, $fastMAType = 0, $slowPeriod = 26, $slowMAType = 0, $signalPeriod = 9, $signalMAType = 0)
+    {
         $fastMAType   = $this->ma_type($fastMAType);
         $slowMAType   = $this->ma_type($slowMAType);
         $signalMAType = $this->ma_type($signalMAType);
@@ -278,6 +282,7 @@ class Indicators {
             }
         }
         print_r($macd);
+
         return -2;
     }
 
@@ -295,7 +300,8 @@ class Indicators {
      * RSI can also be used to confirm trend formations. If you think a trend is forming, wait for
      * RSI to go above or below 50 (depending on if you’re looking at an uptrend or downtrend) before you enter a trade.
      */
-    public function rsi($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function rsi($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         $LOW_RSI  = 30;
         $HIGH_RSI = 70;
 
@@ -337,7 +343,8 @@ class Indicators {
      * When the moving average lines are above 80, it means that the market is overbought and we should look to sell.
      * When the moving average lines are below 20, it means that the market is oversold and we should look to buy.
      */
-    public function stoch($pair = 'BTC-EUR', $data = null, $matype1 = TRADER_MA_TYPE_SMA, $matype2 = TRADER_MA_TYPE_SMA) {
+    public function stoch($pair = 'BTC-EUR', $data = null, $matype1 = TRADER_MA_TYPE_SMA, $matype2 = TRADER_MA_TYPE_SMA)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -377,7 +384,8 @@ class Indicators {
      *
      *  fast stoch
      */
-    public function stochf($pair = 'BTC-EUR', $data = null, $matype1 = TRADER_MA_TYPE_SMA, $matype2 = TRADER_MA_TYPE_SMA) {
+    public function stochf($pair = 'BTC-EUR', $data = null, $matype1 = TRADER_MA_TYPE_SMA, $matype2 = TRADER_MA_TYPE_SMA)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -424,7 +432,8 @@ class Indicators {
      * using return_raw you can watch for saucers and peaks and will need to
      * create a strategy for those if you want to use them.
      */
-    public function awesome_oscillator($pair = 'BTC-EUR', $data = null, $return_raw = false) {
+    public function awesome_oscillator($pair = 'BTC-EUR', $data = null, $return_raw = false)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -466,7 +475,8 @@ class Indicators {
      *
      *      Money flow index
      */
-    public function mfi($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function mfi($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -496,7 +506,8 @@ class Indicators {
      *
      *      use with mfi to confirm
      */
-    public function obv($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function obv($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair, $period, true, 12); // getting day 'noon' data for last two weeks
         }
@@ -539,7 +550,8 @@ class Indicators {
      * These are best used in trending markets that consist of long rallies and downturns.
      * $acceleration=0.02, $maximum=0.02 are tradingview defaults
      */
-    public function sar($pair = 'BTC-EUR', $data = null, $period = 14, $acceleration = 0.02, $maximum = 0.02) {
+    public function sar($pair = 'BTC-EUR', $data = null, $period = 14, $acceleration = 0.02, $maximum = 0.02)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair, $period, true, 12); // getting day 'noon' data for last two weeks
         }
@@ -579,7 +591,8 @@ class Indicators {
      *  This is a forex version of SAR which is used with Stoch.
      *  The idea is the positioning of the sar is above 'certain' kinds of candles
      */
-    public function fsar($pair = 'BTC-EUR', $data = null, $period = 14, $acceleration = 0.02, $maximum = 0.02) {
+    public function fsar($pair = 'BTC-EUR', $data = null, $period = 14, $acceleration = 0.02, $maximum = 0.02)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair, $period, true, 12); // getting day 'noon' data for last two weeks
         }
@@ -588,24 +601,24 @@ class Indicators {
         }
         # array $high , array $low [, float $acceleration [, float $maximum ]]
         $_sar        = trader_sar($data['high'], $data['low'], $acceleration, $maximum);
-        $current_sar = (float) array_pop($_sar);
-        $prior_sar   = (float) array_pop($_sar);
-        $prev_sar    = (float) array_pop($_sar);
+        $current_sar = (float)array_pop($_sar);
+        $prior_sar   = (float)array_pop($_sar);
+        $prev_sar    = (float)array_pop($_sar);
 
-        $last_high  = (float) array_pop($data['high']);
-        $last_low   = (float) array_pop($data['low']);
-        $last_open  = (float) array_pop($data['open']);
-        $last_close = (float) array_pop($data['close']);
+        $last_high  = (float)array_pop($data['high']);
+        $last_low   = (float)array_pop($data['low']);
+        $last_open  = (float)array_pop($data['open']);
+        $last_close = (float)array_pop($data['close']);
 
-        $prior_high  = (float) array_pop($data['high']);
-        $prior_low   = (float) array_pop($data['low']);
-        $prior_open  = (float) array_pop($data['open']);
-        $prior_close = (float) array_pop($data['close']);
+        $prior_high  = (float)array_pop($data['high']);
+        $prior_low   = (float)array_pop($data['low']);
+        $prior_open  = (float)array_pop($data['open']);
+        $prior_close = (float)array_pop($data['close']);
 
         #$prev_high  = (float) array_pop($data['high']);
         #$prev_low   = (float) array_pop($data['low']);
-        $prev_open  = (float) array_pop($data['open']);
-        $prev_close = (float) array_pop($data['close']);
+        $prev_open  = (float)array_pop($data['open']);
+        $prev_close = (float)array_pop($data['close']);
 
         $below        = $this->compareFloatNumbers($current_sar, $last_low, '<');
         $above        = $this->compareFloatNumbers($current_sar, $last_high, '>');
@@ -627,19 +640,19 @@ class Indicators {
 
         // TODO this is useful for testing
         /**
-          $line = "";
-          $line .= "(" . ($prior_above        ? $console->colorize('prior_above', 'light_green') : $console->colorize('prior_above', 'dark'));
-          $line .= " " . ($prior_red_candle   ? $console->colorize('prior_red', 'light_green')   : $console->colorize('prior_red', 'dark'));
-          $line .= " " . ($below              ? $console->colorize('below', 'light_green')       : $console->colorize('below', 'dark'));
-          $line .= " " . ($green_candle       ? $console->colorize('green', 'light_green')       : $console->colorize('green', 'dark'));
-          $line .= ")-";
-          $line .= "(" . ($prior_below        ? $console->colorize('prior_below', 'light_red')   : $console->colorize('prior_below', 'dark'));
-          $line .= " " . ($prior_green_candle ? $console->colorize('prior_green', 'light_red')   : $console->colorize('prior_green', 'dark'));
-          $line .= " " . ($above              ? $console->colorize('above', 'light_red')         : $console->colorize('above', 'dark'));
-          $line .= " " . ($red_candle         ? $console->colorize('red', 'light_red')           : $console->colorize('red', 'dark'));
-          $line .= ")";
-          echo "\n$line";
-          // */
+         * $line = "";
+         * $line .= "(" . ($prior_above        ? $console->colorize('prior_above', 'light_green') : $console->colorize('prior_above', 'dark'));
+         * $line .= " " . ($prior_red_candle   ? $console->colorize('prior_red', 'light_green')   : $console->colorize('prior_red', 'dark'));
+         * $line .= " " . ($below              ? $console->colorize('below', 'light_green')       : $console->colorize('below', 'dark'));
+         * $line .= " " . ($green_candle       ? $console->colorize('green', 'light_green')       : $console->colorize('green', 'dark'));
+         * $line .= ")-";
+         * $line .= "(" . ($prior_below        ? $console->colorize('prior_below', 'light_red')   : $console->colorize('prior_below', 'dark'));
+         * $line .= " " . ($prior_green_candle ? $console->colorize('prior_green', 'light_red')   : $console->colorize('prior_green', 'dark'));
+         * $line .= " " . ($above              ? $console->colorize('above', 'light_red')         : $console->colorize('above', 'dark'));
+         * $line .= " " . ($red_candle         ? $console->colorize('red', 'light_red')           : $console->colorize('red', 'dark'));
+         * $line .= ")";
+         * echo "\n$line";
+         * // */
         if (($prior_above && $prior_red_candle) && ($below && $green_candle)) {
             /** SAR is below a NEW green candle. */
             return 1; // buy signal
@@ -661,7 +674,8 @@ class Indicators {
      *
      *      Commodity Channel Index
      */
-    public function cci($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function cci($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -688,7 +702,8 @@ class Indicators {
      *
      *      Chande Momentum Oscillator
      */
-    public function cmo($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function cmo($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -714,7 +729,8 @@ class Indicators {
      *
      *      Aroon Oscillator
      */
-    public function aroonosc($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function aroonosc($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -749,7 +765,8 @@ class Indicators {
      * ADX can also be used to determine when one should close a trade early. For instance, when ADX starts to slide below 50,
      * it indicates that the current trend is possibly losing steam.
      */
-    public function adx($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function adx($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -776,12 +793,13 @@ class Indicators {
      *  uptrend when consistently above .50
      *  downtrend when consistently below .50
      */
-    public function stochrsi($pair = 'BTC-EUR', $data = null, $period = 14, $trend = false, $trend_period = 5) {
+    public function stochrsi($pair = 'BTC-EUR', $data = null, $period = 14, $trend = false, $trend_period = 5)
+    {
         // trader_stochrsi ( array $real [, integer $timePeriod [, integer $fastK_Period [, integer $fastD_Period [, integer $fastD_MAType ]]]] )
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
-        $stochrsi_trend = $stochrsi       = trader_stochrsi($data['close'], $period);
+        $stochrsi_trend = $stochrsi = trader_stochrsi($data['close'], $period);
         $stochrsi       = array_pop($stochrsi);
 
         /**
@@ -802,6 +820,7 @@ class Indicators {
             if ($trending == -5) {
                 return -1;
             }
+
             return 0;
             /**
              *  or, just see if we have overbought/oversold
@@ -823,7 +842,8 @@ class Indicators {
      * Positive values that are greater than 30 are generally interpreted as indicating overbought conditions,
      * while negative values lower than negative 30 indicate oversold conditions.
      */
-    public function roc($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function roc($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         // trader_roc ( array $real [, integer $timePeriod ] )
         if (empty($data)) {
             $data = $this->getRecentData($pair);
@@ -845,7 +865,8 @@ class Indicators {
      *  When the indicator produces readings from 0 to -20, this indicates overbought market conditions.
      *  When readings are -80 to -100, it indicates oversold market conditions.
      */
-    public function willr($pair = 'BTC-EUR', $data = null, $period = 14) {
+    public function willr($pair = 'BTC-EUR', $data = null, $period = 14)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -875,7 +896,8 @@ class Indicators {
      *  levels below 30 are deemed to be oversold
      *  levels above 70 are deemed to be overbought.
      */
-    public function ultosc($pair = 'BTC-EUR', $data = null, $period1 = 7, $period2 = 14, $period3 = 28) {
+    public function ultosc($pair = 'BTC-EUR', $data = null, $period1 = 7, $period2 = 14, $period3 = 28)
+    {
         //trader_ultosc ( array $high , array $low , array $close [, integer $timePeriod1 [, integer $timePeriod2 [, integer $timePeriod3 ]]] )
         if (empty($data)) {
             $data = $this->getRecentData($pair);
@@ -905,7 +927,8 @@ class Indicators {
      * Readings consistently above 70 usually coincide with a strong uptrend.
      * Readings consistently below 30 usually coincide with a strong downtrend.
      */
-    public function hli($pair = 'BTC-EUR', $data = null, $period = 28) {
+    public function hli($pair = 'BTC-EUR', $data = null, $period = 28)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -922,7 +945,7 @@ class Indicators {
                 $total_highs += ($slice > $high ? 1 : 0); // incr if new high
                 $high        = ($slice > $high ? $slice : $high); // set new high?
             }
-            $low        = $total_lows = 0;
+            $low = $total_lows = 0;
             foreach ($slices_low as $slice) {
                 $total_lows += ($slice < $low ? 1 : 0); // incr if new low
                 $low        = ($slice < $low ? $slice : $low); // set new low
@@ -950,7 +973,8 @@ class Indicators {
      * Bull Power is calculated by subtracting the 13-day EMA from the day’s high.
      * Bear Power is derived by subtracting the 13-day EMA from the day’s low.
      */
-    public function er($pair = 'BTC-EUR', $data = null) {
+    public function er($pair = 'BTC-EUR', $data = null)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -985,7 +1009,7 @@ class Indicators {
     }
 
     /**
-     *  NO TALib specific funciton
+     *  NO TALib specific function
      *  Market Meanness Index - tendency to revert to the mean
      *  currently moving in our out of a trend?
      *  prevent loss by false trend signals
@@ -993,12 +1017,13 @@ class Indicators {
      *  if mmi > 75 then not trending
      *  if mmi < 75 then trending
      */
-    public function mmi($pair = 'BTC-EUR', $data = null, $period = 200) {
+    public function mmi($pair = 'BTC-EUR', $data = null, $period = 200)
+    {
         $data_close = [];
         foreach ($data['close'] as $point) {
             $data_close[] = $point;
         }
-        $nl     = $nh     = 0;
+        $nl     = $nh = 0;
         $len    = count($data_close);
         $median = (array_sum($data_close) / $len);
         for ($a = 0; $a < $len; $a++) {
@@ -1015,6 +1040,7 @@ class Indicators {
         if ($mmi > 75) {
             return -1;
         }
+
         return 0;
     }
 
@@ -1032,13 +1058,14 @@ class Indicators {
      *
      *      If this is incorrect, please let me know.
      */
-    public function hts($pair = 'BTC-EUR', $data = null, $trend = false) {
+    public function hts($pair = 'BTC-EUR', $data = null, $trend = false)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
-        $hts        = trader_ht_sine($data['open'], $data['close']);
-        $dcsine     = array_pop($hts[1]);
-        $p_dcsine   = array_pop($hts[1]);
+        $hts      = trader_ht_sine($data['open'], $data['close']);
+        $dcsine   = array_pop($hts[1]);
+        $p_dcsine = array_pop($hts[1]);
         // leadsine is the first one it looks like.
         $leadsine   = array_pop($hts[0]);
         $p_leadsine = array_pop($hts[0]);
@@ -1052,6 +1079,7 @@ class Indicators {
             if ($dcsine > 0 && $p_dcsine > 0 && $leadsine > 0 && $p_leadsine > 0) {
                 return -1; // downtrend
             }
+
             return 0;
         }
 
@@ -1062,6 +1090,7 @@ class Indicators {
         if ($leadsine < $dcsine && $p_leadsine >= $p_dcsine) {
             return -1; // sell
         }
+
         return 0;
     }
 
@@ -1077,14 +1106,15 @@ class Indicators {
      *      (WMA(4)-trendline)/trendline >= 0.15 then trend = 1
      *
      */
-    public function htl($pair = 'BTC-EUR', $data = null) {
+    public function htl($pair = 'BTC-EUR', $data = null)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
-        $declared  = $uptrend   = $downtrend = 0;
-        $a_htl     = $a_wma4    = [];
-        $htl       = trader_ht_trendline($data['close']);
-        $wma4      = trader_wma($data['close'], 4);
+        $declared = $uptrend = $downtrend = 0;
+        $a_htl    = $a_wma4 = [];
+        $htl      = trader_ht_trendline($data['close']);
+        $wma4     = trader_wma($data['close'], 4);
 
         for ($a = 0; $a < 5; $a++) {
             $a_htl[$a]  = array_pop($htl);
@@ -1100,6 +1130,7 @@ class Indicators {
         if ($downtrend || $declared <= 0.15) {
             return -1;
         }
+
         return 0;
     }
 
@@ -1108,7 +1139,8 @@ class Indicators {
      *      Hilbert Transform - Trend vs Cycle Mode
      *      if > 1 then in trend mode ???
      */
-    public function httc(string $pair = 'BTC-EUR', array $data = null, bool $numperiods = false) {
+    public function httc(string $pair = 'BTC-EUR', array $data = null, bool $numperiods = false)
+    {
         if (empty($data)) {
             $data = $this->getRecentData($pair);
         }
@@ -1118,7 +1150,7 @@ class Indicators {
             throw new RuntimeException('Not enough data points. Maybe clear cache and start over.');
         }
 
-        $htm   = array_pop($a_htm);
+        $htm = array_pop($a_htm);
 
         /**
          *  We can return the number of periods we have been
@@ -1136,6 +1168,7 @@ class Indicators {
                     break;
                 }
             }
+
             return $nump;
         }
 
@@ -1145,6 +1178,7 @@ class Indicators {
         if ($htm == 1) {
             return 1; // we are in a trending mode
         }
+
         return 0; // we are cycling.
     }
 
@@ -1156,17 +1190,17 @@ class Indicators {
     # TODO
     /**  WADL
      * To calculate Williams' Accumulation/Distribution indicator, first determine the True Range High ("TRH") and True Range Low ("TRL").
-      Today's accumulation/distribution is then determined by comparing today's closing price to yesterday's closing price.
-      If today's close is greater than yesterday's close:
-      If today's close is less than yesterday's close:
-      If today's close is equal to yesterday's close:
-      The Williams' Accumulation/Distribution indicator is a cummulative total of these daily values.
+     * Today's accumulation/distribution is then determined by comparing today's closing price to yesterday's closing price.
+     * If today's close is greater than yesterday's close:
+     * If today's close is less than yesterday's close:
+     * If today's close is equal to yesterday's close:
+     * The Williams' Accumulation/Distribution indicator is a cummulative total of these daily values.
      */
     # TODO
     /** ADOSC  (maybe )
      * 1. Money Flow Multiplier = [(close  -  low) - (high - close)] /(high - low)
-      2. Money Flow Volume = Money Flow Multiplier x volume for the period
-      3. Accumulation/Distribution= previous Accumulation/Distribution + current period's Money Flow Volume
+     * 2. Money Flow Volume = Money Flow Multiplier x volume for the period
+     * 3. Accumulation/Distribution= previous Accumulation/Distribution + current period's Money Flow Volume
      */
 
     /**
@@ -1175,7 +1209,8 @@ class Indicators {
      *
      * @return mixed
      */
-    public function allSignals($pair = 'BTC-EUR', $data = null) {
+    public function allSignals($pair = 'BTC-EUR', $data = null)
+    {
         $flags['adx']            = @$this->adx($pair, $data);
         $flags['aroonosc']       = @$this->aroonosc($pair, $data);
         $flags['cmo']            = @$this->cmo($pair, $data);
@@ -1221,64 +1256,24 @@ class Indicators {
      *   PYTHON PRICE PREDICTION HERE..  PROBABLY DON"T USE
      */
 
-    /**
-     * @param string $which
-     * @param string $pair
-     * @param null   $start
-     * @param null   $end
-     *
-     * @return float
-     *
-     *      prediction actually will attempt to predict an open or a close.
-     *      this is somewhat useful just to see if it works.
-     *
-     *      slower than built-in functions as it has to call out to python passing data through
-     *      redis.
-     */
-    public function prediction($which = 'close', $pair = 'BTC-EUR', $start = null, $end = null) {
-        $a = DB::table('historical')
-                ->select('*')
-                ->where('pair', $pair)
-                ->orderby('buckettime', 'DESC')
-                ->limit(24 * 7)
-                ->get();
-
-        $csv = "seq,id,curr,close,open,volume,zero\n";
-        foreach ($a as $stuff) {
-            $_csv[] = "'" . $stuff->buckettime . "'," . $stuff->id . ",'" . $stuff->pair . "'," . (float) $stuff->close . ',' . (float) $stuff->open . ',' . (float) $stuff->volume . ",0\n";
-        }
-        $__csv = array_reverse($_csv);
-        $ccsv  = join("", $__csv);
-        $csv   .= trim($ccsv);
-        \Cache::put('tempbook', $csv, 5); // we use redis to pass this to python
-
-        echo array_pop($__csv) . "\n";
-        $doing   = base_path() . "/app/Scripts/$which" . "_prediction.py";
-        $process = new Process("python -W ignore $doing");
-        $process->run();
-        // executes after the command finishes
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-        $out = explode(',', $process->getOutput());
-        return round(array_pop($out), 2);
-    }
 
     // a function for comparing two float numbers
     // float 1 - The first number
     // float 2 - The number to compare against the first
     // operator - The operator. Valid options are =, <=, <, >=, >, <>, eq, lt, lte, gt, gte, ne
-    public function compareFloatNumbers($float1, $float2, $operator = '=') {
+    public function compareFloatNumbers($float1, $float2, $operator = '=')
+    {
         // Check numbers to 5 digits of precision
         $epsilon = 0.00001;
 
-        $float1 = (float) $float1;
-        $float2 = (float) $float2;
+        $float1 = (float)$float1;
+        $float2 = (float)$float2;
 
         switch ($operator) {
             // equal
             case "=":
-            case "eq": {
+            case "eq":
+                {
                     if (abs($float1 - $float2) < $epsilon) {
                         return true;
                     }
@@ -1286,7 +1281,8 @@ class Indicators {
                 }
             // less than
             case "<":
-            case "lt": {
+            case "lt":
+                {
                     if (abs($float1 - $float2) < $epsilon) {
                         return false;
                     } else {
@@ -1298,7 +1294,8 @@ class Indicators {
                 }
             // less than or equal
             case "<=":
-            case "lte": {
+            case "lte":
+                {
                     if ($this->compareFloatNumbers($float1, $float2, '<') || $this->compareFloatNumbers($float1, $float2, '=')) {
                         return true;
                     }
@@ -1306,7 +1303,8 @@ class Indicators {
                 }
             // greater than
             case ">":
-            case "gt": {
+            case "gt":
+                {
                     if (abs($float1 - $float2) < $epsilon) {
                         return false;
                     } else {
@@ -1318,7 +1316,8 @@ class Indicators {
                 }
             // greater than or equal
             case ">=":
-            case "gte": {
+            case "gte":
+                {
                     if ($this->compareFloatNumbers($float1, $float2, '>') || $this->compareFloatNumbers($float1, $float2, '=')) {
                         return true;
                     }
@@ -1326,13 +1325,15 @@ class Indicators {
                 }
             case "<>":
             case "!=":
-            case "ne": {
+            case "ne":
+                {
                     if (abs($float1 - $float2) > $epsilon) {
                         return true;
                     }
                     break;
                 }
-            default: {
+            default:
+                {
                     die("Unknown operator '" . $operator . "' in compareFloatNumbers()");
                 }
         }
