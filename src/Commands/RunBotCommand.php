@@ -81,16 +81,30 @@ class RunBotCommand extends Command
 
         $gdaxService->connect($sandbox);
 
-        // Create safe limits
+        $indicators = new Indicators();
+        $strategy   = $this->getStrategy();
+        $strategy->setIndicicators($indicators);
+        $strategy->setOrderService($orderService);
+        $strategy->setGdaxService($gdaxService);
+        $strategy->settings($config);
+        
+        // Even when the limit is reached, i want to know the signal
+        $signal = $strategy->getSignal();
+        echo "Signal: ".$signal."\n";
+                
         $currentPrice      = $gdaxService->getCurrentPrice();
+        
+        // WIP
+        $strategy->stopLoss($signal,$currentPrice);
+        
+        // Create safe limits
         $topLimit    = $config['top'];
         $bottomLimit = $config['bottom'];
          if (!$currentPrice || $currentPrice < 1 || $currentPrice > $topLimit || $currentPrice < $bottomLimit) {
             $output->writeln(sprintf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
             return;
         }
-        
-        
+                
         
         $this->gdaxService  = $gdaxService;
         $this->orderService = $orderService;
@@ -100,12 +114,7 @@ class RunBotCommand extends Command
         $this->actualizeSells();
         $this->orderService->fixRejectedSells();
 
-        $indicators = new Indicators();
-        $strategy   = $this->getStrategy();
-        $strategy->setIndicicators($indicators);
-        $strategy->setOrderService($orderService);
-        $strategy->setGdaxService($gdaxService);
-        $strategy->settings($config);
+        
 
         $output->writeln("** Place sell orders");
         $strategy->closePosition();

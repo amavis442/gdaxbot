@@ -11,7 +11,6 @@ namespace App\Strategies;
 
 use App\Contracts\StrategyInterface;
 
-
 /**
  * Class TrendingLinesStrategy
  *
@@ -28,6 +27,7 @@ use App\Contracts\StrategyInterface;
  */
 class TrendingLinesStrategy implements StrategyInterface
 {
+
     /** @var \App\Util\Indicators */
     protected $indicators;
 
@@ -42,7 +42,6 @@ class TrendingLinesStrategy implements StrategyInterface
 
     /** @var string */
     protected $name;
-
 
     public function getName(): string
     {
@@ -63,7 +62,6 @@ class TrendingLinesStrategy implements StrategyInterface
     {
         $this->gdaxService = $gdaxService;
     }
-
 
     public function settings(array $config = null)
     {
@@ -204,15 +202,15 @@ class TrendingLinesStrategy implements StrategyInterface
 
         // Check what On Balance Volume (OBV) does
         $obv = $indicators->obv($recentData);
-        if ($obv  == 1) {
+        if ($obv == 1) {
             echo "On Balance Volume (OBV): Upwards (buy)\n";
         }
 
-        if ($obv  == 0) {
+        if ($obv == 0) {
             echo "On Balance Volume (OBV): Hold\n";
         }
 
-        if ($obv  == -1) {
+        if ($obv == -1) {
             echo "On Balance Volume (OBV): Downwards (sell)\n";
         }
 
@@ -228,6 +226,49 @@ class TrendingLinesStrategy implements StrategyInterface
     }
 
     /**
+     * Experimental stoploss (proof of concept)
+     */
+    public function stopLoss(string $signal, float $currentPrice)
+    {
+       
+        $sellOrders = $this->orderService->getOpenSellOrders();
+        if (is_array($sellOrders)) {
+            foreach ($sellOrders as $sellOrder) {
+
+                $buyId    = $sellOrder->parent_id;
+                $buyOrder = $this->orderService->fetchOrder($buyId);
+
+                $take_profit  = $buyOrder->amount + 20;
+                $newSellPrice = $currentPrice - 20;
+                $oldSellPrice = $sellOrder->amount;
+                $buyPrice     = $buyOrder->amount;
+
+                printf("== CurrentPrice: %s, BuyPrice: %s, Signal: %s\n", $currentPrice, $buyPrice, $signal);
+                if ($signal == 'buy' && $currentPrice < $buyPrice) {
+                    $oldSellPrice = $take_profit;
+                    echo "We are comming from a loss and it goed back up again: " . $take_profit . "\n";
+                }
+
+                //trailing sell order upwards
+                if ($signal == 'buy' && $currentPrice >= $take_profit && $oldSellPrice < $newSellPrice) {
+                    // Stoploss
+                    echo "Take profit price would be: " . $newSellPrice . "\n";
+                    // Steps cancel old sellprice and place new sell order.
+                }
+
+                $take_loss = $buyOrder->amount - 20;
+                //trailing sell order
+                if ($signal == 'sell' && $currentPrice > $take_loss && $currentPrice < $buyPrice) {
+                    // Stoploss
+                    echo "Take loss price would be: " . $newSellPrice . "\n";
+                    // Steps cancel old sellprice and place new sell order.
+                }
+                echo "****\n\n";
+            }
+        }
+    }
+
+    /**
      * Checks if there are slots open to place a buy order an if so places x amount of orders
      *
      * @param int $overrideMaxOrders
@@ -238,10 +279,10 @@ class TrendingLinesStrategy implements StrategyInterface
     {
         $spread     = $this->config['spread'];
         $size       = $this->config['size'];
-        $max_orders = (int)$this->config['max_orders'];
+        $max_orders = (int) $this->config['max_orders'];
         $profit     = $this->config['sellspread'];
 
-        $restOrders      = $max_orders - (int)$this->orderService->getNumOpenOrders();
+        $restOrders      = $max_orders - (int) $this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $signal          = $this->getSignal();
 
@@ -253,7 +294,7 @@ class TrendingLinesStrategy implements StrategyInterface
         }
 
         if ($restOrders < 1) {
-            echo "-- Reached number of allowed orders: ".$max_orders."\n";
+            echo "-- Reached number of allowed orders: " . $max_orders . "\n";
 
             return;
         }
