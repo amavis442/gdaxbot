@@ -6,7 +6,12 @@ CREATE TABLE `orders` (
     `size` varchar(20), 
     `amount` decimal(15,9),
     `status` varchar(40), 
-    `order_id` varchar(40), 
+    `order_id` varchar(40),
+    `strategy` varchar(40),
+    `profit` int,
+    `signalpos` int(11) DEFAULT NULL,
+    `signalneg` int(11) DEFAULT NULL,
+    `close_reason` varchar(20) DEFAULT NULL,
     `created_at` datetime, 
     `updated_at` timestamp
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;;
