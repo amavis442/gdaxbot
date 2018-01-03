@@ -65,6 +65,8 @@ class RunBotCommand extends Command
             $sandbox = true;
         }
 
+        $gdaxService->connect($sandbox);
+
         // Create safe limits
         $currentPrice      = $gdaxService->getCurrentPrice();
         $topLimit    = $config['top'];
@@ -85,7 +87,10 @@ class RunBotCommand extends Command
         $this->orderService->fixRejectedSells();
 
         $indicators = new Indicators();
-        $strategy   = new \App\Strategies\TrendingLinesStrategy($indicators, $orderService, $gdaxService);
+        $strategy   = new \App\Strategies\TrendingLinesStrategy();
+        $strategy->setIndicicators($indicators);
+        $strategy->setOrderService($orderService);
+        $strategy->setGdaxService($gdaxService);
         $strategy->settings($config);
 
         $output->writeln("** Place sell orders");
@@ -94,7 +99,7 @@ class RunBotCommand extends Command
         $this->actualizeBuys();
        
         $output->writeln("** Place buy orders");
-        $strategy->createPosition($startPrice);
+        $strategy->createPosition($currentPrice);
 
         $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
     }

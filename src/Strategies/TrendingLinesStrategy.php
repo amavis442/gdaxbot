@@ -20,18 +20,22 @@ class TrendingLinesStrategy implements StrategyInterface
     protected $config;
     protected $name;
 
-    public function __construct($indicators, $orderService, $gdaxService)
-    {
-        $this->indicators   = $indicators;
-        $this->orderService = $orderService;
-        $this->gdaxService  = $gdaxService;
-
-        $this->name = get_called_class();
-    }
 
     public function getName() : string
     {
-        return $this->name;
+        return get_called_class();
+    }
+
+    public function setIndicicators($indicators){
+        $this->indicators =$indicators;
+    }
+
+    public function setOrderService($orderService){
+        $this->orderService = $orderService;
+    }
+
+    public function setGdaxService($gdaxService){
+        $this->gdaxService = $gdaxService;
     }
 
 

@@ -16,6 +16,11 @@ interface StrategyInterface {
 
     public function  getName(): string;
 
+    public function setIndicicators($indicators);
+    public function setOrderService($orderService);
+    public function setGdaxService($gdaxService);
+
+
     /**
      * Settings can be how many orders to place, spread, sellspread etc
      * @param array $settings
