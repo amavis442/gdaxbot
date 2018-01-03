@@ -40,7 +40,8 @@ use App\Util\Cache;
  * @see http://www.candlesticker.com/BullishPatterns.aspx?lang=en
  *
  */
-class Candles {
+class Candles
+{
 
     use OHLC;
 
@@ -130,23 +131,20 @@ class Candles {
      *          - current   = candle found in the single most recent
      *          - datafor   = close data surrounding the candle on either side
      */
-    public function allCandles($pair = 'BTC-EUR', array $data = null) {
+    public function allCandles(array $data = null): array
+    {
         $ret = [];
 
-        if (empty($data)) {
-            $data = $this->getRecentData($pair);
-        }
-
         foreach ($this->candles as $cdlfunc => $name) {
-            
+
             if (function_exists($cdlfunc)) {
                 $tempdata = $cdlfunc($data['open'], $data['high'], $data['low'], $data['close']);
-               
+
                 if (empty($tempdata)) {
                     continue;
                 }
 
- 
+
                 $cdlfunc = str_replace('trader_cdl', '', $cdlfunc);
 
                 $tmp = array_map('abs', $tempdata); // remove negatives
@@ -165,7 +163,7 @@ class Candles {
 
                 $tempdataReIndexed = array_values($tempdata);
                 $closeData         = array_values($data['close']);
-                
+
                 foreach ($tempdataReIndexed as $idx => $cand) {
                     $sindex = (($idx) - 3 < 0 ? 3 : $idx);
                     if ($sindex + 4 > count($closeData)) {
@@ -184,7 +182,7 @@ class Candles {
                         $ret['recently'][$cdlfunc] = $test;
                     }
                 }
-                
+
                 $last = array_pop($tempdata);
                 if ($last <> 0) {
                     $ret['current'][$cdlfunc] = $last;

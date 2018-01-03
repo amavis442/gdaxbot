@@ -8,7 +8,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Helper\Table;
-
 use App\Util\Indicators;
 use App\Traits\Signals;
 use App\Traits\OHLC;
@@ -18,19 +17,16 @@ use App\Util\Cache;
  * Class ExampleCommand
  * @package Bowhead\Console\Commands
  */
-class TestSignalsCommand extends Command {
+class TestSignalsCommand extends Command
+{
 
     use Signals,
         OHLC;
 
-    protected $cache;
     protected $indicators = null;
 
-    public function setCache($cache) {
-        $this->cache = $cache;
-    }
-
-    protected function configure() {
+    protected function configure()
+    {
         $this->setName('bot:test:signals')
 
                 // the short description shown while running "php bin/console list"
@@ -43,30 +39,31 @@ class TestSignalsCommand extends Command {
      *
      *  this is the part of the command that executes.
      */
-    public function execute(InputInterface $input, OutputInterface $output) {
+    public function execute(InputInterface $input, OutputInterface $output)
+    {
         $this->indicators = new Indicators();
 
         while (1) {
-            $instruments = ['BTC-EUR'];
-            $signalData = $this->signals($instruments);
+         
+            $data = $this->getRecentData('BTC-EUR');
+            $signalData  = $this->signals($data);
 
-            $s = ['symbols','ret'];
+            $s = ['flags', 'ret'];
             foreach ($s as $nametype) {
                 $data = $signalData[$nametype];
-                
+
                 $table = new Table($output);
-                $rows = [];
-                foreach ($data[$instruments[0]] as $name => $value){
+                $rows  = [];
+                foreach ($data as $name => $value) {
                     $rows[] = [$name, $value];
-                    
                 }
-                
+
                 $table
                         ->setHeaders(['', ''])
                         ->setRows($rows);
                 $table->render();
             }
-            $output->writeln('Signal strength for buy/sell: '.$signalData['strength'][$instruments[0]]);
+            $output->writeln('Signal strength for buy/sell: ' . $signalData['strength']);
             sleep(5);
         }
 

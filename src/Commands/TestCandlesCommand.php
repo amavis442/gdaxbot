@@ -53,7 +53,7 @@ class TestCandlesCommand extends Command {
         while (1) {
             $candles              = [];
             $data                 = $this->getRecentData($instrument, 200);
-            $cand                 = $this->candles->allCandles($instrument, $data);
+            $cand                 = $this->candles->allCandles($data);
             $candles[$instrument] = $cand['current'] ?? [];
 
             dump($candles);

@@ -41,91 +41,111 @@ trait Signals
      */
     protected $indicators;
 
-
     /**
-     * @param array|null $instruments
-     *
-     * @return array
+     * 
+     * @param array $data
+     * @return type
      */
-    public function signals(array $instruments = null)
+    public function signals(array $data)
     {
         if (empty($instruments)) {
             $instruments = ['BTC-EUR'];
         }
 
-        $symbollines        = $this->getSymbols($instruments);
-        $transformedSymbols = $this->transformSymbols($symbollines);
-        $transformedSymbolsToText = $this->transformSymbolsToText($transformedSymbols);
+        $flags                    = $this->getSymbols($data);
+        $transformedFlags         = $this->transformSymbols($flags);
+        $transformedSymbolsToText = $this->transformSymbolsToText($transformedFlags);
 
 
-        return ['symbols' => $symbollines, 'ret' => $transformedSymbols, 'strength' => $transformedSymbolsToText];
+        return ['flags' => $flags, 'ret' => $transformedFlags, 'strength' => $transformedSymbolsToText];
     }
 
-    public function getSymbols(array $instruments) : array
+    /**
+     * 
+     * @param array $data
+     * @return array
+     * @throws RuntimeException
+     */
+    public function getSymbols(array $data): array
     {
         if (is_null($this->indicators)) {
             throw new RuntimeException('Need App\Util\Indicators::class to work');
         }
 
         $indicators = $this->indicators;
-        $symbollines = [];
 
-        foreach ($instruments as $pair) {
-            $data = $this->getRecentData($pair);
+        $flags             = [];
+        $flags['rsi']      = $indicators->rsi($data);
+        $flags['stoch']    = $indicators->stoch($data);
+        $flags['stochrsi'] = $indicators->stochrsi($data);
+        $flags['macd']     = $indicators->macd($data);
+        $flags['adx']      = $indicators->adx($data);
+        $flags['willr']    = $indicators->willr($data);
+        $flags['cci']      = $indicators->cci($data);
+        $flags['atr']      = $indicators->atr($data);
+        $flags['hli']      = $indicators->hli($data);
+        $flags['ultosc']   = $indicators->ultosc($data);
+        $flags['roc']      = $indicators->roc($data);
+        $flags['er']       = $indicators->er($data);
 
-            $flags             = [];
-            $flags['rsi']      = $indicators->rsi($pair, $data);
-            $flags['stoch']    = $indicators->stoch($pair, $data);
-            $flags['stochrsi'] = $indicators->stochrsi($pair, $data);
-            $flags['macd']     = $indicators->macd($pair, $data);
-            $flags['adx']      = $indicators->adx($pair, $data);
-            $flags['willr']    = $indicators->willr($pair, $data);
-            $flags['cci']      = $indicators->cci($pair, $data);
-            $flags['atr']      = $indicators->atr($pair, $data);
-            $flags['hli']      = $indicators->hli($pair, $data);
-            $flags['ultosc']   = $indicators->ultosc($pair, $data);
-            $flags['roc']      = $indicators->roc($pair, $data);
-            $flags['er']       = $indicators->er($pair, $data);
-
-            $symbollines[$pair] = $flags;
-        }
-
-        return $symbollines;
+        return $flags;
     }
 
-    public function transformSymbols(array $symbollines) : array
+    /**
+     * 
+     * @param array $flags
+     * @return array
+     */
+    public function transformSymbols(array $flags): array
     {
-        foreach ($symbollines as $symbol => $datas) {
-            $ret[$symbol]         = [];
-            $ret[$symbol]['buy']  = 0;
-            $ret[$symbol]['sell'] = 0;
+        $ret         = [];
+        $ret['buy']  = 0;
+        $ret['sell'] = 0;
+            
+        foreach ($flags as $flag) {
+            
 
-            foreach ($datas as $data) {
-                $ret[$symbol]['buy']  += ($data == 1 ? 1 : 0);
-                $ret[$symbol]['sell'] += ($data == -1 ? 1 : 0);
-            }
+
+            $ret['buy']  += ($flag == 1 ? 1 : 0);
+            $ret['sell'] += ($flag == -1 ? 1 : 0);
         }
 
         return $ret;
     }
 
-    public function transformSymbolsToText(array $ret) : array
+    public function transformSymbolsToText(array $r): string
     {
-        $return = [];
-        foreach ($ret as $k => $r) {
-            $return[$k] = 'NONE';
-            $return[$k] = ($r['buy'] > 6 ? 'WEAK BUY' : $return[$k]);
-            $return[$k] = ($r['buy'] > 8 ? 'GOOD BUY' : $return[$k]);
-            $return[$k] = ($r['buy'] > 9 ? 'STRONG BUY' : $return[$k]);
-            $return[$k] = ($r['buy'] > 10 ? 'VERY STRONG BUY' : $return[$k]);
-            $return[$k] = ($r['sell'] > 6 ? 'WEAK SELL' : $return[$k]);
-            $return[$k] = ($r['sell'] > 8 ? 'GOOD SELL' : $return[$k]);
-            $return[$k] = ($r['sell'] > 9 ? 'STRONG SELL' : $return[$k]);
-            $return[$k] = ($r['sell'] > 10 ? 'VERY STRONG SELL' : $return[$k]);
+        $ret = 'None';
+
+        if ($r['buy'] > 6) {
+            $ret = 'WEAK BUY';
+        }
+        if ($r['buy'] > 8) {
+            $ret = 'GOOD BUY';
+        }
+        if ($r['buy'] > 9) {
+            $ret = 'STRONG BUY';
+        }
+        if ($r['buy'] > 10) {
+            $ret = 'VERY STRONG BUY';
         }
 
-        return $return;
-    }
 
+        if ($r['sell'] > 6) {
+            $ret = 'WEAK SELL';
+        }
+        if ($r['sell'] > 8) {
+            $ret = 'GOOD SELL';
+        }
+        if ($r['sell'] > 9) {
+            $ret = 'STRONG SELL';
+        }
+        if ($r['sell'] > 10) {
+            $ret = 'VERY STRONG SELL';
+        }
+
+
+        return $ret;
+    }
 
 }

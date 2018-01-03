@@ -99,7 +99,9 @@ class TestStrategiesCommand extends Command
         /**
          *  GET ALL OUR SIGNALS HERE
          */
-        $signalsA = $this->signals($instruments); // get the full list
+        $recentData                = $this->getRecentData($instrument, 220);
+
+        $signalsA = $this->signals($recentData); // get the full list
         $signals  = $signalsA['symbols'];
 
         /**
@@ -107,8 +109,7 @@ class TestStrategiesCommand extends Command
          *  using $this->${'strategy'}(param1, param2)
          *  $pair_strategies just has [pair][strategy] = {-1/1/0}
          */
-        foreach ($instruments as $instrument) {
-            $recentData                = $this->getRecentData($instrument, 220);
+
             $recentData_copy           = $recentData['close'];
             $recentprices[$instrument] = array_pop($recentData_copy);
             $flags                     = [];
@@ -121,8 +122,8 @@ class TestStrategiesCommand extends Command
                 $flags[$strategy] = $this->$function_name($instrument, $recentData);
             }
             $pair_strategies[$instrument] = $flags;
-        }
-        dump($pair_strategies);
+
+  
 
         foreach ($pair_strategies as $pair => $strategies) {
 
