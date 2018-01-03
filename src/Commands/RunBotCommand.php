@@ -65,11 +65,8 @@ class RunBotCommand extends Command
             $sandbox = true;
         }
 
-
-        $gdaxService->connect($sandbox);
-
         // Create safe limits
-        $currentPrice      = $this->gdaxService->getCurrentPrice();
+        $currentPrice      = $gdaxService->getCurrentPrice();
         $topLimit    = $config['top'];
         $bottomLimit = $config['bottom'];
          if (!$currentPrice || $currentPrice < 1 || $currentPrice > $topLimit || $currentPrice < $bottomLimit) {
