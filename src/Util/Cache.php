@@ -8,7 +8,11 @@
 
 namespace App\Util;
 
-
+/**
+ * Class Cache
+ *
+ * @package App\Util
+ */
 class Cache
 {
     protected        $cache;

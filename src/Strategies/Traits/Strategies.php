@@ -11,7 +11,8 @@ namespace App\Strategies\Traits;
 use App\Util\Indicators;
 
 /**
- * Class Strategies
+ * Trait Strategies
+ *
  * @package App\Strategies\Traits
  */
 trait Strategies

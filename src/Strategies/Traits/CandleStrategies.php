@@ -12,10 +12,11 @@ use App\Util\Indicators;
 use App\Util\Candles;
 
 /**
- * Class CandleStrategies
- * @package Bowhead\Traits
+ * Trait CandleStrategies
  *
- *          two basic strategies to use with candles.
+ * @package App\Strategies\Traits
+ *
+ * two basic strategies to use with candles.
  */
 trait CandleStrategies
 {

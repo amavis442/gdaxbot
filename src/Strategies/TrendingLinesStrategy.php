@@ -16,12 +16,12 @@ use App\Contracts\StrategyInterface;
  * Class TrendingLinesStrategy
  *
  *
- * @see https://www.quantopian.com/posts/trading-on-multiple-ta-lib-signals
- * @see https://www.quantopian.com/posts/stocks-on-the-move-by-andreas-clenow
+ * @see     https://www.quantopian.com/posts/trading-on-multiple-ta-lib-signals
+ * @see     https://www.quantopian.com/posts/stocks-on-the-move-by-andreas-clenow
  *
- * @see http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:money_flow_index_mfi
- * @see https://tradingsim.com/blog/chande-momentum-oscillator-cmo-technical-indicator/
- * @see http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
+ * @see     http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:money_flow_index_mfi
+ * @see     https://tradingsim.com/blog/chande-momentum-oscillator-cmo-technical-indicator/
+ * @see     http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
  *
  * @package App\Strategies
  *
@@ -30,12 +30,16 @@ class TrendingLinesStrategy implements StrategyInterface
 {
     /** @var \App\Util\Indicators */
     protected $indicators;
-    /** @var \App\Services\OrderService */
+
+    /** @var \App\Contracts\OrderServiceInterface */
     protected $orderService;
-    /** @var \App\Services\GDaxService */
+
+    /** @var \App\Contracts\GdaxServiceInterface */
     protected $gdaxService;
+
     /** @var array */
     protected $config;
+
     /** @var string */
     protected $name;
 
@@ -77,19 +81,19 @@ class TrendingLinesStrategy implements StrategyInterface
          * Commodity channel index (cci)
          * The Commodity Channel Index (CCI) is a versatile indicator that can be used to identify a new trend or warn of extreme conditions.
          */
-        $cci        = $indicators->cci($instrument, $recentData);
+        $cci = $indicators->cci($instrument, $recentData);
 
         /**
          * Chande momentum oscillator (cmo)
          * The chande momentum oscillator (CMO) was developed by Tushar Chande and is a technical indicator that attempts to capture the momentum of a security.
          */
-        $cmo        = $indicators->cmo($instrument, $recentData);
+        $cmo = $indicators->cmo($instrument, $recentData);
 
         /**
          * Money flow index (mfi)
          * The Money Flow Index (MFI) is an oscillator that uses both price and volume to measure buying and selling pressure.
          */
-        $mfi        = $indicators->mfi($instrument, $recentData);
+        $mfi = $indicators->mfi($instrument, $recentData);
 
         //Trends
         /**
@@ -103,7 +107,7 @@ class TrendingLinesStrategy implements StrategyInterface
          * Hilbert Transform - Instantaneous Trendline — smoothed trendline, if the
          * price moves 1.5% away from the trendline we can declare a trend.
          */
-        $htl  = $indicators->htl($instrument, $recentData);
+        $htl = $indicators->htl($instrument, $recentData);
 
         /**
          * Hilbert Transform - Sinewave (MESA indicator)— We are actually using DSP
@@ -111,14 +115,14 @@ class TrendingLinesStrategy implements StrategyInterface
          * This indicator can be passed an extra parameter and it will tell you in
          * we are in a trend or not. (when used as an indicator do not use in a trending market)
          */
-        $hts  = $indicators->hts($instrument, $recentData);
+        $hts = $indicators->hts($instrument, $recentData);
 
         /**
          * Market Meanness Index (link) — This indicator is not a measure of how
          * grumpy the market is, it shows if we are currently in or out of a trend
          * based on price reverting to the mean.
          */
-        $mmi  = $indicators->mmi($instrument, $recentData);
+        $mmi = $indicators->mmi($instrument, $recentData);
 
         switch ($httc) {
             case 0:
@@ -245,7 +249,7 @@ class TrendingLinesStrategy implements StrategyInterface
             $n           = 1;
             $placeOrder  = true;
             while ($hasBuyPrice) {
-                $buyPrice = $buyPrice - $n * $this->spread;
+                $buyPrice = $buyPrice - $n * $spread;
                 $buyPrice = number_format($buyPrice, 2, '.', '');
 
                 $hasBuyPrice = $this->orderService->buyPriceExists($buyPrice);
@@ -258,7 +262,7 @@ class TrendingLinesStrategy implements StrategyInterface
 
 
             if ((is_null($lowestSellPrice) || $lowestSellPrice == 0 || $buyPrice < $lowestSellPrice) && $placeOrder) {
-                $takeProfitAt = $buyPrice + $profit;
+                $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
                 echo "Buy at: " . $buyPrice . "\n";
                 echo "Buy size: " . $size . "\n";
                 echo 'Take profit at: ' . $takeProfitAt . "\n";
@@ -268,7 +272,7 @@ class TrendingLinesStrategy implements StrategyInterface
                 if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
                     $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->name, $takeProfitAt);
                 } else {
-                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->name, 0, 0, 0, $order->getMessage());
+                    $this->orderService->insertOrder('buy', $order->getId(), $size, $buyPrice, $this->name, 0.0, 0, 0, $order->getMessage());
                     echo "Order not placed for " . $buyPrice . "\n";
                 }
 
@@ -295,22 +299,25 @@ class TrendingLinesStrategy implements StrategyInterface
                     $status = $buyOrder->getStatus();
 
                     if ($status == 'done') {
+                        $size      = $row['size'];
                         $sellPrice = $row['take_profit'];
                         $sellPrice = number_format($sellPrice, 2, '.', '');
+                        $parent_id = $row['id'];
+
 
                         echo 'Sell at: ' . $sellPrice . "\n";
                         echo 'Sell size: ' . $row['size'] . "\n";
 
-                        $sellOrder = $this->gdaxService->placeLimitSellOrder($row['size'], $sellPrice);
+                        $sellOrder = $this->gdaxService->placeLimitSellOrder($size, $sellPrice);
 
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
 
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, $this->name, 0, 0, 0, 'open', $row['id']);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->name, 0.0, 0, 0, 'open', $parent_id);
 
                             echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                             $this->orderService->updateOrderStatus($row['id'], $status);
                         } else {
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $row['size'], $sellPrice, $this->name, 0, 0, 0, $sellOrder->getMessage(), $row['id']);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->name, 0.0, 0, 0, $sellOrder->getMessage(), $parent_id);
                         }
                     } else {
                         echo "Order not done " . $row['order_id'] . "\n";

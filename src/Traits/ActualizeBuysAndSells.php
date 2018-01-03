@@ -9,6 +9,11 @@
 namespace App\Traits;
 
 
+/**
+ * Trait ActualizeBuysAndSells
+ *
+ * @package App\Traits
+ */
 trait ActualizeBuysAndSells
 {
     /**

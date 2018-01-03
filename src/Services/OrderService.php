@@ -6,26 +6,50 @@ use App\Contracts\OrderServiceInterface;
 use Illuminate\Database\Capsule\Manager as DB;
 use App\Util\Transform;
 
-
+/**
+ * Class OrderService
+ *
+ * @package App\Services
+ */
 class OrderService implements OrderServiceInterface
 {
 
+    /**
+     *
+     */
     public function purgeDatabase()
     {
         DB::table('orders')->delete();
     }
 
-    public function deleteOrder($id)
+    /**
+     * @param int $id
+     *
+     * @return mixed|void
+     */
+    public function deleteOrder(int $id)
     {
         DB::table('orders')->delete($id);
     }
 
-    public function updateOrder($id, $side)
+    /**
+     * @param int    $id
+     * @param string $side
+     *
+     * @return mixed|void
+     */
+    public function updateOrder(int $id, string $side)
     {
         DB::table('orders')->where('id', $id)->update(['side' => $side]);
     }
 
-    public function updateOrderStatus($id, $status)
+    /**
+     * @param int    $id
+     * @param string $status
+     *
+     * @return mixed|void
+     */
+    public function updateOrderStatus(int $id, string $status)
     {
         DB::table('orders')->where('id', $id)->update(['status' => $status]);
     }
@@ -42,20 +66,20 @@ class OrderService implements OrderServiceInterface
      *
      * @return int
      */
-    public function insertOrder($side, $order_id, $size, $amount, $strategy = 'TrendsLines', $profit = 60, $signalpos = 0, $signalneg = 0, $status = 'pending', $parent_id = 0): int
+    public function insertOrder(string $side, string $order_id, float $size, float $amount, string $strategy = 'TrendsLines', float $take_profit = 13000.0, int $signalpos = 0, int $signalneg = 0, string $status = 'pending', int $parent_id = 0): int
     {
         $id = DB::table('orders')->insertGetId([
-                                                   'side'       => $side,
-                                                   'order_id'   => $order_id,
-                                                   'size'       => $size,
-                                                   'amount'     => $amount,
-                                                   'strategy'   => $strategy,
-                                                   'profit'     => $profit,
-                                                   'signalpos'  => $signalpos,
-                                                   'signalneg'  => $signalneg,
-                                                   'status'     => $status,
-                                                   'parent_id'  => $parent_id,
-                                                   'created_at' => date('Y-m-d H:i:s')
+                                                   'side'        => $side,
+                                                   'order_id'    => $order_id,
+                                                   'size'        => $size,
+                                                   'amount'      => $amount,
+                                                   'strategy'    => $strategy,
+                                                   'take_profit' => $take_profit,
+                                                   'signalpos'   => $signalpos,
+                                                   'signalneg'   => $signalneg,
+                                                   'status'      => $status,
+                                                   'parent_id'   => $parent_id,
+                                                   'created_at'  => date('Y-m-d H:i:s')
                                                ]);
 
         return $id;
@@ -89,7 +113,7 @@ class OrderService implements OrderServiceInterface
      *
      * @return array
      */
-    public function fetchAllOrders($status = 'pending'): array
+    public function fetchAllOrders(string $status = 'pending'): array
     {
         $result = DB::table('orders')->select('*')->where('status', $status)->get();
 
@@ -97,13 +121,11 @@ class OrderService implements OrderServiceInterface
     }
 
     /**
-     * Fetch inidividual order
-     *
      * @param int $id
      *
-     * @return array
+     * @return \stdClass
      */
-    public function fetchOrder($id): \stdClass
+    public function fetchOrder(int $id): \stdClass
     {
         $result = DB::table('orders')->select('*')->where('id', $id)->first();
 
@@ -113,17 +135,20 @@ class OrderService implements OrderServiceInterface
     /**
      * Fetch order by order id from coinbase (has the form of aaaaa-aaaa-aaaa-aaaaa)
      *
-     * @param type $order_id
+     * @param string $order_id
      *
-     * @return type
+     * @return \stdClass
      */
-    public function fetchOrderByOrderId($order_id): \stdClass
+    public function fetchOrderByOrderId(string $order_id): \stdClass
     {
         $result = DB::table('orders')->select('*')->where('order_id', $order_id)->first();
 
         return $result;
     }
 
+    /**
+     * @return int
+     */
     public function getNumOpenOrders(): int
     {
         $result = DB::table('orders')->select(DB::raw('count(*) total'))->where('status', 'open')->orWhere('status', 'pending')->first();
@@ -131,6 +156,9 @@ class OrderService implements OrderServiceInterface
         return isset($result->total) ? $result->total : 0;
     }
 
+    /**
+     * @return float
+     */
     public function getLowestSellPrice()
     {
         $result = DB::select("SELECT min(amount) minprice FROM orders WHERE side='sell' AND status = 'open' OR status = 'pending'");
@@ -146,7 +174,7 @@ class OrderService implements OrderServiceInterface
      *
      * @return array
      */
-    public function getOrdersBySide($side, $status = 'pending'): array
+    public function getOrdersBySide(string $side, string $status = 'pending'): array
     {
         $result = DB::table('order')->where('side', $side)->where('status', $status)->get();
 
@@ -180,11 +208,11 @@ class OrderService implements OrderServiceInterface
     /**
      * Check of we already have a open buy order with that price
      *
-     * @param type $price
+     * @param float $price
      *
-     * @return boolean
+     * @return bool
      */
-    public function buyPriceExists($price): bool
+    public function buyPriceExists(float $price): bool
     {
         $result = DB::select("SELECT * FROM orders WHERE side = 'buy' AND (status = 'pending' OR status = 'open') AND amount = $price");
         foreach ($result as $row) {
@@ -224,9 +252,11 @@ class OrderService implements OrderServiceInterface
     /**
      * Orders can also be inserted by hand
      *
-     * @param type $orders
+     * @param array $orders
+     *
+     * @return mixed|void
      */
-    public function fixUnknownOrdersFromGdax($orders)
+    public function fixUnknownOrdersFromGdax(array $orders = null)
     {
         if (is_array($orders)) {
             foreach ($orders as $order) {
@@ -243,6 +273,11 @@ class OrderService implements OrderServiceInterface
         }
     }
 
+    /**
+     * @param string|null $date
+     *
+     * @return array
+     */
     public function getProfits(string $date = null): array
     {
         if (is_null($date)) {

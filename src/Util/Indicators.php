@@ -14,26 +14,30 @@ use App\Traits\OHLC;
 /**
  * Class Indicators
  *
- * @package Bowhead\Util
+ * @package App\Util
  *
- *          signal functions should return 1 for buy -1 for sell and 0 for no change
- *          other functions can return single floats for predictions.
+ * @see https://medium.com/@joeldg/an-advanced-tutorial-a-new-crypto-currency-trading-bot-boilerplate-framework-e777733607ae
  *
- *          all signal functions can be called alone, with just a pair or a just a pair and data
- *          time periods can be tweaked in backtesting and regression testing.
  *
- *          TODO: port over 'Ichimoku Kinko Hyo' (Ichimoku Cloud) for basic signals
- *          http://www.babypips.com/school/elementary/common-chart-indicators/summary-common-chart-indicators.html
- *          http://stockcharts.com/school/doku.php?id=chart_school:trading_strategies:ichimoku_cloud
- *          http://jsfiddle.net/oscglezm/phq7yo9y/
+ * 
+ * Signal functions should return 1 for buy -1 for sell and 0 for no change
+ * other functions can return single floats for predictions.
  *
- *          Types of indicators:
- *          overlap studies: BBANDS,DEMA,EMA,HT_TRENDLINE,KAMA,MA,MAMA,MAVP,MIDPOINT,MIDPRICE,SAR,SAREXT,SMA,T3,TEMA,TRIMA,WMA
- *          momentum indicators: ADX,ADXR,APO,AROON,AROONOSC,BOP,CCI,CMO,DX,MACD,MACDEXT,MACDFIX,MFI,MINUS_DI,MINUS_DM,
- *                               MOM,PLUS_DI,PLUS_DM,PPO,ROC,ROCP,ROCR,ROCR100,RSI,STOCH,STOCHF,STOCHRSI,TRIX,ULTOSC,WILLR
- *          volume indicators: AD,ADOSC,OBV
- *          volatility indicators: ATR,NATR,TRANGE
- *          cycle indicators: HT_DCPERIOD,HT_DCPHASE,HT_PHASOR,HT_SINE,HT_TRENDMODE
+ * all signal functions can be called alone, with just a pair or a just a pair and data
+ * time periods can be tweaked in backtesting and regression testing.
+ *
+ * TODO: port over 'Ichimoku Kinko Hyo' (Ichimoku Cloud) for basic signals
+ * @see http://www.babypips.com/school/elementary/common-chart-indicators/summary-common-chart-indicators.html
+ * @see http://stockcharts.com/school/doku.php?id=chart_school:trading_strategies:ichimoku_cloud
+ * @see http://jsfiddle.net/oscglezm/phq7yo9y/
+ *
+ * Types of indicators:
+ * overlap studies: BBANDS,DEMA,EMA,HT_TRENDLINE,KAMA,MA,MAMA,MAVP,MIDPOINT,MIDPRICE,SAR,SAREXT,SMA,T3,TEMA,TRIMA,WMA
+ * momentum indicators: ADX,ADXR,APO,AROON,AROONOSC,BOP,CCI,CMO,DX,MACD,MACDEXT,MACDFIX,MFI,MINUS_DI,MINUS_DM,
+ *                      MOM,PLUS_DI,PLUS_DM,PPO,ROC,ROCP,ROCR,ROCR100,RSI,STOCH,STOCHF,STOCHRSI,TRIX,ULTOSC,WILLR
+ * volume indicators: AD,ADOSC,OBV
+ * volatility indicators: ATR,NATR,TRANGE
+ * cycle indicators: HT_DCPERIOD,HT_DCPHASE,HT_PHASOR,HT_SINE,HT_TRENDMODE
  */
 class Indicators
 {

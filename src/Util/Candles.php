@@ -14,29 +14,31 @@ use App\Util\Cache;
 
 /**
  * Class Candles
+ *
  * @package App\Util
  *
- *          Stock candles are traditional Japanese price graphs and all the names for candles
- *          are from Japanese military maneuvers and traditional stories, or are words in Japanese such as
- *          Harami meaning 'pregnant'
+ * Stock candles are traditional Japanese price graphs and all the names for candles
+ * are from Japanese military maneuvers and traditional stories, or are words in Japanese such as
+ * Harami meaning 'pregnant'
  *
- *          Candles are NOT specifically buy/sell signals, look them up before you use them.
- *          http://www.investinganswers.com/financial-dictionary
- *          http://www.investopedia.com/dictionary/
+ * Candles are NOT specifically buy/sell signals, look them up before you use them.
+ * http://www.investinganswers.com/financial-dictionary
+ * http://www.investopedia.com/dictionary/
  *
- *          use allCandles() below to get a complete candle set on your data window.
+ * use allCandles() below to get a complete candle set on your data window.
  *
- *          Not all possible types of candles are here, many two (tweezers) and single (white soldier etc) candles are
- *          missing from this list, there are TONS of different candles abut this list has what is generally accepted as
- *          the main ones, and this is 100% of the TA-Lib port to PHP.
+ * Not all possible types of candles are here, many two (tweezers) and single (white soldier etc) candles are
+ * missing from this list, there are TONS of different candles abut this list has what is generally accepted as
+ * the main ones, and this is 100% of the TA-Lib port to PHP.
  *
- *          Examples:
+ * @example
+ * bears: Bearish Engulfing, Dark Cloud cover, Bearish counter attack, Bearish Harami, eveningstar reversal
+ * @see http://www.candlesticker.com/BearishPatterns.aspx?lang=en
  *
- *          bears: Bearish Engulfing, Dark Cloud cover, Bearish counter attack, Bearish Harami, eveningstar reversal
- *          http://www.candlesticker.com/BearishPatterns.aspx?lang=en
+ * @example
+ * bulls: Bullish Engulfing, Bullish Piercing Pattern, Bullish counter attack, Bullish Harami, Morning Star reversal
+ * @see http://www.candlesticker.com/BullishPatterns.aspx?lang=en
  *
- *          bulls: Bullish Engulfing, Bullish Piercing Pattern, Bullish counter attack, Bullish Harami, Morning Star reversal
- *          http://www.candlesticker.com/BullishPatterns.aspx?lang=en
  */
 class Candles {
 
