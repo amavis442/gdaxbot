@@ -230,8 +230,8 @@ class TrendingLinesStrategy implements StrategyInterface
      */
     public function stopLoss(string $signal, float $currentPrice)
     {
-       
         $sellOrders = $this->orderService->getOpenSellOrders();
+        
         if (is_array($sellOrders) && count($sellOrders)) {
             foreach ($sellOrders as $sellOrder) {
                 $buyId    = $sellOrder['parent_id'];
@@ -349,6 +349,7 @@ class TrendingLinesStrategy implements StrategyInterface
     public function closePosition()
     {
         $currentPendingOrders = $this->orderService->getOpenBuyOrders();
+        
         if (is_array($currentPendingOrders)) {
             foreach ($currentPendingOrders as $row) {
                 // Get the status of the buy order. You can only sell what you got.

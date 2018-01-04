@@ -74,14 +74,14 @@ interface OrderServiceInterface {
      *
      * @return \stdClass
      */
-    public function fetchOrder(int $id): \stdClass;
+    public function fetchOrder(int $id): ?\stdClass;
 
     /**
      * @param string $order_id
      *
      * @return \stdClass
      */
-    public function fetchOrderByOrderId(string $order_id): \stdClass;
+    public function fetchOrderByOrderId(string $order_id): ?\stdClass;
 
     /**
      * @return int

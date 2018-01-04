@@ -79,6 +79,7 @@ class RunBotCommand extends Command
             $output->writeln("=== RUN [" . \Carbon\Carbon::now('Europe/Amsterdam')->format('Y-m-d H:i:s') . "] ===");
             $output->writeln(" Update Ticker ");
             
+            // Ticker
             $res = $httpClient->request('GET', 'https://api.gdax.com/products/BTC-EUR/ticker');
             if ($res->getStatusCode() == 200) {
                 $jsonData = $res->getBody();
@@ -92,29 +93,23 @@ class RunBotCommand extends Command
                 $ticker['price'] = number_format($data['price'],2,'.','');
                 $this->markOHLC($ticker);
             }
-
-                
-            
-            
-            /*
-            
+  
             // Settings
             $config                       = [];
             $config['max_orders_per_run'] = getenv('MAX_ORDERS_PER_RUN');
             $config                       = array_merge($config, $settingsService->getSettings());
 
+             //Cleanup
+            $this->orderService->garbageCollection();
+            $this->actualize();
+            $this->actualizeSells();
+            $this->orderService->fixRejectedSells();
+                
             $botactive = ($config['botactive'] == 1 ? true : false);
             if (!$botactive) {
                 $output->writeln("<info>Bot is not active at the moment</info>");
             } else {
-                //Cleanup
-                $this->orderService->garbageCollection();
-                $this->actualize();
-                $this->actualizeSells();
-                $this->orderService->fixRejectedSells();
-
                 // Now we can use strategy       
-
                 $strategy = $this->getStrategy();
                 $strategy->setIndicicators($indicators);
                 $strategy->setOrderService($orderService);
@@ -126,7 +121,8 @@ class RunBotCommand extends Command
                 $output->writeln("Signal: " . $signal);
 
                 $currentPrice = $gdaxService->getCurrentPrice();
-
+                Cache::put('BTC-EUR.currentPrice',$currentPrice);
+                
                 // WIP
                 $strategy->stopLoss($signal, $currentPrice);
 
@@ -148,8 +144,7 @@ class RunBotCommand extends Command
                     $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
                 }
             }
-             * 
-             */
+            
             sleep(10);
         }
     }
