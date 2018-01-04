@@ -142,8 +142,11 @@ class OrderService implements OrderServiceInterface
     public function fetchOrderByOrderId(string $order_id): \stdClass
     {
         $result = DB::table('orders')->select('*')->where('order_id', $order_id)->first();
-
-        return $result;
+        if ($result) {
+            return $result;
+        } else {
+            return new \stdClass();
+        }
     }
 
     /**
@@ -262,7 +265,7 @@ class OrderService implements OrderServiceInterface
             foreach ($orders as $order) {
                 $order_id = $order->getId();
                 $row      = $this->fetchOrderByOrderId($order_id);
-                if (!$row) {
+                if (!$row || !property_exists($row, 'id')) {
                     $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
                 } else {
                     if ($row->status != 'done') {
