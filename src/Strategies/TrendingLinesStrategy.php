@@ -10,6 +10,7 @@
 namespace App\Strategies;
 
 use App\Contracts\StrategyInterface;
+use App\Util\Cache;
 
 /**
  * Class TrendingLinesStrategy
@@ -230,6 +231,7 @@ class TrendingLinesStrategy implements StrategyInterface
      */
     public function stopLoss(string $signal, float $currentPrice)
     {
+
         $sellOrders = $this->orderService->getOpenSellOrders();
         
         if (is_array($sellOrders) && count($sellOrders)) {
@@ -237,22 +239,32 @@ class TrendingLinesStrategy implements StrategyInterface
                 $buyId    = $sellOrder['parent_id'];
                 $buyOrder = $this->orderService->fetchOrder($buyId);
 
+                if (!property_exists($buyOrder, 'id')) {
+                    echo "Buyorder not found for " . $sellOrder->order_id . "\n";
+                    continue;
+                }
+
+
                 $take_profit  = $buyOrder->amount + 20;
                 $newSellPrice = $currentPrice - 20;
                 $oldSellPrice = $sellOrder['amount'];
                 $buyPrice     = $buyOrder->amount;
 
+                $oldSellPrice = Cache::get($buyOrder->order_id);
+
                 printf("== CurrentPrice: %s, BuyPrice: %s, Signal: %s\n", $currentPrice, $buyPrice, $signal);
                 if ($signal == 'buy' && $currentPrice < $buyPrice) {
                     $oldSellPrice = $take_profit;
-                    echo "We are comming from a loss and it goed back up again: " . $take_profit . "\n";
+                    echo "We are comming from a loss and it goes back up again: " . $take_profit . "\n";
                 }
 
                 //trailing sell order upwards
-                if ($signal == 'buy' && $currentPrice >= $take_profit && $oldSellPrice < $newSellPrice) {
+                if ($currentPrice >= $take_profit && $oldSellPrice < $newSellPrice) {
                     // Stoploss
                     echo "Take profit price would be: " . $newSellPrice . "\n";
                     // Steps cancel old sellprice and place new sell order.
+
+                    Cache::put($buyOrder->order_id, $newSellPrice, 360);
                 }
 
                 $take_loss = $buyOrder->amount - 20;
@@ -263,6 +275,8 @@ class TrendingLinesStrategy implements StrategyInterface
                     // Steps cancel old sellprice and place new sell order.
                 }
                 echo "****\n\n";
+
+
             }
         }
     }
@@ -278,10 +292,10 @@ class TrendingLinesStrategy implements StrategyInterface
     {
         $spread     = $this->config['spread'];
         $size       = $this->config['size'];
-        $max_orders = (int) $this->config['max_orders'];
+        $max_orders = (int)$this->config['max_orders'];
         $profit     = $this->config['sellspread'];
 
-        $restOrders      = $max_orders - (int) $this->orderService->getNumOpenOrders();
+        $restOrders      = $max_orders - (int)$this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $signal          = $this->getSignal();
 

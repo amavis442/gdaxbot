@@ -144,8 +144,7 @@ class RunBotCommand extends Command
                     $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
                 }
             }
-            
-            sleep(10);
+            sleep(15);
         }
     }
 

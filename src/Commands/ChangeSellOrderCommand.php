@@ -43,6 +43,11 @@ class ChangeSellOrderCommand extends Command {
 
         $orderService = new \App\Services\OrderService();
         $sellOrder = $orderService->fetchOrder($id);
+        if (!property_exists($sellOrder,'id')) {
+            $output->writeln('<error>Order with id not found</error>');
+            return;
+        }
+
 
         if (!count($sellOrder)) {
             $output->writeln('<error>Order with id not found</error>');
@@ -63,7 +68,11 @@ class ChangeSellOrderCommand extends Command {
         $parent_id = $sellOrder->parent_id;
         if ($parent_id > 0) {
             $buyOrder = $orderService->fetchOrder($parent_id);
-            
+            if (!property_exists($buyOrder,'id')) {
+                $output->writeln('<error>Order with id not found</error>');
+                return;
+            }
+
             $buysize = number_format($buyOrder->size,9,'.','');
             $buyprice = number_format($buyOrder->amount,3,'.','');
             $buyvalue = number_format($buysize * $buyprice, 3, '.', '');
