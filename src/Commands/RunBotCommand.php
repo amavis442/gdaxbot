@@ -17,6 +17,10 @@ use Symfony\Component\Console\Input\InputOption;
 use App\Traits\ActualizeBuysAndSells;
 use App\Strategies\Traits\TrendingLinesStrategy;
 
+use App\Util\Cache;
+use App\Traits\OHLC;
+
+
 /**
  * Description of RunBotCommand
  *
@@ -25,7 +29,7 @@ use App\Strategies\Traits\TrendingLinesStrategy;
 class RunBotCommand extends Command
 {
 
-    use ActualizeBuysAndSells;
+    use ActualizeBuysAndSells, OHLC;
 
     protected $gdaxService;
     protected $orderService;
@@ -58,7 +62,8 @@ class RunBotCommand extends Command
         $orderService    = new \App\Services\OrderService();
         $gdaxService     = new \App\Services\GDaxService();
         $indicators      = new Indicators();
-
+        $httpClient = new \GuzzleHttp\Client();
+        
         if ($input->getOption('sandbox')) {
             $output->writeln('<info>Running in sandbox mode</info>');
             $sandbox = true;
@@ -71,8 +76,28 @@ class RunBotCommand extends Command
 
 
         while (1) {
-            $output->writeln("=== RUN [" . date('Y-m-d H:i:s') . "] ===");
+            $output->writeln("=== RUN [" . \Carbon\Carbon::now('Europe/Amsterdam')->format('Y-m-d H:i:s') . "] ===");
+            $output->writeln(" Update Ticker ");
+            
+            $res = $httpClient->request('GET', 'https://api.gdax.com/products/BTC-EUR/ticker');
+            if ($res->getStatusCode() == 200) {
+                $jsonData = $res->getBody();
+                $data = json_decode($jsonData, true);
+                
+                $ticker = [];
+                $ticker['product_id'] = 'BTC-EUR';
+                $ticker['timeid'] = \Carbon\Carbon::parse($data['time'])->setTimezone('Europe/Amsterdam')->format('YmdHis');
+                $output->writeln('<info>'.$data['time']. ' '.$ticker['timeid'].'</info>');
+                $ticker['volume'] = $data['volume'];
+                $ticker['price'] = number_format($data['price'],2,'.','');
+                $this->markOHLC($ticker);
+            }
 
+                
+            
+            
+            /*
+            
             // Settings
             $config                       = [];
             $config['max_orders_per_run'] = getenv('MAX_ORDERS_PER_RUN');
@@ -123,7 +148,9 @@ class RunBotCommand extends Command
                     $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
                 }
             }
-            sleep(2);
+             * 
+             */
+            sleep(10);
         }
     }
 

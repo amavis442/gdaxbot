@@ -15,12 +15,12 @@ use \App\Util\Cache;
 
 trait OHLC
 {
-
     /**
      * @param $ticker
      *
      * @return bool
      */
+
     /**
      * @param array $ticker
      *
@@ -28,18 +28,18 @@ trait OHLC
      */
     public function markOHLC(array $ticker): bool
     {
-        $timeid = date('YmdHis'); // 20170530152259 unique for date
 
-        $last_price = $ticker['best_bid'];
-        $product_id = $ticker['product_id'];
-        $volume     = $ticker['volume_24h'];
+        $timeidTicker = $ticker['timeid'];   //date('YmdHis'); // 20170530152259 unique for date
+        $last_price   = (float) $ticker['price'];
+        $product_id   = $ticker['product_id'];
+        $volume       = round($ticker['volume']);
 
         /** tick table update */
         DB::insert("
             INSERT INTO ohlc_tick
             (`product_id`, `timeid`, `open`, `high`, `low`, `close`, `volume`)
             VALUES
-            ('$product_id', $timeid, $last_price, $last_price, $last_price, $last_price, $volume)
+            ('$product_id', $timeidTicker, $last_price, $last_price, $last_price, $last_price, $volume)
             ON DUPLICATE KEY UPDATE
             `high`   = CASE WHEN `high` < VALUES(`high`) THEN VALUES(`high`) ELSE `high` END,
             `low`    = CASE WHEN `low` > VALUES(`low`) THEN VALUES(`low`) ELSE `low` END,
@@ -47,14 +47,13 @@ trait OHLC
             `close`  = VALUES(`close`)
         ");
 
-        $timeid = date("YmdHi", strtotime($timeid));
+        $timeid = \Carbon\Carbon::createFromFormat('YmdHis', $timeidTicker)->format('YmdHi');
 
-        $this->update1MinuteOHLC($product_id, $timeid, $volume);
-        $this->update5MinuteOHLC($product_id, $timeid, $volume);
-        $this->update15MinutOHLC($product_id, $timeid, $volume);
-        $this->update30MinuteOHLC($product_id, $timeid, $volume);
-        $this->update1HourOHLC($product_id, $timeid, $volume);
-
+        $this->update1MinuteOHLC($product_id, $timeid);
+        $this->update5MinuteOHLC($product_id, $timeid);
+        $this->update15MinutOHLC($product_id, $timeid);
+        $this->update30MinuteOHLC($product_id, $timeid);
+        $this->update1HourOHLC($product_id, $timeid);
 
         return true;
     }
@@ -64,68 +63,71 @@ trait OHLC
      * @param int    $timeid
      * @param int    $volume
      */
-    public function update1MinuteOHLC(string $product_id, int $timeid, int $volume = 0)
+    public function update1MinuteOHLC(string $product_id, int $timeid)
     {
-        $open1  = null;
-        $close1 = null;
-        $high1  = null;
-        $low1   = null;
+        $open   = null;
+        $close  = null;
+        $high   = null;
+        $low    = null;
+        $volume = null;
 
+        $lastRecordedTimeId = DB::table('ohlc_1m')->select(DB::raw('MAX(timeid) AS timeid'))
+                ->where('product_id', $product_id)
+                ->first();
 
-        $last1m = DB::table('ohlc_1m')->select(DB::raw('MAX(timeid) AS timeid'))
-                    ->where('product_id', $product_id)
-                    ->first();
-
-        if ($last1m) {
-            $last1timeid = $last1m->timeid;
-            $last1timeid = date("YmdHi", strtotime($last1timeid));
+        if ($lastRecordedTimeId && $lastRecordedTimeId->timeid) {
+            $lasttimeidRecorded = (int) \Carbon\Carbon::createFromFormat('YmdHi', $lastRecordedTimeId->timeid)->format('YmdHi');
+        } else {
+            $lasttimeidRecorded = 0;
         }
 
-        if ($last1timeid < $timeid) {
+        if ($lasttimeidRecorded < $timeid) {
 
             /* Get High and Low from ticker data for insertion */
-            $last1timeids = date("YmdHis", strtotime(date("YmdHi", strtotime("-1 minutes", strtotime("now")))));
-            $accum1ma     = DB::table('ohlc_tick')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
-                              ->where('product_id', $product_id)
-                              ->where('timeid', '>=', $last1timeids)
-                              ->where('timeid', '<=', ($last1timeids + 59))
-                              ->first();
+            $starttimeid = (int) (\Carbon\Carbon::now()->subMinute(1)->format('YmdHi') . '00');
+            $lasttimeid  = (int) $starttimeid + 59;
 
-            $high1 = $accum1ma->high;
-            $low1  = $accum1ma->low;
 
+            $accumHighLowVolume = DB::table('ohlc_tick')->select(DB::raw('MAX(high) as high, MIN(low) as low, AVG(volume) as volume'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', $lasttimeid)
+                    ->first();
+
+            $high   = (float) $accumHighLowVolume->high;
+            $low    = (float) $accumHighLowVolume->low;
+            $volume = (int) round($accumHighLowVolume->volume);
 
             /* Get Open price from ticker data and last minute */
-            $accum1mb = DB::table('ohlc_tick')->select(DB::raw('open AS open'))
-                          ->where('product_id', $product_id)
-                          ->where('timeid', '>=', $last1timeids)
-                          ->where('timeid', '<=', ($last1timeids + 59))
-                          ->limit(1)
-                          ->first();
+            $accumOpen = DB::table('ohlc_tick')->select(DB::raw('open AS open'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', $lasttimeid)
+                    ->limit(1)
+                    ->first();
 
-            if ($accum1mb) {
-                $open1 = $accum1mb->open;
+            if ($accumOpen) {
+                $open = (float) $accumOpen->open;
             }
 
             /* Get close price from ticker data and last minute */
-            $accum1mc = DB::table('ohlc_tick')->select(DB::raw('close AS close'))
-                          ->where('product_id', $product_id)
-                          ->where('timeid', '>=', $last1timeids)
-                          ->where('timeid', '<=', ($last1timeids + 59))
-                          ->orderBy('ctime', 'desc')
-                          ->limit(1)
-                          ->first();
+            $accumClose = DB::table('ohlc_tick')->select(DB::raw('close AS close'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', $lasttimeid)
+                    ->orderBy('ctime', 'desc')
+                    ->limit(1)
+                    ->first();
 
-            if ($accum1mc) {
-                $close1 = $accum1mc->close;
+            if ($accumClose) {
+                $close = (float) $accumClose->close;
             }
 
-            if ($open1 && $close1 && $high1 && $low1) {
-                DB::insert("
-            INSERT INTO ohlc_1m 
+            if ($open && $close && $high && $low) {
+                DB::insert("INSERT INTO ohlc_1m 
             (`product_id`, `timeid`, `open`, `high`, `low`, `close`, `volume`)
             VALUES
-            ('$product_id', $timeid, $open1, $high1, $low1, $close1, $volume)
+            ('$product_id', $timeid, $open, $high, $low, $close, $volume)
             ON DUPLICATE KEY UPDATE 
             `high`   = CASE WHEN `high` < VALUES(`high`) THEN VALUES(`high`) ELSE `high` END,
             `low`    = CASE WHEN `low` > VALUES(`low`) THEN VALUES(`low`) ELSE `low` END,
@@ -142,63 +144,71 @@ trait OHLC
      */
     public function update5MinuteOHLC(string $product_id, int $timeid, int $volume = 0)
     {
-        $open5  = null;
-        $close5 = null;
-        $high5  = null;
-        $low5   = null;
+        $open   = null;
+        $close  = null;
+        $high   = null;
+        $low    = null;
+        $volume = null;
 
-        $last5m = DB::table('ohlc_5m')->select(DB::raw('MAX(timeid) AS timeid'))
+
+        $lastRecordedTimeId = DB::table('ohlc_5m')->select(DB::raw('MAX(timeid) AS timeid'))
+                ->where('product_id', $product_id)
+                ->first();
+
+        if ($lastRecordedTimeId && $lastRecordedTimeId->timeid) {
+            $lasttimeid = (int) \Carbon\Carbon::createFromFormat('YmdHi', $lastRecordedTimeId->timeid)->addMinute(4)->format('YmdHi');
+        } else {
+            $lasttimeid = 0;
+        }
+
+        if ($lasttimeid < $timeid) {
+
+            /* Get High and Low from 1m data for insertion */
+            $starttimeid = \Carbon\Carbon::now()->subMinute(5)->format('YmdHi');
+
+
+            $accumHighLowVolume = DB::table('ohlc_1m')->select(DB::raw('MAX(high) as high, MIN(low) as low, AVG(volume) as volume'))
                     ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', $timeid)
                     ->first();
 
-        $last5timeid = $last5m->timeid;
-        $last5timeid = date("YmdHi", strtotime("+4 minutes", strtotime($last5timeid)));
-
-
-        if ($last5timeid < $timeid) {
-            /* Get High and Low from 1m data for insertion */
-            $last5timeids = date("YmdHi", strtotime("-5 minutes", strtotime("now")));
-            $accum5ma     = DB::table('ohlc_1m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
-                              ->where('product_id', $product_id)
-                              ->where('timeid', '>=', $last5timeids)
-                              ->where('timeid', '<=', ($timeid))
-                              ->first();
-            if ($accum5ma) {
-                $high5 = $accum5ma->high;
-                $low5  = $accum5ma->low;
+            if ($accumHighLowVolume) {
+                $high   = (float) $accumHighLowVolume->high;
+                $low    = (float) $accumHighLowVolume->low;
+                $volume = (int) round($accumHighLowVolume->volume);
             }
 
             /* Get Open price from 1m data and last 5 minutes */
-            $accum5mb = DB::table('ohlc_1m')->select(DB::raw('*'))
-                          ->where('product_id', $product_id)
-                          ->where('timeid', '>=', $last5timeids)
-                          ->where('timeid', '<=', ($timeid))
-                          ->limit(1)
-                          ->first();
+            $accumOpen = DB::table('ohlc_1m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', $timeid)
+                    ->limit(1)
+                    ->first();
 
-            if ($accum5mb) {
-                $open5 = $accum5mb->open;
+            if ($accumOpen) {
+                $open = (float) $accumOpen->open;
             }
 
             /* Get Close price from 1m data and last 5 minutes */
-            $accum5mc = DB::table('ohlc_1m')->select(DB::raw('*'))
-                          ->where('product_id', $product_id)
-                          ->where('timeid', '>=', $last5timeids)
-                          ->where('timeid', '<=', ($timeid))
-                          ->orderBy('ctime', 'desc')
-                          ->limit(1)
-                          ->first();
+            $accumClose = DB::table('ohlc_1m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->orderBy('ctime', 'desc')
+                    ->limit(1)
+                    ->first();
 
-            if ($accum5mc) {
-                $close5 = $accum5mc->close;
+            if ($accumClose) {
+                $close = (float) $accumClose->close;
             }
 
-            if ($open5 && $close5 && $low5 && $high5) {
-                DB::insert("
-            INSERT INTO ohlc_5m 
+            if ($open && $close && $low && $high) {
+                DB::insert("INSERT INTO ohlc_5m 
             (`product_id`, `timeid`, `open`, `high`, `low`, `close`, `volume`)
             VALUES
-            ('$product_id', $timeid, $open5, $high5, $low5, $close5, $volume)
+            ('$product_id', $timeid, $open, $high, $low, $close, $volume)
             ON DUPLICATE KEY UPDATE 
             `high`   = CASE WHEN `high` < VALUES(`high`) THEN VALUES(`high`) ELSE `high` END,
             `low`    = CASE WHEN `low` > VALUES(`low`) THEN VALUES(`low`) ELSE `low` END,
@@ -216,65 +226,69 @@ trait OHLC
     public function update15MinutOHLC(string $product_id, int $timeid, int $volume = 0)
     {
         /** 15m table update * */
-        $open15  = null;
-        $close15 = null;
-        $high15  = null;
-        $low15   = null;
+        $open   = null;
+        $close  = null;
+        $high   = null;
+        $low    = null;
+        $volume = null;
 
-        $last15m = DB::table('ohlc_15m')->select(DB::raw('MAX(timeid) AS timeid'))
-                     ->where('product_id', $product_id)
-                     ->first();
+        $lastRecordedTimeId = DB::table('ohlc_15m')->select(DB::raw('MAX(timeid) AS timeid'))
+                ->where('product_id', $product_id)
+                ->first();
 
-        if ($last15m) {
-            $last15timeid = $last15m->timeid;
-            $last15timeid = date("YmdHi", strtotime("+14 minutes", strtotime($last15timeid)));
+        if ($lastRecordedTimeId && $lastRecordedTimeId->timeid) {
+            $lasttimeid = (int) \Carbon\Carbon::createFromFormat('YmdHi', $lastRecordedTimeId->timeid)->addMinute(14)->format('YmdHi');
+        } else {
+            $lasttimeid = 0;
         }
 
-        if ($last15timeid < $timeid) {
+        if ($lasttimeid < $timeid) {
             /* Get High and Low from 5m data for insertion */
-            $last15timeids = date("YmdHi", strtotime("-15 minutes", strtotime("now")));
-            $accum15ma     = DB::table('ohlc_5m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
-                               ->where('product_id', $product_id)
-                               ->where('timeid', '>=', $last15timeids)
-                               ->where('timeid', '<=', ($timeid))
-                               ->first();
+            $starttimeid = \Carbon\Carbon::now()->subMinute(15)->format('YmdHi'); //last15timeids = date("YmdHi", strtotime("-15 minutes", strtotime("now")));
 
-            if ($accum15ma) {
-                $high15 = $accum15ma->high;
-                $low15  = $accum15ma->low;
+            $accumOpenHighVolume = DB::table('ohlc_5m')->select(DB::raw('MAX(high) as high, MIN(low) as low, AVG(volume) as volume'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->first();
+
+            if ($accumOpenHighVolume) {
+                $high   = (float) $accumOpenHighVolume->high;
+                $low    = (float) $accumOpenHighVolume->low;
+                $volume = (int) round($volume);
             }
 
             /* Get Open price from 5m data and last 15 minutes */
-            $accum15mb = DB::table('ohlc_5m')->select(DB::raw('*'))
-                           ->where('product_id', $product_id)
-                           ->where('timeid', '>=', $last15timeids)
-                           ->where('timeid', '<=', ($timeid))
-                           ->limit(1)
-                           ->first();
+            $accumOpen = DB::table('ohlc_5m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->limit(1)
+                    ->first();
 
-            if ($accum15mb) {
-                $open15 = $accum15mb->open;
+            if ($accumOpen) {
+                $open = (float) $accumOpen->open;
             }
 
             /* Get Close price from 5m data and last 15 minutes */
-            $accum15mc = DB::table('ohlc_5m')->select(DB::raw('*'))
-                           ->where('product_id', $product_id)
-                           ->where('timeid', '>=', $last15timeids)
-                           ->where('timeid', '<=', ($timeid))
-                           ->orderBy('ctime', 'desc')
-                           ->limit(1)
-                           ->first();
+            $accumClose = DB::table('ohlc_5m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->orderBy('ctime', 'desc')
+                    ->limit(1)
+                    ->first();
 
-            if ($accum15mc) {
-                $close15 = $accum15mc->close;
+            if ($accumClose) {
+                $close = (float) $accumClose->close;
             }
 
-            if ($open15 && $close15 && $low15 && $high15) {
+            if ($open && $close && $low && $high) {
                 DB::insert("
             INSERT INTO ohlc_15m 
             (`product_id`, `timeid`, `open`, `high`, `low`, `close`, `volume`)
             VALUES
-            ('$product_id', $timeid, $open15, $high15, $low15, $close15, $volume)
+            ('$product_id', $timeid, $open, $high, $low, $close, $volume)
             ON DUPLICATE KEY UPDATE 
             `high`   = CASE WHEN `high` < VALUES(`high`) THEN VALUES(`high`) ELSE `high` END,
             `low`    = CASE WHEN `low` > VALUES(`low`) THEN VALUES(`low`) ELSE `low` END,
@@ -292,65 +306,68 @@ trait OHLC
     public function update30MinuteOHLC(string $product_id, int $timeid, int $volume = 0)
     {
         /** 30m table update * */
-        $open30  = null;
-        $close30 = null;
-        $high30  = null;
-        $low30   = null;
+        $open   = null;
+        $close  = null;
+        $high   = null;
+        $low    = null;
+        $volume = null;
 
-        $last30m = DB::table('ohlc_30m')->select(DB::raw('MAX(timeid) AS timeid'))
-                     ->where('product_id', $product_id)
-                     ->first();
+        $lastRecordedTimeId = DB::table('ohlc_30m')->select(DB::raw('MAX(timeid) AS timeid'))
+                ->where('product_id', $product_id)
+                ->first();
 
-        if ($last30m) {
-            $last30timeid = $last30m->timeid;
-            $last30timeid = date("YmdHi", strtotime("+29 minutes", strtotime($last30timeid)));
+        if ($lastRecordedTimeId) {
+            $lasttimeid = (int) $lastRecordedTimeId->timeid + 29 * 60;
+        } else {
+            $lasttimeid = 0;
         }
 
-        if ($last30timeid < $timeid) {
+        if ($lasttimeid < $timeid) {
             /* Get High and Low from 15m data for insertion */
-            $last30timeids = date("YmdHi", strtotime("-30 minutes", strtotime("now")));
-            $accum30ma     = DB::table('ohlc_15m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
-                               ->where('product_id', $product_id)
-                               ->where('timeid', '>=', $last30timeids)
-                               ->where('timeid', '<=', ($timeid))
-                               ->first();
+            $starttimeid = \Carbon\Carbon::now()->subMinute(30)->format('YmdHi'); // date("YmdHi", strtotime("-30 minutes", strtotime("now")));
 
-            if ($accum30ma) {
-                $high30 = $accum30ma->high;
-                $low30  = $accum30ma->low;
+            $accumOpenHighVolume = DB::table('ohlc_15m')->select(DB::raw('MAX(high) as high, MIN(low) as low, AVG(volume) as volume'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->first();
+
+            if ($accumOpenHighVolume) {
+                $high   = (float) $accumOpenHighVolume->high;
+                $low    = (float) $accumOpenHighVolume->low;
+                $volume = (int) round($accumOpenHighVolume->volume);
             }
 
             /* Get Open price from 15m data and last 30 minutes */
-            $accum30mb = DB::table('ohlc_15m')->select(DB::raw('*'))
-                           ->where('product_id', $product_id)
-                           ->where('timeid', '>=', $last30timeids)
-                           ->where('timeid', '<=', ($timeid))
-                           ->limit(1)
-                           ->first();
+            $accumOpen = DB::table('ohlc_15m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->limit(1)
+                    ->first();
 
-            if ($accum30mb) {
-                $open30 = $accum30mb->open;
+            if ($accumOpen) {
+                $open = (float) $accumOpen->open;
             }
 
             /* Get Close price from 15m data and last 30 minutes */
-            $accum30mc = DB::table('ohlc_15m')->select(DB::raw('*'))
-                           ->where('product_id', $product_id)
-                           ->where('timeid', '>=', $last30timeids)
-                           ->where('timeid', '<=', ($timeid))
-                           ->orderBy('ctime', 'desc')
-                           ->limit(1)
-                           ->first();
+            $accumClose = DB::table('ohlc_15m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->orderBy('ctime', 'desc')
+                    ->limit(1)
+                    ->first();
 
-            if ($accum30mc) {
-                $close30 = $accum30mc->close;
+            if ($accumClose) {
+                $close = (float) $accumClose->close;
             }
 
-            if ($open30 && $close30 && $low30 && $high30) {
-                DB::insert("
-            INSERT INTO ohlc_30m 
+            if ($open && $close && $low && $high) {
+                DB::insert("INSERT INTO ohlc_30m 
             (`product_id`, `timeid`, `open`, `high`, `low`, `close`, `volume`)
             VALUES
-            ('$product_id', $timeid, $open30, $high30, $low30, $close30, $volume)
+            ('$product_id', $timeid, $open, $high, $low, $close, $volume)
             ON DUPLICATE KEY UPDATE 
             `high`   = CASE WHEN `high` < VALUES(`high`) THEN VALUES(`high`) ELSE `high` END,
             `low`    = CASE WHEN `low` > VALUES(`low`) THEN VALUES(`low`) ELSE `low` END,
@@ -368,65 +385,69 @@ trait OHLC
     public function update1HourOHLC(string $product_id, int $timeid, int $volume = 0)
     {
         /** 1h table update * */
-        $open60  = null;
-        $close60 = null;
-        $high60  = null;
-        $low60   = null;
+        $open   = null;
+        $close  = null;
+        $high   = null;
+        $low    = null;
+        $volume = null;
 
-        $last60m = DB::table('ohlc_1h')->select(DB::raw('MAX(timeid) AS timeid'))
-                     ->where('product_id', $product_id)
-                     ->first();
+        $lastRecordedTimeId = DB::table('ohlc_1h')->select(DB::raw('MAX(timeid) AS timeid'))
+                ->where('product_id', $product_id)
+                ->first();
 
-        if ($last60m) {
-            $last60timeid = $last60m->timeid;
-            $last60timeid = date("YmdHi", strtotime("+59 minutes", strtotime($last60timeid)));
+        if ($lastRecordedTimeId && $lastRecordedTimeId->timeid) {
+            $lasttimeid = (int) \Carbon\Carbon::createFromFormat('YmdHi', $lastRecordedTimeId->timeid)->addMinute(59)->format('YmdHi');
+        } else {
+            $lasttimeid = 0;
         }
 
-        if ($last60timeid < $timeid) {
+        if ($lasttimeid < $timeid) {
             /* Get High and Low from 30m data for insertion */
-            $last60timeids = date("YmdHi", strtotime("-60 minutes", strtotime("now")));
-            $accum60ma     = DB::table('ohlc_30m')->select(DB::raw('MAX(high) as high, MIN(low) as low'))
-                               ->where('product_id', $product_id)
-                               ->where('timeid', '>=', $last60timeids)
-                               ->where('timeid', '<=', ($timeid))
-                               ->first();
+            $starttimeid = \Carbon\Carbon::now()->subMinute(60)->format('YmdHi'); // date("YmdHi", strtotime("-60 minutes", strtotime("now")));
 
-            if ($accum60ma) {
-                $high60 = $accum60ma->high;
-                $low60  = $accum60ma->low;
+            $accumHighLowVolume = DB::table('ohlc_30m')->select(DB::raw('MAX(high) as high, MIN(low) as low, AVG(volume) as volume'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->first();
+
+            if ($accumHighLowVolume) {
+                $high   = (float) $accumHighLowVolume->high;
+                $low    = (float) $accumHighLowVolume->low;
+                $volume = $accumHighLowVolume->volume;
             }
 
             /* Get Open price from 30m data and last 60 minutes */
-            $accum60mb = DB::table('ohlc_30m')->select(DB::raw('*'))
-                           ->where('product_id', $product_id)
-                           ->where('timeid', '>=', $last60timeids)
-                           ->where('timeid', '<=', ($timeid))
-                           ->limit(1)
-                           ->first();
+            $accumOpen = DB::table('ohlc_30m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->limit(1)
+                    ->first();
 
-            if ($accum60mb) {
-                $open60 = $accum60mb->open;
+            if ($accumOpen) {
+                $open = (float) $accumOpen->open;
             }
 
             /* Get Close price from 30m data and last 60 minutes */
-            $accum60mc = DB::table('ohlc_30m')->select(DB::raw('*'))
-                           ->where('product_id', $product_id)
-                           ->where('timeid', '>=', $last60timeids)
-                           ->where('timeid', '<=', ($timeid))
-                           ->orderBy('ctime', 'desc')
-                           ->limit(1)
-                           ->first();
+            $accumClose = DB::table('ohlc_30m')->select(DB::raw('*'))
+                    ->where('product_id', $product_id)
+                    ->where('timeid', '>=', $starttimeid)
+                    ->where('timeid', '<=', ($timeid))
+                    ->orderBy('ctime', 'desc')
+                    ->limit(1)
+                    ->first();
 
-            if ($accum60mc) {
-                $close60 = $accum60mc->close;
+            if ($accumClose) {
+                $close = (float) $accumClose->close;
             }
 
-            if ($open60 && $close60 && $low60 && $high60) {
+            if ($open && $close && $low && $high) {
                 DB::insert("
             INSERT INTO ohlc_1h 
             (`product_id`, `timeid`, `open`, `high`, `low`, `close`, `volume`)
             VALUES
-            ('$product_id', $timeid, $open60, $high60, $low60, $close60, $volume)
+            ('$product_id', $timeid, $open, $high, $low, $close, $volume)
             ON DUPLICATE KEY UPDATE 
             `high`   = CASE WHEN `high` < VALUES(`high`) THEN VALUES(`high`) ELSE `high` END,
             `low`    = CASE WHEN `low` > VALUES(`low`) THEN VALUES(`low`) ELSE `low` END,
@@ -496,11 +517,11 @@ trait OHLC
         }
 
         $rows = DB::table('ohlc_' . $periodSize)
-                  ->select(DB::raw('*, unix_timestamp(ctime) as buckettime'))
-                  ->where('product_id', $product_id)
-                  ->orderby('timeid', 'DESC')
-                  ->limit($limit)
-                  ->get();
+                ->select(DB::raw('*, unix_timestamp(ctime) as buckettime'))
+                ->where('product_id', $product_id)
+                ->orderby('timeid', 'DESC')
+                ->limit($limit)
+                ->get();
 
         $starttime    = null;
         $validperiods = 0;
@@ -515,22 +536,22 @@ trait OHLC
             } else {
                 /** Check for missing periods * */
                 if ($periodSize == '1m') {
-                    $variance = (int)119;
+                    $variance = (int) 119;
                 } else {
                     if ($periodSize == '5m') {
-                        $variance = (int)375;
+                        $variance = (int) 375;
                     } else {
                         if ($periodSize == '15m') {
-                            $variance = (int)1125;
+                            $variance = (int) 1125;
                         } else {
                             if ($periodSize == '30m') {
-                                $variance = (int)2250;
+                                $variance = (int) 2250;
                             } else {
                                 if ($periodSize == '1h') {
-                                    $variance = (int)4500;
+                                    $variance = (int) 4500;
                                 } else {
                                     if ($periodSize == '1d') {
-                                        $variance = (int)108000;
+                                        $variance = (int) 108000;
                                     }
                                 }
                             }
@@ -540,7 +561,7 @@ trait OHLC
 
                 $periodcheck = $starttime - $endtime;
 
-                if ((int)$periodcheck > (int)$variance) {
+                if ((int) $periodcheck > (int) $variance) {
                     dump($starttime, $endtime, $periodcheck, $oldrow, $row);
                     echo "** YOU HAVE " . $validperiods . " PERIODS OF VALID PRICE DATA OUT OF ' . $limit . '. Please ensure price sync is running and wait for additional data to be logged before trying again. Additionally you could use a smaller time period if available.\n";
                 }
