@@ -232,7 +232,7 @@ class TrendingLinesStrategy implements StrategyInterface
     {
        
         $sellOrders = $this->orderService->getOpenSellOrders();
-        if (is_array($sellOrders)) {
+        if (is_array($sellOrders) && count($sellOrders)) {
             foreach ($sellOrders as $sellOrder) {
                 if (!$sellOrder) {
                     break;
