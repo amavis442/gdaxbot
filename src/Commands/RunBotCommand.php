@@ -51,84 +51,80 @@ class RunBotCommand extends Command
         return $strategies['Trendlines'];
     }
 
-
-
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln("=== RUN [" . date('Y-m-d H:i:s') . "] ===");
-        
-        // Settings
+        $sandbox         = false;
         $settingsService = new \App\Services\SettingsService();
+        $orderService    = new \App\Services\OrderService();
+        $gdaxService     = new \App\Services\GDaxService();
+        $indicators      = new Indicators();
 
-        $config                       = [];
-        $config['max_orders_per_run'] = getenv('MAX_ORDERS_PER_RUN');
-        $config                       = array_merge($config, $settingsService->getSettings());
-
-        $botactive = ($config['botactive'] == 1 ? true : false);
-        if (!$botactive) {
-            $output->writeln("<info>Bot is not active at the moment</info>");
-            return;
-        }
-
-        $orderService = new \App\Services\OrderService();
-
-        $gdaxService = new \App\Services\GDaxService();
-        $gdaxService->setCoin(getenv('CRYPTOCOIN'));
-
-        $sandbox = false;
         if ($input->getOption('sandbox')) {
             $output->writeln('<info>Running in sandbox mode</info>');
             $sandbox = true;
         }
+        $gdaxService->setCoin(getenv('CRYPTOCOIN'));
 
         $gdaxService->connect($sandbox);
-
-        //Cleanup
         $this->gdaxService  = $gdaxService;
         $this->orderService = $orderService;
 
-        $this->orderService->garbageCollection();
-        $this->actualize();
-        $this->actualizeSells();
-        $this->orderService->fixRejectedSells();
-        
-        // Now we can use strategy       
-        $indicators = new Indicators();
-        $strategy   = $this->getStrategy();
-        $strategy->setIndicicators($indicators);
-        $strategy->setOrderService($orderService);
-        $strategy->setGdaxService($gdaxService);
-        $strategy->settings($config);
-        
-        // Even when the limit is reached, i want to know the signal
-        $signal = $strategy->getSignal();
-        echo "Signal: ".$signal."\n";
-                
-        $currentPrice      = $gdaxService->getCurrentPrice();
-        
-        
-        
-        
-        // WIP
-        $strategy->stopLoss($signal,$currentPrice);
-        
-        // Create safe limits
-        $topLimit    = $config['top'];
-        $bottomLimit = $config['bottom'];
-         if (!$currentPrice || $currentPrice < 1 || $currentPrice > $topLimit || $currentPrice < $bottomLimit) {
-            $output->writeln(sprintf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
-            return;
+
+        while (1) {
+            $output->writeln("=== RUN [" . date('Y-m-d H:i:s') . "] ===");
+
+            // Settings
+            $config                       = [];
+            $config['max_orders_per_run'] = getenv('MAX_ORDERS_PER_RUN');
+            $config                       = array_merge($config, $settingsService->getSettings());
+
+            $botactive = ($config['botactive'] == 1 ? true : false);
+            if (!$botactive) {
+                $output->writeln("<info>Bot is not active at the moment</info>");
+            } else {
+                //Cleanup
+                $this->orderService->garbageCollection();
+                $this->actualize();
+                $this->actualizeSells();
+                $this->orderService->fixRejectedSells();
+
+                // Now we can use strategy       
+
+                $strategy = $this->getStrategy();
+                $strategy->setIndicicators($indicators);
+                $strategy->setOrderService($orderService);
+                $strategy->setGdaxService($gdaxService);
+                $strategy->settings($config);
+
+                // Even when the limit is reached, i want to know the signal
+                $signal = $strategy->getSignal();
+                $output->writeln("Signal: " . $signal);
+
+                $currentPrice = $gdaxService->getCurrentPrice();
+
+                // WIP
+                $strategy->stopLoss($signal, $currentPrice);
+
+                // Create safe limits
+                $topLimit    = $config['top'];
+                $bottomLimit = $config['bottom'];
+                if (!$currentPrice || $currentPrice < 1 || $currentPrice > $topLimit || $currentPrice < $bottomLimit) {
+                    $output->writeln(sprintf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
+                } else {
+
+                    $output->writeln("** Place sell orders");
+                    $strategy->closePosition();
+
+                    $this->actualizeBuys();
+
+                    $output->writeln("** Place buy orders");
+                    $strategy->createPosition($currentPrice);
+
+                    $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
+                }
+            }
+            sleep(2);
         }
-
-        $output->writeln("** Place sell orders");
-        $strategy->closePosition();
-
-        $this->actualizeBuys();
-       
-        $output->writeln("** Place buy orders");
-        $strategy->createPosition($currentPrice);
-
-        $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
     }
 
 }
