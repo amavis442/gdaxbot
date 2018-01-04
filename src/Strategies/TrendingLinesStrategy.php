@@ -234,7 +234,9 @@ class TrendingLinesStrategy implements StrategyInterface
         $sellOrders = $this->orderService->getOpenSellOrders();
         if (is_array($sellOrders)) {
             foreach ($sellOrders as $sellOrder) {
-
+                if (!$sellOrder) {
+                    break;
+                }
                 $buyId    = $sellOrder->parent_id;
                 $buyOrder = $this->orderService->fetchOrder($buyId);
 
