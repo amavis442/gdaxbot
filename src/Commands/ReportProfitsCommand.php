@@ -19,7 +19,7 @@ class ReportProfitsCommand extends Command {
     }
     
      protected function configure() {
-        $this->setName('bot:report:profits')
+        $this->setName('report:profits')
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Shows a table of profit/losses by the bot.')

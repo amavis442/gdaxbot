@@ -25,7 +25,7 @@ use Symfony\Component\Console\Helper\Table;
 class ReportCommand extends Command {
     
     protected function configure() {
-        $this->setName('bot:report')
+        $this->setName('report')
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Report of the wallet.')

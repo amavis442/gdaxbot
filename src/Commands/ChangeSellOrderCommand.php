@@ -19,7 +19,7 @@ class ChangeSellOrderCommand extends Command {
     }
 
     protected function configure() {
-        $this->setName('bot:change:sell')
+        $this->setName('change:sell')
                 ->setDescription('Change an open sell to a new price.')
                 ->addArgument('id', InputArgument::REQUIRED, 'The id you see in bot:report:openorders.')
                 ->addArgument('price', InputArgument::REQUIRED, 'The new price to sell for like 12000.00 or 300.00 or 300')

@@ -24,7 +24,7 @@ use App\Util\Transform;
 class ReportOpenOrdersCommand  extends Command {
     
     protected function configure() {
-        $this->setName('bot:report:openorders')
+        $this->setName('report:openorders')
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Shows a table of current open orders.')
@@ -40,7 +40,7 @@ class ReportOpenOrdersCommand  extends Command {
       
         $table = new Table($output);
         $table
-            ->setHeaders(['id','parent_id','side', 'size', 'amount','status', 'order_id', 'created_at', 'updated_at'])
+            ->setHeaders(['id','parent_id','side', 'size', 'amount','status', 'order_id','strategy', 'take_profit','signalpos','signalneg','close_reason','created_at', 'updated_at'])
             ->setRows($rows);
         $table->render();
 
