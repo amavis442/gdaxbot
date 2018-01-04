@@ -10,6 +10,7 @@
 namespace App\Strategies;
 
 use App\Contracts\StrategyInterface;
+use App\Util\Cache;
 
 /**
  * Class TrendingLinesStrategy
@@ -242,17 +243,21 @@ class TrendingLinesStrategy implements StrategyInterface
                 $oldSellPrice = $sellOrder['amount'];
                 $buyPrice     = $buyOrder->amount;
 
+                $oldSellPrice = Cache::get($buyOrder->order_id);
+
                 printf("== CurrentPrice: %s, BuyPrice: %s, Signal: %s\n", $currentPrice, $buyPrice, $signal);
                 if ($signal == 'buy' && $currentPrice < $buyPrice) {
                     $oldSellPrice = $take_profit;
-                    echo "We are comming from a loss and it goed back up again: " . $take_profit . "\n";
+                    echo "We are comming from a loss and it goes back up again: " . $take_profit . "\n";
                 }
 
                 //trailing sell order upwards
-                if ($signal == 'buy' && $currentPrice >= $take_profit && $oldSellPrice < $newSellPrice) {
+                if ($currentPrice >= $take_profit && $oldSellPrice < $newSellPrice) {
                     // Stoploss
                     echo "Take profit price would be: " . $newSellPrice . "\n";
                     // Steps cancel old sellprice and place new sell order.
+
+                    Cache::put($buyOrder->order_id, $newSellPrice, 360);
                 }
 
                 $take_loss = $buyOrder->amount - 20;
@@ -263,6 +268,9 @@ class TrendingLinesStrategy implements StrategyInterface
                     // Steps cancel old sellprice and place new sell order.
                 }
                 echo "****\n\n";
+
+
+
             }
         }
     }
