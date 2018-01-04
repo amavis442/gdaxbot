@@ -83,6 +83,16 @@ class RunBotCommand extends Command
 
         $gdaxService->connect($sandbox);
 
+        //Cleanup
+        $this->gdaxService  = $gdaxService;
+        $this->orderService = $orderService;
+
+        $this->orderService->garbageCollection();
+        $this->actualize();
+        $this->actualizeSells();
+        $this->orderService->fixRejectedSells();
+        
+        // Now we can use strategy       
         $indicators = new Indicators();
         $strategy   = $this->getStrategy();
         $strategy->setIndicicators($indicators);
@@ -96,6 +106,9 @@ class RunBotCommand extends Command
                 
         $currentPrice      = $gdaxService->getCurrentPrice();
         
+        
+        
+        
         // WIP
         $strategy->stopLoss($signal,$currentPrice);
         
@@ -106,17 +119,6 @@ class RunBotCommand extends Command
             $output->writeln(sprintf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
             return;
         }
-                
-        
-        $this->gdaxService  = $gdaxService;
-        $this->orderService = $orderService;
-
-        $this->orderService->garbageCollection();
-        $this->actualize();
-        $this->actualizeSells();
-        $this->orderService->fixRejectedSells();
-
-        
 
         $output->writeln("** Place sell orders");
         $strategy->closePosition();

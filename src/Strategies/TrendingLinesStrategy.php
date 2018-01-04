@@ -234,15 +234,12 @@ class TrendingLinesStrategy implements StrategyInterface
         $sellOrders = $this->orderService->getOpenSellOrders();
         if (is_array($sellOrders) && count($sellOrders)) {
             foreach ($sellOrders as $sellOrder) {
-                if (!$sellOrder) {
-                    break;
-                }
-                $buyId    = $sellOrder->parent_id;
+                $buyId    = $sellOrder['parent_id'];
                 $buyOrder = $this->orderService->fetchOrder($buyId);
 
                 $take_profit  = $buyOrder->amount + 20;
                 $newSellPrice = $currentPrice - 20;
-                $oldSellPrice = $sellOrder->amount;
+                $oldSellPrice = $sellOrder['amount'];
                 $buyPrice     = $buyOrder->amount;
 
                 printf("== CurrentPrice: %s, BuyPrice: %s, Signal: %s\n", $currentPrice, $buyPrice, $signal);
