@@ -88,6 +88,16 @@ interface OrderServiceInterface {
      */
     public function getNumOpenOrders(): int;
 
+    
+    public function getTopOpenBuyOrder(): ?\stdClass;
+    
+    public function getBottomOpenBuyOrder(): ?\stdClass;
+    
+        
+    public function getTopOpenSellOrder(): ?\stdClass;
+    
+    public function getBottomOpenSellOrder(): ?\stdClass;
+    
     /**
      * @param string|null $date
      *

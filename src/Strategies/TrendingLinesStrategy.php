@@ -318,10 +318,12 @@ class TrendingLinesStrategy implements StrategyInterface
             $buyPrice = $oldBuyPrice - ($i * $spread);
             $buyPrice = number_format($buyPrice, 2, '.', '');
 
+            /*
             // Check if we already have a buy for this price, then try to find an open slot
             $hasBuyPrice = $this->orderService->buyPriceExists($buyPrice);
             $n           = 1;
             $placeOrder  = true;
+            
             while ($hasBuyPrice) {
                 $buyPrice = $buyPrice - $n * $spread;
                 $buyPrice = number_format($buyPrice, 2, '.', '');
@@ -332,7 +334,7 @@ class TrendingLinesStrategy implements StrategyInterface
                     $hasBuyPrice = false;
                 }
                 $n++;
-            }
+            }*/
 
 
             if ((is_null($lowestSellPrice) || $lowestSellPrice == 0 || $buyPrice < $lowestSellPrice) && $placeOrder) {

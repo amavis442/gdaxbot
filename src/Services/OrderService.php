@@ -174,6 +174,38 @@ class OrderService implements OrderServiceInterface
         return isset($row->minprice) ? $row->minprice : 0.0;
     }
 
+    public function getTopOpenBuyOrder(): ?\stdClass {
+        $result = DB::select("SELECT * from orders WHERE side='buy' AND status = 'open' OR status = 'pending' AND amount = (SELECT MAX(amount) maxamount from orders WHERE side='buy' AND status = 'open' OR status = 'pending') limit 1");
+        if ($result) {
+            return (object) $result[0];
+        }
+        return null ;
+    }
+    
+    public function getBottomOpenBuyOrder(): ?\stdClass {
+        $result = DB::select("SELECT * from orders WHERE side='buy' AND status = 'open' OR status = 'pending' AND amount = (SELECT MIN(amount) maxamount from orders WHERE side='buy' AND status = 'open' OR status = 'pending') limit 1");
+        if ($result) {
+            return (object) $result[0];
+        }
+        return null ;
+    }
+    
+    public function getTopOpenSellOrder(): ?\stdClass {
+        $result = DB::select("SELECT * from orders WHERE side='sell' AND status = 'open' OR status = 'pending' AND amount = (SELECT MAX(amount) maxamount from orders WHERE side='sell' AND status = 'open' OR status = 'pending') limit 1");
+        if ($result) {
+            return (object) $result[0];
+        }
+        return null ;
+    }
+    
+    public function getBottomOpenSellOrder(): ?\stdClass {
+        $result = DB::select("SELECT * from orders WHERE side='sell' AND status = 'open' OR status = 'pending' AND amount = (SELECT MIN(amount) maxamount from orders WHERE side='sell' AND status = 'open' OR status = 'pending') limit 1");
+        if ($result) {
+            return (object) $result[0];
+        }
+        return null ;
+    }
+    
     /**
      *
      * @param string $side
