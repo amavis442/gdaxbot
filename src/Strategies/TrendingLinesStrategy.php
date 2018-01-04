@@ -231,12 +231,18 @@ class TrendingLinesStrategy implements StrategyInterface
      */
     public function stopLoss(string $signal, float $currentPrice)
     {
-       
+
         $sellOrders = $this->orderService->getOpenSellOrders();
         if (is_array($sellOrders) && count($sellOrders)) {
             foreach ($sellOrders as $sellOrder) {
                 $buyId    = $sellOrder['parent_id'];
                 $buyOrder = $this->orderService->fetchOrder($buyId);
+
+                if (!property_exists($buyOrder, 'id')) {
+                    echo "Buyorder not found for " . $sellOrder->order_id . "\n";
+                    continue;
+                }
+
 
                 $take_profit  = $buyOrder->amount + 20;
                 $newSellPrice = $currentPrice - 20;
@@ -270,7 +276,6 @@ class TrendingLinesStrategy implements StrategyInterface
                 echo "****\n\n";
 
 
-
             }
         }
     }
@@ -286,10 +291,10 @@ class TrendingLinesStrategy implements StrategyInterface
     {
         $spread     = $this->config['spread'];
         $size       = $this->config['size'];
-        $max_orders = (int) $this->config['max_orders'];
+        $max_orders = (int)$this->config['max_orders'];
         $profit     = $this->config['sellspread'];
 
-        $restOrders      = $max_orders - (int) $this->orderService->getNumOpenOrders();
+        $restOrders      = $max_orders - (int)$this->orderService->getNumOpenOrders();
         $lowestSellPrice = $this->orderService->getLowestSellPrice();
         $signal          = $this->getSignal();
 

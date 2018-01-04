@@ -129,7 +129,11 @@ class OrderService implements OrderServiceInterface
     {
         $result = DB::table('orders')->select('*')->where('id', $id)->first();
 
-        return $result;
+        if ($result) {
+            return $result;
+        } else {
+            return new \stdClass;
+        }
     }
 
     /**
