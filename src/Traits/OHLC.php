@@ -542,7 +542,7 @@ trait OHLC
 
                 if ((int)$periodcheck > (int)$variance) {
                     dump($starttime, $endtime, $periodcheck, $oldrow, $row);
-                    echo "** YOU HAVE " . $validperiods . " PERIODS OF VALID PRICE DATA OUT OF ' . $limit . '. Please ensure price sync is running and wait for additional data to be logged before trying again. Additionally you could use a smaller time period if available.\n");
+                    echo "** YOU HAVE " . $validperiods . " PERIODS OF VALID PRICE DATA OUT OF ' . $limit . '. Please ensure price sync is running and wait for additional data to be logged before trying again. Additionally you could use a smaller time period if available.\n";
                 }
 
                 $validperiods++;
