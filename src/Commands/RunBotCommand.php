@@ -268,7 +268,7 @@ class RunBotCommand extends Command
 
                     $this->actualizeBuys();
 
-                    if ($strategy == PositionConstants::BUY) {
+                    if ($signal == PositionConstants::BUY) {
                         $profit       = $config['sellspread'];
                         $size         = $config['size'];
                         $takeProfitAt = number_format($currentPrice + $profit, 2, '.', '');
