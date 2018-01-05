@@ -75,7 +75,8 @@ class RunBotCommand extends Command
             $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, $takeProfitAt);
             $positionCreated = true;
         } else {
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, 0.0, 0, 0, $order->getMessage());
+            $reason = $order->getMessage() . $order->getRejectReason(). ' ';
+            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, 0.0, 0, 0, $reason);
         }
 
         return $positionCreated;
