@@ -303,6 +303,8 @@ class RunBotCommand extends Command
                         // Price should go up buy 30 euro to place next one
                         $canPlaceBuyOrder = false;
                         $highestBuy       = $this->orderService->getTopOpenBuyOrder();
+
+
                         if ($highestBuy) {
                             if ($buyPrice > $highestBuy + $spread) {
                                 $canPlaceBuyOrder = true;
@@ -310,13 +312,14 @@ class RunBotCommand extends Command
                         }
 
                         $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
-                        if ($lowestBuy) {
-                            if ($buyPrice < $lowestBuy - $spread) {
+                        $lowestSell = $this->orderService->getBottomOpenSellOrder();
+                        if ($lowestBuy || $lowestSell) {
+                            if ($buyPrice < $lowestBuy - $spread && $buyPrice < $lowestSell - $spread) {
                                 $canPlaceBuyOrder = true;
                             }
                         }
 
-                        if (!$lowestBuy && !$highestBuy) { // First order of the day
+                        if (!$lowestBuy && !$highestBuy && !$lowestSell) { // First order of the day
                             $canPlaceBuyOrder = true;
                         }
 
