@@ -254,6 +254,10 @@ class RunBotCommand extends Command
             $signal = $strategy->getSignal();
             $output->writeln("Signal: " . $signal);
 
+            $numOpenOrders = $this->orderService->getNumOpenOrders();
+            $numOrdersLeftToPlace = $config['max'] - $numOpenOrders;
+
+
             $botactive = ($config['botactive'] == 1 ? true : false);
             if (!$botactive) {
                 $output->writeln("<info>Bot is not active at the moment</info>");
@@ -278,21 +282,23 @@ class RunBotCommand extends Command
 
                     $this->actualizeBuys();
 
-                    if ($signal == PositionConstants::BUY) {
-                        $profit       = $config['sellspread'];
-                        $size         = $config['size'];
-                        $takeProfitAt = number_format($currentPrice + $profit, 2, '.', '');
-
-                        // Determine the price we want it
-                        $buyPrice = number_format($currentPrice - $config['spread'],2.,'.','');
-
-
+                    if ($signal == PositionConstants::BUY && $numOrdersLeftToPlace > 0) {
                         $output->writeln("** Place buy orders");
 
-                        if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
-                            $output->writeln('Position created: '. $size.' '. $currentPrice. ' Take profit At'. $takeProfitAt);
-                        } else {
-                            $output->writeln('<danger>Failed to create position created: '. $size.' '. $currentPrice. ' Take profit At'. $takeProfitAt.'</danger>');
+                        $profit       = $config['sellspread'];
+                        $size         = $config['size'];
+
+
+                        for ($i = 0; $i < $numOrdersLeftToPlace; $i ++) {
+                            // Determine the price we want it
+                            $buyPrice = number_format($currentPrice - $i* $config['spread'], 2., '.', '');
+                            $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
+
+                            if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
+                                $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt);
+                            } else {
+                                $output->writeln('<danger>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</danger>');
+                            }
                         }
                     }
                     $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
