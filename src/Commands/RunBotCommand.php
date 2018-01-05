@@ -307,7 +307,7 @@ class RunBotCommand extends Command
                         $size   = $config['size'];
 
                         // Determine the price we want it
-                        $buyPrice     = number_format($currentPrice - 0.02, 2, '.', '');
+                        $buyPrice     = number_format($currentPrice - 0.01, 2, '.', '');
                         $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
 
                         // Price should go up buy 30 euro to place next one
