@@ -297,10 +297,11 @@ class RunBotCommand extends Command
                         $buyPrice     = number_format($currentPrice - 0.02, 2, '.', '');
                         $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
 
+                        // Price should go up buy 30 euro to place next one
                         $canPlaceBuyOrder = false;
-                        $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
-                        if ($lowestBuy) {
-                            if ($buyPrice < $lowestBuy - 30) {
+                        $highestBuy = $this->orderService->getTopOpenBuyOrder();
+                        if ($highestBuy) {
+                            if ($buyPrice > $highestBuy + 30) {
                                 $canPlaceBuyOrder= true;
                             }
                         } else {
