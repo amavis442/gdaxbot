@@ -301,7 +301,7 @@ class RunBotCommand extends Command
                             if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
                                 $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At ' . $takeProfitAt);
                             } else {
-                                $output->writeln('<danger>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</danger>');
+                                $output->writeln('<warning>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</warning>');
                             }
                         }
                     }
