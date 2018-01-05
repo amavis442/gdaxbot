@@ -56,17 +56,17 @@ class RunBotCommand extends Command
     }
 
 
-    protected function createPosition($price, $size, $takeProfitAt): bool
+    protected function createPosition($price, $size, $takeProfitAt, $strategyName = ''): bool
     {
         $positionCreated = false;
 
         $order = $this->gdaxService->placeLimitBuyOrder($size, $price);
 
         if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $this->getName(), $takeProfitAt);
+            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, $takeProfitAt);
             $positionCreated = true;
         } else {
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $this->getName(), 0.0, 0, 0, $order->getMessage());
+            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, 0.0, 0, 0, $order->getMessage());
         }
 
         return $positionCreated;
@@ -238,6 +238,7 @@ class RunBotCommand extends Command
             $this->orderService->fixRejectedSells();
 
             // Now we can use strategy
+            /** @var \App\Contracts\StrategyInterface $strategy */
             $strategy = $this->getStrategy();
 
             // Even when the limit is reached, i want to know the signal
@@ -275,7 +276,7 @@ class RunBotCommand extends Command
 
                         $output->writeln("** Place buy orders");
 
-                        if ($this->createPosition($size, $currentPrice, $takeProfitAt)) {
+                        if ($this->createPosition($size, $currentPrice, $takeProfitAt, $strategy->getName())) {
                             $output->writeln('Position created: '. $size.' '. $currentPrice. ' Take profit At'. $takeProfitAt);
                         } else {
                             $output->writeln('<danger>Failed to create position created: '. $size.' '. $currentPrice. ' Take profit At'. $takeProfitAt.'</danger>');

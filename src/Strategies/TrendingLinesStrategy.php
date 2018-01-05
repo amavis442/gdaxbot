@@ -33,18 +33,6 @@ class TrendingLinesStrategy implements StrategyInterface
     /** @var \App\Util\Indicators */
     protected $indicators;
 
-    /** @var \App\Contracts\OrderServiceInterface */
-    protected $orderService;
-
-    /** @var \App\Contracts\GdaxServiceInterface */
-    protected $gdaxService;
-
-    /** @var array */
-    protected $config;
-
-    /** @var string */
-    protected $name;
-
     public function getName(): string
     {
         return 'TrendingLines';
