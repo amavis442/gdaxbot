@@ -293,7 +293,7 @@ class RunBotCommand extends Command
                         $size   = $config['size'];
 
                         // Determine the price we want it
-                        $buyPrice     = number_format($currentPrice - 0.02 - $config['spread'], 2, '.', '');
+                        $buyPrice     = number_format($currentPrice - 0.02, 2, '.', '');
                         $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
 
                         if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
