@@ -255,7 +255,7 @@ class RunBotCommand extends Command
             $output->writeln("Signal: " . $signal);
 
             $numOpenOrders = (int)$this->orderService->getNumOpenOrders();
-            $numOrdersLeftToPlace = (int)$config['max'] - $numOpenOrders;
+            $numOrdersLeftToPlace = (int)$config['max_orders'] - $numOpenOrders;
             if(!$numOrdersLeftToPlace) {
                 $numOrdersLeftToPlace = 0;
             }
