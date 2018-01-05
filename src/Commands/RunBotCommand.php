@@ -302,20 +302,37 @@ class RunBotCommand extends Command
 
                         // Price should go up buy 30 euro to place next one
                         $canPlaceBuyOrder = false;
-                        $highestBuy       = $this->orderService->getTopOpenBuyOrder();
 
-
+                        $highestBuy = $this->orderService->getTopOpenBuyOrder();
                         if ($highestBuy) {
                             if ($buyPrice > $highestBuy + $spread) {
                                 $canPlaceBuyOrder = true;
                             }
                         }
 
-                        $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
                         $lowestSell = $this->orderService->getBottomOpenSellOrder();
+                        $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
                         if ($lowestBuy || $lowestSell) {
-                            if ($buyPrice < $lowestBuy - $spread && $buyPrice < $lowestSell - $spread) {
-                                $canPlaceBuyOrder = true;
+                            if (!$lowestBuy && $lowestSell) {
+                                if ($buyPrice < ($lowestSell - $spread)) {
+                                    $canPlaceBuyOrder = true;
+                                }
+                            }
+
+                            if ($lowestBuy && !$lowestSell) {
+                                if ($buyPrice < ($lowestBuy - $spread)) {
+                                    $canPlaceBuyOrder = true;
+                                }
+                            }
+
+                            if ($lowestBuy && $lowestSell) {
+                                if ($lowestSell < $lowestBuy && $buyPrice < ($lowestSell - $spread)) {
+                                    $canPlaceBuyOrder = true;
+                                }
+
+                                if ($lowestSell > $lowestBuy && $buyPrice < ($lowestBuy - $spread)) {
+                                    $canPlaceBuyOrder = true;
+                                }
                             }
                         }
 
