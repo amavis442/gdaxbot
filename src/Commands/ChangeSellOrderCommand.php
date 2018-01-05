@@ -44,14 +44,8 @@ class ChangeSellOrderCommand extends Command {
         $orderService = new \App\Services\OrderService();
         $sellOrder = $orderService->fetchOrder($id);
         if (!$sellOrder) {
-            $output->writeln('<error>Order with id not found</error>');
+            $output->writeln('<error>Order with id '.$id.'not found</error>');
             return;
-        }
-
-
-        if (!count($sellOrder)) {
-            $output->writeln('<error>Order with id not found</error>');
-            return false;
         }
 
         if ($sellOrder->side != 'sell') {
