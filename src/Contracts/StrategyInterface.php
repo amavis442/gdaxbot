@@ -16,29 +16,11 @@ interface StrategyInterface {
 
     public function  getName(): string;
 
-    public function setIndicicators($indicators);
-    public function setOrderService($orderService);
-    public function setGdaxService($gdaxService);
-
-
-    /**
-     * Settings can be how many orders to place, spread, sellspread etc
-     * @param array $settings
-     */
-    public function settings(array $config = null);
-    
     /**
      * Signal will be buy, sell or hold
      */
-    public function getSignal();
+    public function getSignal(): int;
     
-    /**
-     * Buy 
-     */
-    public function createPosition($currentPrice);
-    
-    /**
-     * Sell
-     */
-    public function closePosition();
+
+
 }

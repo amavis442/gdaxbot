@@ -35,8 +35,7 @@ trait OHLC
         $volume       = round($ticker['volume']);
 
         /** tick table update */
-        DB::insert("
-            INSERT INTO ohlc_tick
+        DB::insert("INSERT INTO ohlc_tick
             (`product_id`, `timeid`, `open`, `high`, `low`, `close`, `volume`)
             VALUES
             ('$product_id', $timeidTicker, $last_price, $last_price, $last_price, $last_price, $volume)
@@ -44,8 +43,7 @@ trait OHLC
             `high`   = CASE WHEN `high` < VALUES(`high`) THEN VALUES(`high`) ELSE `high` END,
             `low`    = CASE WHEN `low` > VALUES(`low`) THEN VALUES(`low`) ELSE `low` END,
             `volume` = VALUES(`volume`),
-            `close`  = VALUES(`close`)
-        ");
+            `close`  = VALUES(`close`)");
 
         $timeid = \Carbon\Carbon::createFromFormat('YmdHis', $timeidTicker)->format('YmdHi');
 
