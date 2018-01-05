@@ -239,7 +239,7 @@ class TrendingLinesStrategy implements StrategyInterface
                 $buyId    = $sellOrder['parent_id'];
                 $buyOrder = $this->orderService->fetchOrder($buyId);
 
-                if (!property_exists($buyOrder, 'id')) {
+                if ($buyOrder) {
                     echo "Buyorder not found for " . $sellOrder->order_id . "\n";
                     continue;
                 }

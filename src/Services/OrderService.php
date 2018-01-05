@@ -301,7 +301,7 @@ class OrderService implements OrderServiceInterface
             foreach ($orders as $order) {
                 $order_id = $order->getId();
                 $row      = $this->fetchOrderByOrderId($order_id);
-                if (!$row || !property_exists($row, 'id')) {
+                if (!$row) {
                     $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
                 } else {
                     if ($row->status != 'done') {
