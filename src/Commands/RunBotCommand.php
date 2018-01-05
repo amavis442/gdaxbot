@@ -286,6 +286,7 @@ class RunBotCommand extends Command
 
                     $this->actualizeBuys();
 
+
                     if ($signal == PositionConstants::BUY && $numOrdersLeftToPlace > 0) {
                         $output->writeln("** Place buy orders");
 
@@ -296,10 +297,22 @@ class RunBotCommand extends Command
                         $buyPrice     = number_format($currentPrice - 0.02, 2, '.', '');
                         $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
 
-                        if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
-                            $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At ' . $takeProfitAt);
+                        $canPlaceBuyOrder = false;
+                        $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
+                        if ($lowestBuy) {
+                            if ($buyPrice < $lowestBuy - 30) {
+                                $canPlaceBuyOrder= true;
+                            }
                         } else {
-                            $output->writeln('<warning>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</warning>');
+                            $canPlaceBuyOrder = true;
+                        }
+
+                        if($canPlaceBuyOrder) {
+                            if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
+                                $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At ' . $takeProfitAt);
+                            } else {
+                                $output->writeln('<warning>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</warning>');
+                            }
                         }
                     }
                     $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
