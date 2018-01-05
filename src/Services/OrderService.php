@@ -302,7 +302,7 @@ class OrderService implements OrderServiceInterface
                 $order_id = $order->getId();
                 $row      = $this->fetchOrderByOrderId($order_id);
                 if (!$row) {
-                    $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice());
+                    $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice(), 'Manual', $order->getPrice() + 100.00);
                 } else {
                     if ($row->status != 'done') {
                         $this->updateOrderStatus($row->id, $order->getStatus());
