@@ -151,6 +151,7 @@ class RunBotCommand extends Command
 
                 $take_profit  = $buyOrder->amount + 20;
                 $newSellPrice = $currentPrice - 20;
+
                 $oldSellPrice = $sellOrder['amount'];
                 $buyPrice     = $buyOrder->amount;
 
@@ -241,6 +242,8 @@ class RunBotCommand extends Command
             $config['max_orders_per_run'] = getenv('MAX_ORDERS_PER_RUN');
             $config                       = array_merge($config, $this->settingsService->getSettings());
 
+            $spread = $config['spread'];
+
             //Cleanup
             $this->orderService->garbageCollection();
             $this->actualize();
@@ -299,17 +302,17 @@ class RunBotCommand extends Command
 
                         // Price should go up buy 30 euro to place next one
                         $canPlaceBuyOrder = false;
-                        $highestBuy = $this->orderService->getTopOpenBuyOrder();
+                        $highestBuy       = $this->orderService->getTopOpenBuyOrder();
                         if ($highestBuy) {
-                            if ($buyPrice > $highestBuy + 30) {
-                                $canPlaceBuyOrder= true;
+                            if ($buyPrice > $highestBuy + $spread) {
+                                $canPlaceBuyOrder = true;
                             }
                         }
 
                         $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
                         if ($lowestBuy) {
-                            if ($buyPrice < $lowestBuy - 30) {
-                                $canPlaceBuyOrder= true;
+                            if ($buyPrice < $lowestBuy - $spread) {
+                                $canPlaceBuyOrder = true;
                             }
                         }
 
@@ -317,7 +320,7 @@ class RunBotCommand extends Command
                             $canPlaceBuyOrder = true;
                         }
 
-                        if($canPlaceBuyOrder) {
+                        if ($canPlaceBuyOrder) {
                             if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
                                 $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At ' . $takeProfitAt);
                             } else {
