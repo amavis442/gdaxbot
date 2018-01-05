@@ -156,7 +156,7 @@ class RunBotCommand extends Command
 
                 $oldSellPrice = Cache::get($buyOrder->order_id);
 
-                printf("== CurrentPrice: %s, BuyPrice: %s, Signal: %s\n", $currentPrice, $buyPrice, $signal);
+                printf("WIP SL: == CurrentPrice: %s, BuyPrice: %s, Signal: %s\n", $currentPrice, $buyPrice, $signal);
                 if ($signal == 'buy' && $currentPrice < $buyPrice) {
                     $oldSellPrice = $take_profit;
                     echo "We are comming from a loss and it goes back up again: " . $take_profit . "\n";
