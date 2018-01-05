@@ -85,7 +85,7 @@ class RunBotCommand extends Command
     /**
      * Checks the open buys and if they are filled then place a buy order for the same size but higher price
      */
-    protected function closePosition()
+    protected function closePosition($strategyName = '')
     {
         $currentPendingOrders = $this->orderService->getOpenBuyOrders();
 
@@ -112,12 +112,12 @@ class RunBotCommand extends Command
 
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
 
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->getName(), 0.0, 0, 0, 'open', $parent_id);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $strategyName, 0.0, 0, 0, 'open', $parent_id);
 
                             echo "Updating order status from pending to done: " . $row['order_id'] . "\n";
                             $this->orderService->updateOrderStatus($row['id'], $status);
                         } else {
-                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $this->getName(), 0.0, 0, 0, $sellOrder->getMessage(), $parent_id);
+                            $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $strategyName, 0.0, 0, 0, $sellOrder->getMessage(), $parent_id);
                         }
                     } else {
                         echo "Order not done " . $row['order_id'] . "\n";
@@ -281,7 +281,7 @@ class RunBotCommand extends Command
                 } else {
 
                     $output->writeln("** Place sell orders");
-                    $this->closePosition();
+                    $this->closePosition($strategy->getName());
 
                     $this->actualizeBuys();
 
