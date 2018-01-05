@@ -166,12 +166,12 @@ class OrderService implements OrderServiceInterface
     /**
      * @return float
      */
-    public function getLowestSellPrice()
+    public function getLowestSellPrice(): ?float
     {
         $result = DB::select("SELECT min(amount) minprice FROM orders WHERE side='sell' AND status = 'open' OR status = 'pending'");
         $row    = $result[0];
 
-        return isset($row->minprice) ? $row->minprice : 0.0;
+        return isset($row->minprice) ? $row->minprice : null;
     }
 
     public function getTopOpenBuyOrder(): ?\stdClass {

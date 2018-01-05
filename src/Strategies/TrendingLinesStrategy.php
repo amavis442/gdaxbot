@@ -337,7 +337,7 @@ class TrendingLinesStrategy implements StrategyInterface
             }*/
 
 
-            if ((is_null($lowestSellPrice) || $lowestSellPrice == 0 || $buyPrice < $lowestSellPrice) && $placeOrder) {
+            if ((is_null($lowestSellPrice) || $lowestSellPrice == 0.0 || $buyPrice < $lowestSellPrice) && $placeOrder) {
                 $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
                 echo "Buy at: " . $buyPrice . "\n";
                 echo "Buy size: " . $size . "\n";

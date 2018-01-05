@@ -108,7 +108,7 @@ interface OrderServiceInterface {
     /**
      * Get the lowest price of an open or pending sell
      */
-    public function getLowestSellPrice();
+    public function getLowestSellPrice(): ?float;
     
     /**
      * Get orders which have a side. vb side = buy 
