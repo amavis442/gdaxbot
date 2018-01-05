@@ -143,7 +143,7 @@ class RunBotCommand extends Command
                 $buyId    = $sellOrder['parent_id'];
                 $buyOrder = $this->orderService->fetchOrder($buyId);
 
-                if ($buyOrder) {
+                if (!$buyOrder) {
                     echo "Buyorder not found for " . $sellOrder['order_id'] . "\n";
                     continue;
                 }
