@@ -295,11 +295,11 @@ class RunBotCommand extends Command
 
                         for ($i = 0; $i < $numOrdersLeftToPlace; $i ++) {
                             // Determine the price we want it
-                            $buyPrice = number_format($currentPrice - $i* $config['spread'], 2., '.', '');
+                            $buyPrice = number_format($currentPrice - 0.02 - $i * $config['spread'], 2, '.', '');
                             $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
 
                             if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
-                                $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt);
+                                $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At ' . $takeProfitAt);
                             } else {
                                 $output->writeln('<danger>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</danger>');
                             }
