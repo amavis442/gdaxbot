@@ -304,7 +304,16 @@ class RunBotCommand extends Command
                             if ($buyPrice > $highestBuy + 30) {
                                 $canPlaceBuyOrder= true;
                             }
-                        } else {
+                        }
+
+                        $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
+                        if ($lowestBuy) {
+                            if ($buyPrice < $lowestBuy - 30) {
+                                $canPlaceBuyOrder= true;
+                            }
+                        }
+
+                        if (!$lowestBuy && !$highestBuy) { // First order of the day
                             $canPlaceBuyOrder = true;
                         }
 
