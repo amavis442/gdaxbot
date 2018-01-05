@@ -305,9 +305,11 @@ class RunBotCommand extends Command
 
                         $lowestSell = $this->orderService->getBottomOpenSellOrder();
                         $highestBuy = $this->orderService->getTopOpenBuyOrder();
-                        if ($highestBuy && $highestBuy < $lowestSell) {
-                            if ($buyPrice > $highestBuy + $spread) {
-                                $canPlaceBuyOrder = true;
+                        if ($highestBuy || $highestBuy && $lowestSell) {
+                            if ($highestBuy && $lowestSell && $highestBuy < $lowestSell) {
+                                if ($buyPrice > $highestBuy + $spread) {
+                                    $canPlaceBuyOrder = true;
+                                }
                             }
                         }
 
