@@ -65,7 +65,7 @@ class RunBotCommand extends Command
     }
 
 
-    protected function createPosition($size,$price, $takeProfitAt, $strategyName = ''): bool
+    protected function createPosition($size, $price, $takeProfitAt, $strategyName = ''): bool
     {
         $positionCreated = false;
 
@@ -75,7 +75,7 @@ class RunBotCommand extends Command
             $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, $takeProfitAt);
             $positionCreated = true;
         } else {
-            $reason = $order->getMessage() . $order->getRejectReason(). ' ';
+            $reason = $order->getMessage() . $order->getRejectReason() . ' ';
             $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, 0.0, 0, 0, $reason);
         }
 
@@ -191,7 +191,7 @@ class RunBotCommand extends Command
         $httpClient = new \GuzzleHttp\Client();
 
         // Ticker
-        $res = $httpClient->request('GET', 'https://api.gdax.com/products/'.$pair.'/ticker');
+        $res = $httpClient->request('GET', 'https://api.gdax.com/products/' . $pair . '/ticker');
 
         if ($res->getStatusCode() == 200) {
             $jsonData = $res->getBody();
@@ -255,9 +255,9 @@ class RunBotCommand extends Command
             $signal = $strategy->getSignal();
             $output->writeln("Signal: " . $signal);
 
-            $numOpenOrders = (int)$this->orderService->getNumOpenOrders();
+            $numOpenOrders        = (int)$this->orderService->getNumOpenOrders();
             $numOrdersLeftToPlace = (int)$config['max_orders'] - $numOpenOrders;
-            if(!$numOrdersLeftToPlace) {
+            if (!$numOrdersLeftToPlace) {
                 $numOrdersLeftToPlace = 0;
             }
 
@@ -289,20 +289,17 @@ class RunBotCommand extends Command
                     if ($signal == PositionConstants::BUY && $numOrdersLeftToPlace > 0) {
                         $output->writeln("** Place buy orders");
 
-                        $profit       = $config['sellspread'];
-                        $size         = $config['size'];
+                        $profit = $config['sellspread'];
+                        $size   = $config['size'];
 
+                        // Determine the price we want it
+                        $buyPrice     = number_format($currentPrice - 0.02 - $config['spread'], 2, '.', '');
+                        $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
 
-                        for ($i = 0; $i < $numOrdersLeftToPlace; $i ++) {
-                            // Determine the price we want it
-                            $buyPrice = number_format($currentPrice - 0.02 - $i * $config['spread'], 2, '.', '');
-                            $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
-
-                            if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
-                                $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At ' . $takeProfitAt);
-                            } else {
-                                $output->writeln('<warning>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</warning>');
-                            }
+                        if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
+                            $output->writeln('Position created: ' . $size . ' ' . $currentPrice . ' Take profit At ' . $takeProfitAt);
+                        } else {
+                            $output->writeln('<warning>Failed to create position created: ' . $size . ' ' . $currentPrice . ' Take profit At' . $takeProfitAt . '</warning>');
                         }
                     }
                     $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
