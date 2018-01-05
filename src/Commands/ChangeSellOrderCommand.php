@@ -39,8 +39,6 @@ class ChangeSellOrderCommand extends Command {
             return false;
         }
 
-
-
         $orderService = new \App\Services\OrderService();
         $sellOrder = $orderService->fetchOrder($id);
         if (!$sellOrder) {
@@ -62,8 +60,8 @@ class ChangeSellOrderCommand extends Command {
         $parent_id = $sellOrder->parent_id;
         if ($parent_id > 0) {
             $buyOrder = $orderService->fetchOrder($parent_id);
-            if ($buyOrder) {
-                $output->writeln('<error>Order with id not found</error>');
+            if (!$buyOrder) {
+                $output->writeln('<error>Buy order with id '.$parent_id.' not found</error>');
                 return;
             }
 
