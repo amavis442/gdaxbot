@@ -17,24 +17,21 @@ class PriceIsRightRule implements RuleInterface
     {
         $canPlaceBuyOrder = false;
         if ($lowestBuyPrice || $lowestSellPrice) {
-            if (!$lowestBuyPrice && $lowestSellPrice) {
-                if ($price < ($lowestSellPrice - $spread)) {
-                    $canPlaceBuyOrder = true;
-                }
-            }
 
             if ($lowestBuyPrice && !$lowestSellPrice) {
                 if ($price < ($lowestBuyPrice - $spread)) {
                     $canPlaceBuyOrder = true;
                 }
             }
-
-            if ($lowestBuyPrice && $lowestSellPrice) {
-                if ($lowestSellPrice < $lowestBuyPrice && $price < ($lowestSellPrice - $spread)) {
+            
+            if (!$lowestBuyPrice && $lowestSellPrice) {
+                if ($price < ($lowestSellPrice - $spread)) {
                     $canPlaceBuyOrder = true;
                 }
+            }
 
-                if ($lowestSellPrice > $lowestBuyPrice && $price < ($lowestBuyPrice - $spread)) {
+            if ($lowestBuyPrice && $lowestSellPrice) {
+                if ($price < ($lowestBuyPrice - $spread)) {
                     $canPlaceBuyOrder = true;
                 }
             }
