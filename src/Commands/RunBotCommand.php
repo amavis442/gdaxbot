@@ -58,10 +58,19 @@ class RunBotCommand extends Command
          * Available strategy's
          */
         $strategies = [
-            'Trendlines' => new \App\Strategies\TrendingLinesStrategy()
+            'Trendlines' => new \App\Strategies\TrendingLinesStrategy(),
         ];
 
         return $strategies['Trendlines'];
+    }
+
+    protected function getRule($ruleName)
+    {
+        $rules = [
+            'PriceIsRight' => new \App\Rules\PriceIsRightRule(),
+        ];
+
+        return $rules[$ruleName];
     }
 
 
@@ -220,6 +229,7 @@ class RunBotCommand extends Command
         $this->gdaxService->connect($sandbox);
     }
 
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $sandbox = false;
@@ -301,47 +311,14 @@ class RunBotCommand extends Command
                         $takeProfitAt = number_format($buyPrice + $profit, 2, '.', '');
 
                         // Price should go up buy 30 euro to place next one
-                        $canPlaceBuyOrder = false;
-
-                        $lowestSell = $this->orderService->getBottomOpenSellOrder();
-                        $highestBuy = $this->orderService->getTopOpenBuyOrder();
-                        if ($highestBuy || $highestBuy && $lowestSell) {
-                            if ($highestBuy && $lowestSell && $highestBuy < $lowestSell) {
-                                if ($buyPrice > $highestBuy + $spread) {
-                                    $canPlaceBuyOrder = true;
-                                }
-                            }
-                        }
+                        $lowestSellPrice = $this->orderService->getBottomOpenSellOrder();
+                        $highestBuyPrice = $this->orderService->getTopOpenBuyOrder();
+                        $lowestBuyPrice  = $this->orderService->getBottomOpenBuyOrder();
 
 
-                        $lowestBuy = $this->orderService->getBottomOpenBuyOrder();
-                        if ($lowestBuy || $lowestSell) {
-                            if (!$lowestBuy && $lowestSell) {
-                                if ($buyPrice < ($lowestSell - $spread)) {
-                                    $canPlaceBuyOrder = true;
-                                }
-                            }
+                        $rulePriceIsRight = $this->getRule('PriceIsRight');
+                        $canPlaceBuyOrder = $rulePriceIsRight->validate($buyPrice, $spread, $lowestBuyPrice, $highestBuyPrice, $lowestSellPrice, null);
 
-                            if ($lowestBuy && !$lowestSell) {
-                                if ($buyPrice < ($lowestBuy - $spread)) {
-                                    $canPlaceBuyOrder = true;
-                                }
-                            }
-
-                            if ($lowestBuy && $lowestSell) {
-                                if ($lowestSell < $lowestBuy && $buyPrice < ($lowestSell - $spread)) {
-                                    $canPlaceBuyOrder = true;
-                                }
-
-                                if ($lowestSell > $lowestBuy && $buyPrice < ($lowestBuy - $spread)) {
-                                    $canPlaceBuyOrder = true;
-                                }
-                            }
-                        }
-
-                        if (!$lowestBuy && !$highestBuy && !$lowestSell) { // First order of the day
-                            $canPlaceBuyOrder = true;
-                        }
 
                         if ($canPlaceBuyOrder) {
                             if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
