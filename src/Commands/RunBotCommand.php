@@ -31,8 +31,17 @@ class RunBotCommand extends Command
 
     use ActualizeBuysAndSells, OHLC;
 
+    /**
+     * @var \App\Contracts\GdaxServiceInterface
+     */
     protected $gdaxService;
+    /**
+     * @var \App\Contracts\OrderServiceInterface;
+     */
     protected $orderService;
+    /**
+     * @var \App\Contracts\StrategyInterface;
+     */
     protected $settingsService;
 
     protected function configure()
@@ -56,7 +65,7 @@ class RunBotCommand extends Command
     }
 
 
-    protected function createPosition($price, $size, $takeProfitAt, $strategyName = ''): bool
+    protected function createPosition($size,$price, $takeProfitAt, $strategyName = ''): bool
     {
         $positionCreated = false;
 
@@ -274,9 +283,13 @@ class RunBotCommand extends Command
                         $size         = $config['size'];
                         $takeProfitAt = number_format($currentPrice + $profit, 2, '.', '');
 
+                        // Determine the price we want it
+                        $buyPrice = number_format($currentPrice - $config['spread'],2.,'.','');
+
+
                         $output->writeln("** Place buy orders");
 
-                        if ($this->createPosition($size, $currentPrice, $takeProfitAt, $strategy->getName())) {
+                        if ($this->createPosition($size, $buyPrice, $takeProfitAt, $strategy->getName())) {
                             $output->writeln('Position created: '. $size.' '. $currentPrice. ' Take profit At'. $takeProfitAt);
                         } else {
                             $output->writeln('<danger>Failed to create position created: '. $size.' '. $currentPrice. ' Take profit At'. $takeProfitAt.'</danger>');
