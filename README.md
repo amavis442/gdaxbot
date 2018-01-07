@@ -43,7 +43,7 @@ SELLINGTRESHOLD=229.0 // When shoud the selling stop
 
 ## Step 4:
 
-php gdaxbot.sh bot:run
+php bin/console bot:run
 
 If you are daring, you can put this in a cronjob.
 
@@ -53,7 +53,7 @@ Run th eticker
 #~$ more /etc/supervisor/conf.d/crypt.conf
 
 [program:wsgdax]
-command=/usr/bin/php gdax.sh bot:websocket
+command=/usr/bin/php bin/console bot:run
 directory=/home/ubuntu/gdax
 startretries=3
 stopwaitsecs=10

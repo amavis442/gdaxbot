@@ -1,0 +1,15 @@
+## YAML Template.
+---
+strategies:
+    available:
+        Trendlines: \App\Strategies\TrendingLines
+        Percent33: \App\Strategies\Percent33
+    active: Trendlines
+    
+rules:
+    available:
+        PriceIsRight: \App\Rules\PriceIsRightRule
+    buy:    
+        active: PriceIsRight
+    sell:
+        active: PriceIsRight
