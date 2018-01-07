@@ -63,7 +63,7 @@ class TestStoplossCommand extends Command
         while(1)
         {
             $currentprice = $gdaxService->getCurrentPrice();
-            $sell = $stoploss->trailingStop($currentprice, $buyprice, $percentage, $output);
+            $sell = $stoploss->trailingStop(0, $currentprice, $buyprice, $percentage, $output);
             
             sleep(5);
             
