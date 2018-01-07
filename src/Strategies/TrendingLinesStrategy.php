@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * Created by PhpStorm.
@@ -40,7 +41,7 @@ class TrendingLinesStrategy implements StrategyInterface
 
     public function getSignal(): int
     {
-        $indicators = new Indicators();;
+        $indicators = new Indicators();
 
         $instrument = 'BTC-EUR';
         $recentData = $indicators->getRecentData($instrument);

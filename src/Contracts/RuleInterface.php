@@ -11,5 +11,5 @@ namespace App\Contracts;
 
 interface RuleInterface
 {
-    public function validate(float $price, float $spread, float $lowestBuyPrice = null, float $highestBuyPrice = null, float $lowestSellPrice = null,float $highestSellPrice = null): bool;
+    public function validate(float $price, float $spread, ?float $lowestBuyPrice = null, ?float $highestBuyPrice = null, ?float $lowestSellPrice = null, ?float $highestSellPrice = null): bool;
 }

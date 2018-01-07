@@ -31,6 +31,8 @@ class RunBotCommand extends Command
 
     use ActualizeBuysAndSells, OHLC;
 
+    protected $testMode = false;
+    
     /**
      * @var \App\Contracts\GdaxServiceInterface
      */
@@ -43,11 +45,14 @@ class RunBotCommand extends Command
      * @var \App\Contracts\StrategyInterface;
      */
     protected $settingsService;
+    
+    protected $httpClient;
 
     protected function configure()
     {
         $this->setName('bot:run')
              ->setDescription('Runs the bot for 1 cycle use cron to call this command.')
+             ->addOption('test', null, InputOption::VALUE_NONE, 'Run bot, but is will not open an/or close positions but it will update the database so please use a _dev database.')
              ->addOption('sandbox', null, InputOption::VALUE_NONE, 'Run bot in sandbox so no real trades will be made.')
              ->setHelp('Runs the bot for 1 cycle use cron to call this command.');
     }
@@ -78,16 +83,20 @@ class RunBotCommand extends Command
     {
         $positionCreated = false;
 
-        $order = $this->gdaxService->placeLimitBuyOrder($size, $price);
-
-        if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, $takeProfitAt);
-            $positionCreated = true;
+        if (!$this->testMode) {
+            $order = $this->gdaxService->placeLimitBuyOrder($size, $price);
+            if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
+                $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, $takeProfitAt);
+                $positionCreated = true;
+            } else {
+                $reason = $order->getMessage() . $order->getRejectReason() . ' ';
+                $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, 0.0, 0, 0, $reason);
+            }
         } else {
-            $reason = $order->getMessage() . $order->getRejectReason() . ' ';
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $strategyName, 0.0, 0, 0, $reason);
+            $this->orderService->insertOrder('buy', 'test-test-test-test', $size, $price, 'TEST', $takeProfitAt);
+            $positionCreated = true;
         }
-
+        
         return $positionCreated;
     }
 
@@ -101,9 +110,10 @@ class RunBotCommand extends Command
 
         if (is_array($currentPendingOrders)) {
             foreach ($currentPendingOrders as $row) {
+
                 // Get the status of the buy order. You can only sell what you got.
                 $buyOrder = $this->gdaxService->getOrder($row['order_id']);
-
+                
                 /** \GDAX\Types\Response\Authenticated\Order $orderData */
                 if ($buyOrder instanceof \GDAX\Types\Response\Authenticated\Order) {
                     $status = $buyOrder->getStatus();
@@ -119,7 +129,7 @@ class RunBotCommand extends Command
                         echo 'Sell size: ' . $row['size'] . "\n";
 
                         $sellOrder = $this->gdaxService->placeLimitSellOrder($size, $sellPrice);
-
+                        
                         if ($sellOrder->getId() && ($sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $sellOrder->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
 
                             $this->orderService->insertOrder('sell', $sellOrder->getId(), $size, $sellPrice, $strategyName, 0.0, 0, 0, 'open', $parent_id);
@@ -198,10 +208,8 @@ class RunBotCommand extends Command
 
     protected function updateTicker($pair = 'BTC-EUR')
     {
-        $httpClient = new \GuzzleHttp\Client();
-
         // Ticker
-        $res = $httpClient->request('GET', 'https://api.gdax.com/products/' . $pair . '/ticker');
+        $res = $this->httpClient->request('GET', 'https://api.gdax.com/products/' . $pair . '/ticker');
 
         if ($res->getStatusCode() == 200) {
             $jsonData = $res->getBody();
@@ -223,10 +231,9 @@ class RunBotCommand extends Command
         $this->settingsService = new \App\Services\SettingsService();
         $this->orderService    = new \App\Services\OrderService();
         $this->gdaxService     = new \App\Services\GDaxService();
-
         $this->gdaxService->setCoin(getenv('CRYPTOCOIN'));
-
         $this->gdaxService->connect($sandbox);
+        $this->httpClient = new \GuzzleHttp\Client();
     }
 
 
@@ -237,7 +244,11 @@ class RunBotCommand extends Command
             $output->writeln('<info>Running in sandbox mode</info>');
             $sandbox = true;
         }
-
+    
+        if ($input->getOption('sandbox')) {
+            $this->testMode = true;
+        }
+        
         $this->init($sandbox);
 
 

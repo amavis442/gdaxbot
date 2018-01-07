@@ -10,6 +10,7 @@
 namespace App\Util;
 
 use App\Traits\OHLC;
+use \RuntimeException;
 
 /**
  * Class Indicators

@@ -1,6 +1,6 @@
 <?php
 
-require 'vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Console\Application;
@@ -11,8 +11,9 @@ use App\Util\Cache;
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 
-$dotenv = new Dotenv();
-$dotenv->load(__DIR__ . '/.env');
+if (!isset($_SERVER['APP_ENV'])) {
+    (new Dotenv())->load(__DIR__.'/../.env');
+}
 
 $config = new \Doctrine\DBAL\Configuration();
 

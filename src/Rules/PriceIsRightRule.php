@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Created by PhpStorm.
  * User: patrickteunissen
@@ -13,7 +15,7 @@ use App\Contracts\RuleInterface;
 
 class PriceIsRightRule implements RuleInterface
 {
-    public function validate(float $price, float $spread, float $lowestBuyPrice = null, float $highestBuyPrice = null, float $lowestSellPrice = null,float $highestSellPrice = null): bool
+    public function validate(float $price, float $spread, ?float $lowestBuyPrice = null, ?float $highestBuyPrice = null, ?float $lowestSellPrice = null,?float $highestSellPrice = null): bool
     {
         $canPlaceBuyOrder = false;
         if ($lowestBuyPrice || $lowestSellPrice) {
