@@ -41,14 +41,23 @@ trait Positions
                 $price = $position['amount'];
                 $size = $position['size'];
                 $position_id = $position['id'];
+                $order_id = $position['order_id']; // Buy order_id
                 
                 $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, getenv('STOPLOSS'), $output);
 
                 if ($sellMe) {
                     $sellPrice = number_format($currentPrice + 0.01, 2, '.', '');
                     $order = $this->gdaxService->placeLimitSellOrder($size, $sellPrice);
-                   
-                    $this->orderService->insertOrder('sell', $order->getId(), $size, $price, 'pending', 0, $position_id);
+                    if ($order->getMessage()) {
+                        $status = $order->getMessage();
+                    } else {
+                        $status = $order->getStatus();
+                    }
+                    
+                    $buyOrder = $this->orderService->fetchOrderByOrderId($order_id);
+                    $parent_id = $buyOrder->id;
+                    
+                    $this->orderService->insertOrder('sell', $order->getId(), $size, $price, $status, $parent_id, $position_id);
                 }
             }
         }

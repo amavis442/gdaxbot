@@ -131,7 +131,7 @@ class RunBotCommand extends Command
             $this->actualizeBuys();
 
             $this->actualizeSells();
-            $this->orderService->fixRejectedSells();
+            //$this->orderService->fixRejectedSells();
 
 
             // Even when the limit is reached, i want to know the signal
