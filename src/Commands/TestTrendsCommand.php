@@ -25,7 +25,7 @@ class TestTrendsCommand extends Command {
     }
 
     protected function configure() {
-        $this->setName('bot:test:trends')
+        $this->setName('test:trends')
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Test the trends.')

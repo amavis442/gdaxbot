@@ -2,6 +2,7 @@
 CREATE TABLE `orders` (
     `id` INTEGER PRIMARY KEY AUTO_INCREMENT, 
     `parent_id` integer unsigned, 
+    `position_id` integer unsigned,
     `side` varchar(10), 
     `size` varchar(20), 
     `amount` decimal(15,9),
@@ -11,10 +12,23 @@ CREATE TABLE `orders` (
     `take_profit` decimal(10,2),
     `signalpos` int(11) DEFAULT NULL,
     `signalneg` int(11) DEFAULT NULL,
+    `position` enum('pending','open','closed') default 'pending',
     `close_reason` varchar(20) DEFAULT NULL,
     `created_at` datetime, 
     `updated_at` timestamp
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Create mysql orders table
+CREATE TABLE `positions` (
+    `id` INTEGER PRIMARY KEY AUTO_INCREMENT, 
+    `order_id` varchar(40), 
+    `size` varchar(20), 
+    `amount` decimal(15,9),
+    `position` enum('open','pending','closed') default 'open',
+    `close_reason` varchar(20) DEFAULT NULL,
+    `created_at` datetime, 
+    `updated_at` timestamp
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- Create the settings table for the bot
 CREATE TABLE `settings` (

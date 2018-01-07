@@ -149,7 +149,7 @@ class GDaxService implements GdaxServiceInterface
         //Current asking price
         $startPrice = $productTicker->getPrice();
 
-        return number_format($startPrice, 2, '.', '');
+        return (float)number_format($startPrice, 2, '.', '');
     }
 
     /**

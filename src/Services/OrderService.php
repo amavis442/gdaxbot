@@ -50,9 +50,9 @@ class OrderService implements OrderServiceInterface
      *
      * @return mixed|void
      */
-    public function updateOrderStatus(int $id, string $status)
+    public function updateOrderStatus(int $id, string $status, int $position_id = 0)
     {
-        DB::table('orders')->where('id', $id)->update(['status' => $status]);
+        DB::table('orders')->where('id', $id)->update(['status' => $status,'position_id' => $position_id]);
     }
 
     /**
@@ -67,17 +67,14 @@ class OrderService implements OrderServiceInterface
      *
      * @return int
      */
-    public function insertOrder(string $side, string $order_id, float $size, float $amount, string $strategy = 'TrendsLines', float $take_profit = 13000.0, int $signalpos = 0, int $signalneg = 0, string $status = 'pending', int $parent_id = 0): int
+    public function insertOrder(string $side, string $order_id, float $size, float $amount, string $status = 'pending', int $parent_id = 0, int $position_id = 0, string $strategy = 'TrendsLines'): int
     {
         $id = DB::table('orders')->insertGetId([
                                                    'side'        => $side,
                                                    'order_id'    => $order_id,
                                                    'size'        => $size,
                                                    'amount'      => $amount,
-                                                   'strategy'    => $strategy,
-                                                   'take_profit' => $take_profit,
-                                                   'signalpos'   => $signalpos,
-                                                   'signalneg'   => $signalneg,
+                                                   'position_id' => $position_id,
                                                    'status'      => $status,
                                                    'parent_id'   => $parent_id,
                                                    'created_at'  => date('Y-m-d H:i:s')
@@ -303,7 +300,7 @@ class OrderService implements OrderServiceInterface
                 $order_id = $order->getId();
                 $row      = $this->fetchOrderByOrderId($order_id);
                 if (!$row) {
-                    $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice(), 'Manual', $order->getPrice() + 100.00);
+                    $this->insertOrder($order->getSide(), $order->getId(), $order->getSize(), $order->getPrice(), 'Manual');
                 } else {
                     if ($row->status != 'done') {
                         $this->updateOrderStatus($row->id, $order->getStatus());

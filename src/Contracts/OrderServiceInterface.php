@@ -34,7 +34,7 @@ interface OrderServiceInterface {
      *
      * @return mixed
      */
-    public function updateOrderStatus(int $id, string $status);
+    public function updateOrderStatus(int $id, string $status, int $position_id = 0);
 
     /**
      * @param string $side
@@ -50,7 +50,7 @@ interface OrderServiceInterface {
      *
      * @return int
      */
-    public function insertOrder(string $side, string $order_id, float $size, float $amount, string $strategy = 'TrendsLines', float $take_profit = 13000.0, int $signalpos = 0, int $signalneg = 0, string $status = 'pending', int $parent_id = 0): int;
+    public function insertOrder(string $side, string $order_id, float $size, float $amount, string $status = 'pending', int $parent_id = 0, int $position_id = 0, string $strategy = 'TrendsLines'): int;
 
     /**
      * @return mixed

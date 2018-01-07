@@ -33,6 +33,7 @@ $application->add(new \App\Commands\TestSignalsCommand());
 
 $application->add(new \App\Commands\TestStrategiesCommand());
 
+$application->add(new \App\Commands\TestStoplossCommand());
 
 /**
  * Run the console app

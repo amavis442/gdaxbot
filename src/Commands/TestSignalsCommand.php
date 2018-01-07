@@ -27,7 +27,7 @@ class TestSignalsCommand extends Command
 
     protected function configure()
     {
-        $this->setName('bot:test:signals')
+        $this->setName('test:signals')
 
                 // the short description shown while running "php bin/console list"
                 ->setDescription('Test the signals.')
