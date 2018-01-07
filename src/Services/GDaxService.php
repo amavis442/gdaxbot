@@ -1,6 +1,5 @@
 <?php
-declare(strict_types=1);
-
+declare(strict_types = 1);
 namespace App\Services;
 
 use App\Contracts\GdaxServiceInterface;
@@ -14,6 +13,7 @@ class GDaxService implements GdaxServiceInterface
 {
 
     protected $client;
+    protected $account = [];
     protected $accountEUR;
     protected $accountLTC;
     protected $accountBTC;
@@ -25,7 +25,7 @@ class GDaxService implements GdaxServiceInterface
      */
     public function __construct()
     {
-
+        
     }
 
     /**
@@ -57,7 +57,7 @@ class GDaxService implements GdaxServiceInterface
      */
     public function getOrderbook(): \GDAX\Types\Response\Market\ProductOrderBook
     {
-        $product          = (new \GDAX\Types\Request\Market\Product())->setProductId($this->getProductId())->setLevel(2);
+        $product = (new \GDAX\Types\Request\Market\Product())->setProductId($this->getProductId())->setLevel(2);
         $productOrderBook = $this->client->getProductOrderBook($product);
 
         return $productOrderBook;
@@ -112,7 +112,7 @@ class GDaxService implements GdaxServiceInterface
      */
     public function getOrder(string $order_id): \GDAX\Types\Response\Authenticated\Order
     {
-        $order    = (new \GDAX\Types\Request\Authenticated\Order())->setId($order_id);
+        $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($order_id);
         $response = $this->client->getOrder($order);
 
         return $response;
@@ -143,7 +143,7 @@ class GDaxService implements GdaxServiceInterface
     public function getCurrentPrice(): float
     {
 
-        $product       = (new \GDAX\Types\Request\Market\Product())->setProductId($this->getProductId());
+        $product = (new \GDAX\Types\Request\Market\Product())->setProductId($this->getProductId());
         $productTicker = $this->client->getProductTicker($product);
 
         //Current asking price
@@ -159,7 +159,7 @@ class GDaxService implements GdaxServiceInterface
      */
     public function cancelOrder(string $order_id): \GDAX\Types\Response\RawData
     {
-        $order    = (new \GDAX\Types\Request\Authenticated\Order())->setId($order_id);
+        $order = (new \GDAX\Types\Request\Authenticated\Order())->setId($order_id);
         $response = $this->client->cancelOrder($order);
 
         return $response;
@@ -224,17 +224,24 @@ class GDaxService implements GdaxServiceInterface
         foreach ($accounts as $account) {
             $currency = $account->getCurrency();
             if ($currency == 'LTC') {
-                $this->accountLTC = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
+                $this->account['LTC'] = $account;
             }
 
             if ($currency == 'EUR') {
-                $this->accountEUR = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
+                $this->account['EUR'] = $account;
             }
 
             if ($currency == 'BTC') {
-                $this->accountBTC = (new \GDAX\Types\Request\Authenticated\Account())->setId($account->getId());
+                $this->account['BTC'] = $account;
             }
         }
+    }
+
+    public function getAccount(string $currency): \GDAX\Types\Response\Authenticated\Account
+    {
+        $this->getAccounts();
+
+        return $this->account[$currency];
     }
 
     /**
@@ -251,19 +258,19 @@ class GDaxService implements GdaxServiceInterface
         /** @var  \GDAX\Types\Response\Authenticated\Account $account */
         foreach ($accounts as $account) {
             $currency = $account->getCurrency();
-            $balance  = $account->getBalance();
+            $balance = $account->getBalance();
 
             if ($currency != 'EUR') {
-                $product       = (new \GDAX\Types\Request\Market\Product())->setProductId($currency . '-EUR');
+                $product = (new \GDAX\Types\Request\Market\Product())->setProductId($currency . '-EUR');
                 $productTicker = $this->client->getProductTicker($product);
-                $koers         = number_format($productTicker->getPrice(), 3, '.', '');
+                $koers = number_format($productTicker->getPrice(), 3, '.', '');
             } else {
                 $koers = 0.0;
             }
             $waarde = 0.0;
             if ($currency == 'EUR') {
                 $balance = number_format($balance, 4, '.', '');
-                $waarde  = $balance;
+                $waarde = $balance;
             } else {
                 $waarde = number_format($balance * $koers, 4, '.', '');
             }
@@ -289,5 +296,4 @@ class GDaxService implements GdaxServiceInterface
             return [];
         }
     }
-
 }

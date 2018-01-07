@@ -103,6 +103,9 @@ interface GdaxServiceInterface
      * Get the accounts (balance etc)
      */
     public function getAccounts();
+    
+    public function getAccount(string $currency): \GDAX\Types\Response\Authenticated\Account;
+    
 
     /**
      * Get the fills for a certain product_id (vb. BTC-EUR)

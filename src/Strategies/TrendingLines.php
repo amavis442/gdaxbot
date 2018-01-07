@@ -28,7 +28,7 @@ use App\Util\Indicators;
  * @package App\Strategies
  *
  */
-class TrendingLinesStrategy implements StrategyInterface
+class TrendingLines implements StrategyInterface
 {
 
     /** @var \App\Util\Indicators */

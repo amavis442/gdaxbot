@@ -1,18 +1,17 @@
 <?php
+require __DIR__ . '/../vendor/autoload.php';
 
-require __DIR__.'/../vendor/autoload.php';
-
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Console\Application;
 use App\Bot\Gdaxbot;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use App\Util\Cache;
-
 use Illuminate\Database\Capsule\Manager as Capsule;
 
 if (!isset($_SERVER['APP_ENV'])) {
-    (new Dotenv())->load(__DIR__.'/../.env');
+    (new Dotenv())->load(__DIR__ . '/../.env');
 }
 
 $config = new \Doctrine\DBAL\Configuration();
@@ -30,27 +29,35 @@ $conn = \Doctrine\DBAL\DriverManager::getConnection($connectionParams, $config);
 
 $capsule = new Capsule;
 $capsule->addConnection([
-    'driver'    => 'mysql',
-    'host'      => getenv('DB_HOST'),
-    'database'  => getenv('DB_DATABASE'),
-    'username'  => getenv('DB_USERNAME'),
-    'password'  => getenv('DB_PASSWORD'),
-    'charset'   => 'utf8',
+    'driver' => 'mysql',
+    'host' => getenv('DB_HOST'),
+    'database' => getenv('DB_DATABASE'),
+    'username' => getenv('DB_USERNAME'),
+    'password' => getenv('DB_PASSWORD'),
+    'charset' => 'utf8',
     'collation' => 'utf8_unicode_ci',
-    'prefix'    => '',
+    'prefix' => '',
 ]);
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
-//RedisAdapter::createConnection('redis://127.0.0.1:6379');
 $client = new \Predis\Client();
 $cache = new RedisAdapter($client, 300);
 Cache::setCache($cache);
 
-//$container = new ContainerBuilder();
-//$container->register('mailer', 'Mailer');
+$container = new ContainerBuilder();
 
-/*
 
-$cache = new RedisAdapter($client, '', 0);
-*/
+
+$bot = Yaml::parseFile(__DIR__ . '/../config/bot.yml');
+$availableStrategies = $bot['strategies']['available'];
+$activeStrategy = $bot['strategies']['active'];
+
+$availableRules = $bot['rules']['available'];
+$activeBuyRule = $bot['rules']['buy']['active'];
+$activeSellRule = $bot['rules']['sell']['active'];
+
+
+$container->register('bot.strategy', $availableStrategies[$activeStrategy]);
+$container->register('bot.buy.rule', $availableRules[$activeBuyRule]);
+$container->register('bot.sell.rule', $availableRules[$activeSellRule]);
