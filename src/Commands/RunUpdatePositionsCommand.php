@@ -155,7 +155,7 @@ class RunUpdatePositionsCommand extends Command
     /**
      * Checks the open buys and if they are filled then place a buy order for the same size but higher price
      */
-    protected function watchPositions(float $currentPrice, \Symfony\Component\Console\Output\OutputInterface $output)
+    protected function watchPositions(float $currentPrice, \Symfony\Component\Console\Output\OutputInterface $output, array $config = [])
     {
         $positions = $this->positionService->getOpen();
 
@@ -166,7 +166,7 @@ class RunUpdatePositionsCommand extends Command
                 $position_id = $position['id'];
                 $order_id    = $position['order_id']; // Buy order_id
 
-                $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, getenv('STOPLOSS'), $output);
+                $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, $config['stoploss'], $output);
 
                 $placeOrder = true;
                 if (true || $sellMe) {
@@ -237,7 +237,7 @@ class RunUpdatePositionsCommand extends Command
 
                 $output->writeln("** Update positions");
 
-                $this->watchPositions($currentPrice, $output);
+                $this->watchPositions($currentPrice, $output, $config);
 
                 $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
             }
