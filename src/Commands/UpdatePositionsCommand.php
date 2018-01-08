@@ -62,53 +62,31 @@ class UpdatePositionsCommand extends Command
         $this->setName('bot:run:update')
             ->setDescription('Update the positions.')
             ->addOption('test', null, InputOption::VALUE_NONE, 'Run bot, but is will not open an/or close positions but it will update the database so please use a _dev database.')
-            ->addOption('sandbox', null, InputOption::VALUE_NONE, 'Run bot in sandbox so no real trades will be made.')
             ->setHelp('Runs the bot for 1 cycle use cron to call this command.');
     }
 
-    protected function init($sandbox = false)
+    protected function init()
     {
-        $this->settingsService = new \App\Services\SettingsService();
-        $this->orderService = new \App\Services\OrderService();
-        $this->gdaxService = new \App\Services\GDaxService();
-        $this->httpClient = new \GuzzleHttp\Client();
-        $this->positionService = new \App\Services\PositionService();
-        $this->stoplossRule = new \App\Rules\Stoploss();
-
-        $this->gdaxService->setCoin(getenv('CRYPTOCOIN'));
-        $this->gdaxService->connect($sandbox);
+        $this->settingsService = $this->container->get('bot.settings');
+        $this->orderService = $this->container->get('bot.service.order');
+        $this->gdaxService = $this->container->get('bot.service.gdax');
+        $this->positionService = $this->container->get('bot.service.position');
+        $this->stoplossRule = $this->container->get('bot.rule.stoploss');
     }
     
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $sandbox = false;
-        if ($input->getOption('sandbox')) {
-            $output->writeln('<info>Running in sandbox mode</info>');
-            $sandbox = true;
-        }
-
-        if ($input->getOption('sandbox')) {
-            $this->testMode = true;
-        }
-
-        $this->init($sandbox);
+        $this->init();
 
         // Get Account
-        $account = $this->gdaxService->getAccount('EUR');
-
-        // Now we can use strategy
-        /** @var \App\Contracts\StrategyInterface $strategy */
-        $strategy = $this->getStrategy();
-        $buyRule = $this->getRule('buy');
+        //$account = $this->gdaxService->getAccount('EUR');
 
         while (1) {
             $output->writeln("=== RUN [" . \Carbon\Carbon::now('Europe/Amsterdam')->format('Y-m-d H:i:s') . "] ===");
             // Settings
             $config = [];
-            $config['max_orders_per_run'] = getenv('MAX_ORDERS_PER_RUN');
             $config = array_merge($config, $this->settingsService->getSettings());
-            $spread = $config['spread'];
-
+           
             //Cleanup
             $this->orderService->garbageCollection();
             $this->actualize();

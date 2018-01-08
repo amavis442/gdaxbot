@@ -12,8 +12,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
-use App\Traits\Positions;
-use App\Traits\ActualizeBuysAndSells;
+
 use App\Strategies\Traits\TrendingLinesStrategy;
 use App\Util\Cache;
 use App\Traits\OHLC;
@@ -27,13 +26,9 @@ use App\Util\PositionConstants;
 class RunBotCommand extends Command
 {
 
-    use ActualizeBuysAndSells,
-        OHLC,
-        Positions;
+    use OHLC;
 
-    protected $testMode = false;
-
-    /**
+   /**
      * @var \App\Contracts\GdaxServiceInterface
      */
     protected $gdaxService;
@@ -49,8 +44,7 @@ class RunBotCommand extends Command
     protected $settingsService;
     protected $httpClient;
     protected $container;
-    protected $positionService;
-    protected $stoplossRule;
+
 
     public function setContainer($container)
     {
@@ -59,10 +53,9 @@ class RunBotCommand extends Command
 
     protected function configure()
     {
-        $this->setName('bot:run')
+        $this->setName('bot:run:buys')
             ->setDescription('Runs the bot for 1 cycle use cron to call this command.')
             ->addOption('test', null, InputOption::VALUE_NONE, 'Run bot, but is will not open an/or close positions but it will update the database so please use a _dev database.')
-            ->addOption('sandbox', null, InputOption::VALUE_NONE, 'Run bot in sandbox so no real trades will be made.')
             ->setHelp('Runs the bot for 1 cycle use cron to call this command.');
     }
 
@@ -81,33 +74,33 @@ class RunBotCommand extends Command
         return $this->container->get('bot.' . $side . '.rule');
     }
 
-    protected function init($sandbox = false)
+    protected function init()
     {
-        $this->settingsService = new \App\Services\SettingsService();
-        $this->orderService = new \App\Services\OrderService();
-        $this->gdaxService = new \App\Services\GDaxService();
-        $this->httpClient = new \GuzzleHttp\Client();
-        $this->positionService = new \App\Services\PositionService();
-        $this->stoplossRule = new \App\Rules\Stoploss();
-
-
-        $this->gdaxService->setCoin(getenv('CRYPTOCOIN'));
-        $this->gdaxService->connect($sandbox);
+        $this->settingsService = $this->container->get('bot.settings');
+        $this->orderService = $this->container->get('bot.service.order');
+        $this->gdaxService = $this->container->get('bot.service.gdax');
+        $this->httpClient = $this->container->get('bot.httpclient');
     }
 
+    protected function placeBuyOrder($size, $price): bool
+    {
+        $positionCreated = false;
+
+        $order = $this->gdaxService->placeLimitBuyOrder($size, $price);
+        if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
+            $this->orderService->insertOrder('buy', $order->getId(), $size, $price);
+            $positionCreated = true;
+        } else {
+            $reason = $order->getMessage() . $order->getRejectReason() . ' ';
+            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $reason);
+        }
+
+        return $positionCreated;
+    }
+    
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $sandbox = false;
-        if ($input->getOption('sandbox')) {
-            $output->writeln('<info>Running in sandbox mode</info>');
-            $sandbox = true;
-        }
-
-        if ($input->getOption('sandbox')) {
-            $this->testMode = true;
-        }
-
-        $this->init($sandbox);
+        $this->init();
 
         // Get Account
         $account = $this->gdaxService->getAccount('EUR');
@@ -124,15 +117,6 @@ class RunBotCommand extends Command
             $config['max_orders_per_run'] = getenv('MAX_ORDERS_PER_RUN');
             $config = array_merge($config, $this->settingsService->getSettings());
             $spread = $config['spread'];
-
-            //Cleanup
-            $this->orderService->garbageCollection();
-            $this->actualize();
-            $this->actualizeBuys();
-
-            $this->actualizeSells();
-            //$this->orderService->fixRejectedSells();
-
 
             // Even when the limit is reached, i want to know the signal
             $signal = $strategy->getSignal();
@@ -161,20 +145,18 @@ class RunBotCommand extends Command
 
                     $output->writeln("** Update positions");
 
-                    $this->updatePositions($currentPrice, $output);
-
                     if ($signal == PositionConstants::BUY && $numOrdersLeftToPlace > 0) {
                         $output->writeln("** Place buy orders");
                         $size = $config['size'];
                         $buyPrice = number_format($currentPrice - 0.01, 2, '.', '');
 
-                        $this->createPosition($size, $buyPrice);
+                        $this->placeBuyOrder($size, $buyPrice);
                     }
                     $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
                 }
             }
 
-            sleep(10);
+            sleep(60);
         }
     }
 }

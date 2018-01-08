@@ -13,22 +13,6 @@ namespace App\Traits;
  */
 trait Positions
 {
-   protected function createPosition($size, $price): bool
-    {
-        $positionCreated = false;
-
-        $order = $this->gdaxService->placeLimitBuyOrder($size, $price);
-        if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price);
-            $positionCreated = true;
-        } else {
-            $reason = $order->getMessage() . $order->getRejectReason() . ' ';
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price, $reason);
-        }
-
-        return $positionCreated;
-    }
-
     /**
      * Checks the open buys and if they are filled then place a buy order for the same size but higher price
      */
