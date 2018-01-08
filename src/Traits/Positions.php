@@ -54,6 +54,7 @@ trait Positions
                             $status = $order->getStatus();
                         }
                         $this->orderService->insertOrder('sell', $order->getId(), $size, $price, $status, $parent_id, $position_id);
+                        echo ">> Place sell order ".$order->getId(). " for position ".$position_id."\n";
                     }
                 } 
             }
