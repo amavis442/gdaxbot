@@ -123,4 +123,11 @@ class PositionService implements PositionServiceInterface
 
         return Transform::toArray($result);
     }
+
+    public function getClosed(): array
+    {
+        $result = DB::select("SELECT * FROM positions WHERE position = 'closed'");
+
+        return Transform::toArray($result);
+    }
 }
