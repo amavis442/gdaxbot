@@ -57,7 +57,7 @@ class RunUpdatePositionsCommand extends Command
 
     protected function configure()
     {
-        $this->setName('bot:run:update')
+        $this->setName('bot:run:positions')
             ->setDescription('Update the positions.')
             ->addOption('test', null, InputOption::VALUE_NONE, 'Run bot, but is will not open an/or close positions but it will update the database so please use a _dev database.')
             ->setHelp('Runs the bot for 1 cycle use cron to call this command.');
