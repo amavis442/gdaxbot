@@ -222,7 +222,7 @@ class UpdatePositionsCommand extends Command
             $this->orderService->garbageCollection();
 
             $this->updateBuyOrderStatusAndCreatePosition();
-            $this->actualizeSells();
+            $this->actualizeSellOrders();
             $this->actualizePositions();
 
             $botactive = ($config['botactive'] == 1 ? true : false);
@@ -238,7 +238,7 @@ class UpdatePositionsCommand extends Command
                 $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
             }
 
-            $this->actualizeSells();
+            $this->actualizeSellOrders();
             $this->actualizePositions();
             //$this->actualize();
 
