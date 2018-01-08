@@ -53,6 +53,28 @@ interface OrderServiceInterface {
     public function insertOrder(string $side, string $order_id, float $size, float $amount, string $status = 'pending', int $parent_id = 0, int $position_id = 0, string $strategy = 'TrendsLines'): int;
 
     /**
+     * @param string $order_id
+     * @param float  $size
+     * @param float  $amount
+     * @param int    $parent_id
+     * @param int    $position_id
+     *
+     * @return int
+     */
+    public function buy(string $order_id, float $size, float $amount, int $position_id = 0,int $parent_id = 0): int;
+
+    /**
+     * @param string $order_id
+     * @param float  $size
+     * @param float  $amount
+     * @param int    $parent_id
+     * @param int    $position_id
+     *
+     * @return int
+     */
+    public function sell(string $order_id, float $size, float $amount, int $position_id = 0,int $parent_id = 0): int;
+
+    /**
      * @return mixed
      */
     public function garbageCollection();

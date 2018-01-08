@@ -4,6 +4,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 namespace App\Traits;
 
 /**
@@ -22,16 +23,16 @@ trait Positions
 
         if (is_array($positions)) {
             foreach ($positions as $position) {
-                $price = $position['amount'];
-                $size = $position['size'];
+                $price       = $position['amount'];
+                $size        = $position['size'];
                 $position_id = $position['id'];
-                $order_id = $position['order_id']; // Buy order_id
-                
+                $order_id    = $position['order_id']; // Buy order_id
+
                 $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, getenv('STOPLOSS'), $output);
-                
+
                 $placeOrder = true;
                 if ($sellMe) {
-                    $buyOrder = $this->orderService->fetchOrderByOrderId($order_id);
+                    $buyOrder  = $this->orderService->fetchOrderByOrderId($order_id);
                     $parent_id = $buyOrder->id;
                     // Check if there are sell order for this position and cancel them.
                     $existingSellOrder = $this->orderService->fetchOrderByParentId($parent_id);
@@ -44,19 +45,19 @@ trait Positions
                             $placeOrder = false;
                         }
                     }
-                    
+
                     if ($placeOrder) {
                         $sellPrice = number_format($currentPrice + 0.01, 2, '.', '');
-                        $order = $this->gdaxService->placeLimitSellOrderFor1Minute($size, $sellPrice);
+                        $order     = $this->gdaxService->placeLimitSellOrderFor1Minute($size, $sellPrice);
                         if ($order->getMessage()) {
                             $status = $order->getMessage();
                         } else {
                             $status = $order->getStatus();
                         }
-                        $this->orderService->insertOrder('sell', $order->getId(), $size, $price, $status, $parent_id, $position_id);
-                        echo ">> Place sell order ".$order->getId(). " for position ".$position_id."\n";
+                        $this->orderService->sell($order->getId(), $size, $price, $status, $position_id, $parent_id);
+                        echo ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
                     }
-                } 
+                }
             }
         }
     }

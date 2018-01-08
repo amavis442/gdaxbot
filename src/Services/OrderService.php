@@ -83,6 +83,39 @@ class OrderService implements OrderServiceInterface
         return $id;
     }
 
+    public function buy(string $order_id, float $size, float $amount,int $position_id = 0, int $parent_id = 0): int
+    {
+        $id = DB::table('orders')->insertGetId([
+                                                   'side'        => 'buy',
+                                                   'order_id'    => $order_id,
+                                                   'size'        => $size,
+                                                   'amount'      => $amount,
+                                                   'position_id' => $position_id,
+                                                   'status'      => 'pending',
+                                                   'parent_id'   => $parent_id,
+                                                   'created_at'  => date('Y-m-d H:i:s')
+                                               ]);
+
+        return $id;
+    }
+
+    public function sell(string $order_id, float $size, float $amount,int $position_id = 0, int $parent_id = 0) :int
+    {
+        $id = DB::table('orders')->insertGetId([
+                                                   'side'        => 'sell',
+                                                   'order_id'    => $order_id,
+                                                   'size'        => $size,
+                                                   'amount'      => $amount,
+                                                   'position_id' => $position_id,
+                                                   'status'      => 'pending',
+                                                   'parent_id'   => $parent_id,
+                                                   'created_at'  => date('Y-m-d H:i:s')
+                                               ]);
+
+        return $id;
+    }
+
+
     /**
      * Get rid of the failures.
      */

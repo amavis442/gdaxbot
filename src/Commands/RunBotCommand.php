@@ -89,7 +89,7 @@ class RunBotCommand extends Command
 
         $order = $this->gdaxService->placeLimitBuyOrder($size, $price);
         if ($order->getId() && ($order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_PENDING || $order->getStatus() == \GDAX\Utilities\GDAXConstants::ORDER_STATUS_OPEN)) {
-            $this->orderService->insertOrder('buy', $order->getId(), $size, $price);
+            $this->orderService->buy($order->getId(), $size, $price);
             $positionCreated = true;
         } else {
             $reason = $order->getMessage() . $order->getRejectReason() . ' ';
