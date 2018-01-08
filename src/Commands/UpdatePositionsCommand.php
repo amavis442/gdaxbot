@@ -86,7 +86,7 @@ class UpdatePositionsCommand extends Command
     /**
      * Update the open buys
      */
-    public function updateBuyOrdersStatusAndCreatePosition()
+    public function updateBuyOrderStatusAndCreatePosition()
     {
         $orders = $this->orderService->getOpenBuyOrders();
 
@@ -221,7 +221,7 @@ class UpdatePositionsCommand extends Command
             //Cleanup
             $this->orderService->garbageCollection();
 
-            $this->updateBuyOrdersStatusAndCreatePosition();
+            $this->updateBuyOrderStatusAndCreatePosition();
             $this->actualizeSells();
             $this->actualizePositions();
 
