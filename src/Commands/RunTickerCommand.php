@@ -42,39 +42,52 @@ class RunTickerCommand extends Command
      */
     protected $settingsService;
 
+    protected $container;
+
     protected function configure()
     {
-        $this->setName('ticker:run')
+        $this->setName('bot:run:ticker')
              ->setDescription('Runs the ticker.')
              ->setHelp('Runs the ticker.');
     }
 
+    public function setContainer($container)
+    {
+        $this->container = $container;
+    }
+
+    protected function init()
+    {
+        $this->settingsService = $this->container->get('bot.settings');
+        $this->orderService = $this->container->get('bot.service.order');
+        $this->gdaxService = $this->container->get('bot.service.gdax');
+    }
+
+
     protected function updateTicker($pair = 'BTC-EUR')
     {
-        // Ticker
-        $res = $this->httpClient->request('GET', 'https://api.gdax.com/products/' . $pair . '/ticker');
 
-        if ($res->getStatusCode() == 200) {
-            $jsonData = $res->getBody();
-            $data     = json_decode($jsonData, true);
+        $product = (new \GDAX\Types\Request\Market\Product())->setProductId($pair);
+        /** @var \GDAX\Types\Response\Market\ProductTicker $tickerData */
+        $tickerData = $this->gdaxService->getClient()->getProductTicker($product);
 
+
+        if ($tickerData instanceof \GDAX\Types\Response\Market\ProductTicker) {
             $ticker               = [];
             $ticker['product_id'] = $pair;
-            $ticker['timeid']     = (int)\Carbon\Carbon::parse($data['time'])->setTimezone('Europe/Amsterdam')->format('YmdHis');
-            $ticker['volume']     = (int)round($data['volume']);
-            $ticker['price']      = (float)number_format($data['price'], 2, '.', '');
+            /** @var \DateTime $time */
+            $time = $tickerData->getTime();
+            $timeStr = $time->format('Y-m-d H:i:s');
+            $ticker['timeid']     = (int)\Carbon\Carbon::parse($timeStr)->setTimezone('Europe/Amsterdam')->format('YmdHis');
+            $ticker['volume']     = (int)round($tickerData->getVolume());
+            $ticker['price']      = (float)number_format($tickerData->getPrice(), 2, '.', '');
 
             $this->markOHLC($ticker);
         }
     }
 
 
-    protected function init()
-    {
-        $this->settingsService = new \App\Services\SettingsService();
-        $this->orderService    = new \App\Services\OrderService();
-        $this->httpClient = new \GuzzleHttp\Client();
-    }
+
 
 
     protected function execute(InputInterface $input, OutputInterface $output)

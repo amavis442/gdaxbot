@@ -52,6 +52,11 @@ class GDaxService implements GdaxServiceInterface
         }
     }
 
+    public function getClient(): \GDAX\Clients\AuthenticatedClient
+    {
+        return $this->client;
+    }
+
     /**
      * @return \GDAX\Types\Response\Market\ProductOrderBook
      */

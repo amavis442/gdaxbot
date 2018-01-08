@@ -19,9 +19,11 @@ $application->add(new \App\Commands\ChangeSellOrderCommand());
 $application->add(new \App\Commands\ReportProfitsCommand());
 $application->add(new \App\Commands\GdaxWebsocketCommand());
 
-$application->add(new \App\Commands\RunTickerCommand());
+$ticker = new \App\Commands\RunTickerCommand();
+$ticker->setContainer($container);
+$application->add($ticker);
 
-$updatePositions = new \App\Commands\UpdatePositionsCommand();
+$updatePositions = new \App\Commands\RunUpdatePositionsCommand();
 $updatePositions->setContainer($container);
 $application->add($updatePositions);
 

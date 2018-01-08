@@ -24,6 +24,8 @@ interface GdaxServiceInterface
      */
     public function connect(bool $sandbox = false);
 
+    public function getClient(): \GDAX\Clients\AuthenticatedClient;
+
     /**
      * Returns orderbook level 2
      *

@@ -24,7 +24,7 @@ use App\Util\PositionConstants;
  *
  * @author patrick
  */
-class UpdatePositionsCommand extends Command
+class RunUpdatePositionsCommand extends Command
 {
 
     use OHLC;
@@ -92,7 +92,10 @@ class UpdatePositionsCommand extends Command
 
         if (count($orders)) {
             foreach ($orders as $order) {
+                /** @var \GDAX\Types\Response\Authenticated\Order $gdaxOrder */
                 $gdaxOrder = $this->gdaxService->getOrder($order['order_id']);
+                 // Mocken
+
                 $position_id = 0;
                 $status = $gdaxOrder->getStatus();
 
@@ -120,7 +123,7 @@ class UpdatePositionsCommand extends Command
         if (is_array($orders)) {
             foreach ($orders as $order) {
                 $gdaxOrder = $this->gdaxService->getOrder($order['order_id']);
-                $status = $order->getStatus();
+                $status = $gdaxOrder->getStatus();
 
                 if ($status) {
                     $this->orderService->updateOrderStatus($order['id'], $gdaxOrder->getStatus());
@@ -138,8 +141,9 @@ class UpdatePositionsCommand extends Command
             foreach ($positions as $position) {
                 $position_id = $position['id'];
                 $order = $this->orderService->fetchPosition($position_id,'sell');
+
                 if ($order) {
-                    $status = $order->getStatus();
+                    $status = $order->status;
                     if ($status == 'done') {
                         $this->positionService->close($position_id);
                     }
@@ -165,7 +169,7 @@ class UpdatePositionsCommand extends Command
                 $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, getenv('STOPLOSS'), $output);
 
                 $placeOrder = true;
-                if ($sellMe) {
+                if (true || $sellMe) {
                     $buyOrder  = $this->orderService->fetchOrderByOrderId($order_id);
                     $parent_id = $buyOrder->id;
 
@@ -194,7 +198,7 @@ class UpdatePositionsCommand extends Command
                         }
 
                         if ($status == 'open' || $status == 'pending') {
-                            $this->orderService->sell($order->getId(), $size, $price, $status, $position_id, $parent_id);
+                            $this->orderService->sell($order->getId(), $size, $price, $position_id, $parent_id);
                             echo ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
                         }
                     }

@@ -53,7 +53,7 @@ class OrderService implements OrderServiceInterface
     public function updateOrderStatus(int $id, string $status, int $position_id = 0)
     {
         if ($position_id == 0) {
-            $data = ['position_id' => $position_id];
+            $data = ['status' => $status];
         } else {
             $data = ['status' => $status,'position_id' => $position_id];
         }
