@@ -61,7 +61,8 @@ trait ActualizeBuysAndSells
         if (is_array($rows)) {
             foreach ($rows as $row) {
                 $order = $this->gdaxService->getOrder($row['order_id']);
-                $position_id = $row['position_id'];
+
+
                 $status = $order->getStatus();
                 $parent_id = $row['parent_id'];
 
@@ -69,6 +70,7 @@ trait ActualizeBuysAndSells
                     $this->orderService->updateOrderStatus($row['id'], $order->getStatus());
 
                     if ($status == 'done') {
+                        $position_id = $row['position_id'];
                         $buyorder = $this->orderService->fetchOrderByParentId($parent_id);
                         $this->positionService->close($buyorder->position_id);
                     }

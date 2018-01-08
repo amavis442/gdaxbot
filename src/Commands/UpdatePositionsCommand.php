@@ -89,7 +89,7 @@ class UpdatePositionsCommand extends Command
            
             //Cleanup
             $this->orderService->garbageCollection();
-            $this->actualize();
+
             $this->actualizeBuys();
             $this->actualizeSells();
 
@@ -105,6 +105,8 @@ class UpdatePositionsCommand extends Command
 
                 $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
             }
+
+            $this->actualize();
 
             sleep(2);
         }
