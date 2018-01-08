@@ -134,6 +134,19 @@ class OrderService implements OrderServiceInterface
         }
     }
 
+    public function fetchOrderByParentId(int $parent_id, string $status = 'open'): ?\stdClass
+    {
+        $result = DB::table('orders')->select('*')->where('parent_id', $parent_id)->where('status',$status)->first();
+
+        if ($result) {
+            return $result;
+        } else {
+            return null;
+        }
+    }
+
+    
+    
     /**
      * Fetch order by order id from coinbase (has the form of aaaaa-aaaa-aaaa-aaaaa)
      *

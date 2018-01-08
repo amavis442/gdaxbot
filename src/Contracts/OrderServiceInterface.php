@@ -76,6 +76,8 @@ interface OrderServiceInterface {
      */
     public function fetchOrder(int $id): ?\stdClass;
 
+    public function fetchOrderByParentId(int $parent_id, string $status = 'open'): ?\stdClass;
+    
     /**
      * @param string $order_id
      *

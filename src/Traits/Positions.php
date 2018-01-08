@@ -44,20 +44,33 @@ trait Positions
                 $order_id = $position['order_id']; // Buy order_id
                 
                 $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, getenv('STOPLOSS'), $output);
-
+                
+                $placeOrder = true;
                 if ($sellMe) {
-                    $sellPrice = number_format($currentPrice + 0.01, 2, '.', '');
-                    $order = $this->gdaxService->placeLimitSellOrder($size, $sellPrice);
-                    if ($order->getMessage()) {
-                        $status = $order->getMessage();
-                    } else {
-                        $status = $order->getStatus();
-                    }
-                    
                     $buyOrder = $this->orderService->fetchOrderByOrderId($order_id);
                     $parent_id = $buyOrder->id;
+                    // Check if there are sell order for this position and cancel them.
+                    $existingSellOrder = $this->orderService->fetchOrderByParentId($parent_id);
+                    if ($existingSellOrder) {
+                        // Give the order 1 minute to complete
+                        $created_at = $existingSellOrder->created_at;
+                        if (\Carbon\Carbon::parse('Y-m-d H:i:s', $created_at)->addMinute(1)->format('YmdHis') < \Carbon\Carbon::now()->format('YmdHis')) {
+                            $this->gdaxService->cancelOrder($existingSellOrder->order_id);
+                        } else {
+                            $placeOrder = false;
+                        }
+                    }
                     
-                    $this->orderService->insertOrder('sell', $order->getId(), $size, $price, $status, $parent_id, $position_id);
+                    if ($placeOrder) {
+                        $sellPrice = number_format($currentPrice + 0.01, 2, '.', '');
+                        $order = $this->gdaxService->placeLimitSellOrder($size, $sellPrice);
+                        if ($order->getMessage()) {
+                            $status = $order->getMessage();
+                        } else {
+                            $status = $order->getStatus();
+                        }
+                        $this->orderService->insertOrder('sell', $order->getId(), $size, $price, $status, $parent_id, $position_id);
+                    }
                 }
             }
         }
