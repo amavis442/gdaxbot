@@ -80,6 +80,7 @@ class RunBotCommand extends Command
         $this->orderService = $this->container->get('bot.service.order');
         $this->gdaxService = $this->container->get('bot.service.gdax');
         $this->httpClient = $this->container->get('bot.httpclient');
+        $this->positionService = $this->container->get('bot.service.position');
     }
 
     protected function placeBuyOrder($size, $price): bool
@@ -122,7 +123,7 @@ class RunBotCommand extends Command
             $signal = $strategy->getSignal();
             $output->writeln("Signal: " . $signal);
 
-            $numOpenOrders = (int) $this->orderService->getNumOpenOrders();
+            $numOpenOrders = (int) $this->positionService->getNumOpen();
             $numOrdersLeftToPlace = (int) $config['max_orders'] - $numOpenOrders;
             if (!$numOrdersLeftToPlace) {
                 $numOrdersLeftToPlace = 0;
