@@ -35,6 +35,7 @@ CREATE TABLE `settings` (
     `id` INTEGER PRIMARY KEY AUTO_INCREMENT, 
     `spread` decimal(8,2),
     `sellspread` decimal(8,2), 
+    `stoploss` decimal(8,2),
     `max_orders` int, 
     `bottom` decimal(10,2),
     `top` decimal(10,2) ,
