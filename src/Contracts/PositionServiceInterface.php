@@ -29,6 +29,18 @@ interface PositionServiceInterface
      */
     public function open(string $order_id, float $size, float $amount): int;
 
+    /**
+     * @param int $id
+     *
+     * @return mixed
+     */
+    public function pending(int $id);
+
+    /**
+     * @param int $id
+     *
+     * @return mixed
+     */
     public function close(int $id);
     
     /**

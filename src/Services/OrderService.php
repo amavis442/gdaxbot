@@ -52,7 +52,13 @@ class OrderService implements OrderServiceInterface
      */
     public function updateOrderStatus(int $id, string $status, int $position_id = 0)
     {
-        DB::table('orders')->where('id', $id)->update(['status' => $status,'position_id' => $position_id]);
+        if ($position_id == 0) {
+            $data = ['position_id' => $position_id];
+        } else {
+            $data = ['status' => $status,'position_id' => $position_id];
+        }
+
+        DB::table('orders')->where('id', $id)->update($data);
     }
 
     /**
@@ -166,6 +172,23 @@ class OrderService implements OrderServiceInterface
             return null;
         }
     }
+
+    /**
+     * @param int $id
+     *
+     * @return \stdClass
+     */
+    public function fetchPosition(int $position_id, string $side): ?\stdClass
+    {
+        $result = DB::table('orders')->select('*')->where('position_id', $position_id)->where('side', $side)->first();
+
+        if ($result) {
+            return $result;
+        } else {
+            return null;
+        }
+    }
+
 
     public function fetchOrderByParentId(int $parent_id, string $status = 'open'): ?\stdClass
     {

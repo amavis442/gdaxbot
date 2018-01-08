@@ -84,6 +84,16 @@ interface OrderServiceInterface {
      */
     public function getPendingBuyOrders(): array;
 
+
+    /**
+     * @param int    $position_id
+     * @param string $side
+     *
+     * @return null|\stdClass
+     */
+    public function fetchPosition(int $position_id, string $side): ?\stdClass;
+
+
     /**
      * @param string $status
      *

@@ -48,6 +48,10 @@ class PositionService implements PositionServiceInterface
         return $id;
     }
 
+    public function pending(int $id)
+    {
+        DB::table('positions')->where('id', $id)->update(['position' => 'pending']);
+    }
 
     public function close(int $id)
     {
