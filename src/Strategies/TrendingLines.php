@@ -127,25 +127,33 @@ class TrendingLines implements StrategyInterface
         // Check what On Balance Volume (OBV) does
         $obv = $indicators->obv($recentData);
         if ($obv == 1) {
-            //echo "..On Balance Volume (OBV): Upwards (buy)\n";
+            echo "..On Balance Volume (OBV): Upwards (buy)\n";
         }
 
         if ($obv == 0) {
-            //echo "..On Balance Volume (OBV): Hold\n";
+            echo "..On Balance Volume (OBV): Hold\n";
         }
 
         if ($obv == -1) {
-            //echo "..On Balance Volume (OBV): Downwards (sell)\n";
+            echo "..On Balance Volume (OBV): Downwards (sell)\n";
         }
-
+        
+        if (($httc * $htl  * $mmi) == 1) {
+            echo "Buy\n";
+        }
+        if (($httc * $htl  * $mmi) == -1) {
+            echo "Sell\n";
+        }
+         
+        $result = PositionConstants::HOLD;
         if ($httc == 1 && $htl == 1 && $mmi == 1 && $obv == 1) {
-            return PositionConstants::BUY;
+            $result = PositionConstants::BUY;
         }
 
         if ($httc == 1 && $htl == -1 && $mmi == 1 && $obv == -1) {
-            return PositionConstants::SELL;
+            $result = PositionConstants::SELL;
         }
 
-        return PositionConstants::HOLD;
+        return $result;
     }
 }
