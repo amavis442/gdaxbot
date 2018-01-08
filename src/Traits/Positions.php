@@ -39,8 +39,7 @@ trait Positions
                         // Give the order 1 minute to complete
                         $created_at = $existingSellOrder->created_at;
                         if (\Carbon\Carbon::parse('Y-m-d H:i:s', $created_at)->addMinute(1)->format('YmdHis') < \Carbon\Carbon::now()->format('YmdHis')) {
-                            $this->gdaxService->cancelOrder($existingSellOrder->order_id);
-                            $this->orderService->updateOrderStatus($existingSellOrder->id,'cancelled');
+                            $placeOrder = true;
                         } else {
                             $placeOrder = false;
                         }
@@ -48,7 +47,7 @@ trait Positions
                     
                     if ($placeOrder) {
                         $sellPrice = number_format($currentPrice + 0.01, 2, '.', '');
-                        $order = $this->gdaxService->placeLimitSellOrder($size, $sellPrice);
+                        $order = $this->gdaxService->placeLimitSellOrderFor1Minute($size, $sellPrice);
                         if ($order->getMessage()) {
                             $status = $order->getMessage();
                         } else {
@@ -56,17 +55,7 @@ trait Positions
                         }
                         $this->orderService->insertOrder('sell', $order->getId(), $size, $price, $status, $parent_id, $position_id);
                     }
-                } else {
-                    // No more need to sell
-                    $buyOrder = $this->orderService->fetchOrderByOrderId($order_id);
-                    $parent_id = $buyOrder->id;
-                    $existingSellOrder = $this->orderService->fetchOrderByParentId($parent_id);
-                    if ($existingSellOrder) {
-                        // Give the order 1 minute to complete
-                        $this->gdaxService->cancelOrder($existingSellOrder->order_id);
-                        $this->orderService->updateOrderStatus($existingSellOrder->id,'cancelled');
-                    }
-                }
+                } 
             }
         }
     }

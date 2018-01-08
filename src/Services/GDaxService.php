@@ -214,6 +214,32 @@ class GDaxService implements GdaxServiceInterface
     }
 
     /**
+     * Place a buy order
+     *
+     * @param float $size
+     * @param float $price
+     *
+     * @return \GDAX\Types\Response\Authenticated\Order
+     */
+    public function placeLimitSellOrderFor1Minute(float $size, float $price): \GDAX\Types\Response\Authenticated\Order
+    {
+        $order = (new \GDAX\Types\Request\Authenticated\Order())
+            ->setType(\GDAX\Utilities\GDAXConstants::ORDER_TYPE_LIMIT)
+            ->setProductId($this->getProductId())
+            ->setSize($size)
+            ->setSide(\GDAX\Utilities\GDAXConstants::ORDER_SIDE_SELL)
+            ->setPrice($price)
+            ->setTimeInForce(\GDAX\Utilities\GDAXConstants::TIME_IN_FORCE_GTT)
+            ->setCancelAfter(\GDAX\Utilities\GDAXConstants::CANCEL_AFTER_MIN)
+            ->setPostOnly(true);
+
+        $response = $this->client->placeOrder($order);
+
+
+        return $response;
+    }
+    
+    /**
      * Get acount data like balance (can be handy to check if there is enough funds left)
      */
     public function getAccounts()
