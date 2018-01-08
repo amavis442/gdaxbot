@@ -56,6 +56,7 @@ trait Positions
                         $created_at = $existingSellOrder->created_at;
                         if (\Carbon\Carbon::parse('Y-m-d H:i:s', $created_at)->addMinute(1)->format('YmdHis') < \Carbon\Carbon::now()->format('YmdHis')) {
                             $this->gdaxService->cancelOrder($existingSellOrder->order_id);
+                            $this->orderService->updateOrderStatus($existingSellOrder->id,'cancelled');
                         } else {
                             $placeOrder = false;
                         }
@@ -70,6 +71,16 @@ trait Positions
                             $status = $order->getStatus();
                         }
                         $this->orderService->insertOrder('sell', $order->getId(), $size, $price, $status, $parent_id, $position_id);
+                    }
+                } else {
+                    // No more need to sell
+                    $buyOrder = $this->orderService->fetchOrderByOrderId($order_id);
+                    $parent_id = $buyOrder->id;
+                    $existingSellOrder = $this->orderService->fetchOrderByParentId($parent_id);
+                    if ($existingSellOrder) {
+                        // Give the order 1 minute to complete
+                        $this->gdaxService->cancelOrder($existingSellOrder->order_id);
+                        $this->orderService->updateOrderStatus($existingSellOrder->id,'cancelled');
                     }
                 }
             }
