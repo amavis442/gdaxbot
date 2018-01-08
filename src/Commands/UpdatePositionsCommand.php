@@ -101,10 +101,10 @@ class UpdatePositionsCommand extends Command
                         $position_id = $this->positionService->open($gdaxOrder->getId(), $gdaxOrder->getSize(), $gdaxOrder->getPrice());
                     }
 
-                    $this->orderService->updateOrderStatus($order['id'], $order->getStatus(), $position_id);
+                    $this->orderService->updateOrderStatus($order['id'], $gdaxOrder->getStatus(), $position_id);
 
                 } else {
-                    $this->orderService->updateOrderStatus($order['id'], $order->getMessage(), $position_id);
+                    $this->orderService->updateOrderStatus($order['id'], $gdaxOrder->getMessage(), $position_id);
                 }
             }
         }
