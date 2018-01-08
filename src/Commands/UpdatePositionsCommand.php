@@ -233,7 +233,7 @@ class UpdatePositionsCommand extends Command
 
                 $output->writeln("** Update positions");
 
-                $this->watchPosition($currentPrice, $output);
+                $this->watchPositions($currentPrice, $output);
 
                 $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
             }
