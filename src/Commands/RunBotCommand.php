@@ -143,11 +143,7 @@ class RunBotCommand extends Command
                 if (!$currentPrice || $currentPrice < 1 || $currentPrice > $topLimit || $currentPrice < $bottomLimit) {
                     $output->writeln(sprintf("<info>Treshold reached %s  [%s]  %s so no buying for now</info>", $bottomLimit, $currentPrice, $topLimit));
                 } else {
-
-                    $output->writeln("** Update positions");
-
                     if ($signal == PositionConstants::BUY && $numOrdersLeftToPlace > 0) {
-                        $output->writeln("** Place buy orders");
                         $size = $config['size'];
                         $buyPrice = number_format($currentPrice - 0.01, 2, '.', '');
 
