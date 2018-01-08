@@ -13,3 +13,7 @@ rules:
         active: PriceIsRight
     sell:
         active: PriceIsRight
+
+settings:
+    gdax:
+        sandbox: false

@@ -56,8 +56,23 @@ $activeStrategy = $bot['strategies']['active'];
 $availableRules = $bot['rules']['available'];
 $activeBuyRule = $bot['rules']['buy']['active'];
 $activeSellRule = $bot['rules']['sell']['active'];
-
+$sandbox = $bot['settings']['gdax']['sandbox'];
 
 $container->register('bot.strategy', $availableStrategies[$activeStrategy]);
 $container->register('bot.buy.rule', $availableRules[$activeBuyRule]);
 $container->register('bot.sell.rule', $availableRules[$activeSellRule]);
+
+$container->register('bot.settings', '\App\Services\SettingsService');
+$container->register('bot.service.order', '\App\Services\OrderService');
+$container->register('bot.service.gdax', '\App\Services\GDaxService')
+    ->addMethodCall('setCoin', [getenv('CRYPTOCOIN')])
+    ->addMethodCall('connect', [$sandbox]);
+$container->register('bot.httpclient', '\GuzzleHttp\Client');
+$container->register('bot.service.order', '\App\Services\PositionService');
+$container->register('bot.rule.stoploss', '\App\Rules\Stoploss');
+
+$gdaxService = $container->get('bot.service.gdax');
+dump($gdaxService);
+
+$price = $gdaxService->getCurrentPrice();
+dump($price);

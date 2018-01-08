@@ -21,6 +21,9 @@ $application->add(new \App\Commands\GdaxWebsocketCommand());
 
 $application->add(new \App\Commands\RunTickerCommand());
 
+$updatePositions = new \App\Commands\UpdatePositionsCommand();
+$updatePositions->setContainer($container);
+$application->add($updatePositions);
 
 /** 
  * For testing
