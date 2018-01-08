@@ -70,7 +70,6 @@ trait ActualizeBuysAndSells
                     $this->orderService->updateOrderStatus($row['id'], $order->getStatus());
 
                     if ($status == 'done') {
-                        $position_id = $row['position_id'];
                         $buyorder = $this->orderService->fetchOrderByParentId($parent_id);
                         $this->positionService->close($buyorder->position_id);
                     }

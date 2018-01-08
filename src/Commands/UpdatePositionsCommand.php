@@ -106,7 +106,8 @@ class UpdatePositionsCommand extends Command
                 $output->writeln("=== DONE " . date('Y-m-d H:i:s') . " ===");
             }
 
-            $this->actualize();
+            $this->actualizeSells();
+            //$this->actualize();
 
             sleep(2);
         }

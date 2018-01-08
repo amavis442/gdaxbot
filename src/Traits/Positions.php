@@ -48,13 +48,17 @@ trait Positions
 
                     if ($placeOrder) {
                         $sellPrice = number_format($currentPrice + 0.01, 2, '.', '');
+
                         $order     = $this->gdaxService->placeLimitSellOrderFor1Minute($size, $sellPrice);
+
                         if ($order->getMessage()) {
                             $status = $order->getMessage();
                         } else {
                             $status = $order->getStatus();
                         }
+
                         $this->orderService->sell($order->getId(), $size, $price, $status, $position_id, $parent_id);
+
                         echo ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
                     }
                 }
