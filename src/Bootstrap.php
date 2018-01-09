@@ -45,10 +45,6 @@ $client = new \Predis\Client();
 $cache = new RedisAdapter($client, 300);
 Cache::setCache($cache);
 
-$container = new ContainerBuilder();
-
-
-
 $bot = Yaml::parseFile(__DIR__ . '/../config/bot.yml');
 $availableStrategies = $bot['strategies']['available'];
 $activeStrategy = $bot['strategies']['active'];
@@ -58,15 +54,6 @@ $activeBuyRule = $bot['rules']['buy']['active'];
 $activeSellRule = $bot['rules']['sell']['active'];
 $sandbox = $bot['settings']['gdax']['sandbox'];
 
-$container->register('bot.strategy', $availableStrategies[$activeStrategy]);
-$container->register('bot.buy.rule', $availableRules[$activeBuyRule]);
-$container->register('bot.sell.rule', $availableRules[$activeSellRule]);
 
-$container->register('bot.settings', '\App\Services\SettingsService');
-$container->register('bot.service.order', '\App\Services\OrderService');
-$container->register('bot.service.position', '\App\Services\PositionService');
-$container->register('bot.service.gdax', '\App\Services\GDaxService')
-    ->addMethodCall('setCoin', [getenv('CRYPTOCOIN')])
-    ->addMethodCall('connect', [$sandbox]);
-$container->register('bot.httpclient', '\GuzzleHttp\Client');
-$container->register('bot.rule.stoploss', '\App\Rules\Stoploss');
+require __DIR__ .'/Container.php';
+
