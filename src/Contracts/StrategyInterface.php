@@ -22,5 +22,6 @@ interface StrategyInterface {
     public function getSignal(): int;
     
 
+    public function getMessage(): array;
 
 }

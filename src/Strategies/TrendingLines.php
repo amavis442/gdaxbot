@@ -33,11 +33,19 @@ class TrendingLines implements StrategyInterface
 
     /** @var \App\Util\Indicators */
     protected $indicators;
+    protected $msg = [];
+
 
     public function getName(): string
     {
         return 'TrendingLines';
     }
+
+    public function getMessage(): array
+    {
+        return $this->msg;
+    }
+
 
     public function getSignal(): int
     {
@@ -96,12 +104,12 @@ class TrendingLines implements StrategyInterface
 
         /** instrument is overbought, we will short */
         if ($cci == -1 && $cmo == -1 && $mfi == -1) {
-            //echo "..Overbought going Short (sell)\n";
+            $this->msg[] = "..Overbought going Short (sell)";
         }
 
         /** It is underbought, we will go LONG */
         if ($cci == 1 && $cmo == 1 && $mfi == 1) {
-            //echo "..Underbought going LONG (buy)\n";
+            $this->msg[] = "..Underbought going LONG (buy)";
         }
 
         $adx         = $indicators->adx($recentData);
@@ -117,32 +125,32 @@ class TrendingLines implements StrategyInterface
         $up_cross   = (($prior_sma40 <= $sma6 && $sma40 > $sma6) ? 1 : 0);
 
         if ($adx == 1 && $down_cross) {
-            //echo "..adx down_cross -> buy";
+            $this->msg[] = "..adx down_cross -> buy";
         }
 
         if ($adx == 1 && $up_cross) {
-            //echo "..adx up_cross -> sell";
+            $this->msg[] = "..adx up_cross -> sell";
         }
 
         // Check what On Balance Volume (OBV) does
         $obv = $indicators->obv($recentData);
         if ($obv == 1) {
-            echo "..On Balance Volume (OBV): Upwards (buy)\n";
+            $this->msg[] =  "..On Balance Volume (OBV): Upwards (buy)\n";
         }
 
         if ($obv == 0) {
-            echo "..On Balance Volume (OBV): Hold\n";
+            $this->msg[] =  "..On Balance Volume (OBV): Hold\n";
         }
 
         if ($obv == -1) {
-            echo "..On Balance Volume (OBV): Downwards (sell)\n";
+            $this->msg[] = "..On Balance Volume (OBV): Downwards (sell)\n";
         }
         
         if (($httc * $htl  * $mmi) == 1) {
-            echo "Buy\n";
+            $this->msg[] =  "Buy";
         }
         if (($httc * $htl  * $mmi) == -1) {
-            echo "Sell\n";
+            $this->msg[] = "Sell";
         }
          
         $result = PositionConstants::HOLD;
