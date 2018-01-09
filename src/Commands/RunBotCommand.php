@@ -155,7 +155,7 @@ class RunBotCommand extends Command
                 }
             }
 
-            sleep(60);
+            sleep(30);
         }
     }
 }
