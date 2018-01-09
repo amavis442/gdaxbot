@@ -8,6 +8,10 @@
 
 namespace App\Managers;
 
+use App\Contracts\IndicatorInterface;
+use App\Contracts\IndicatorManagerInterface;
+
+
 class IndicatorManager implements IndicatorManagerInterface
 {
     /**
@@ -21,9 +25,9 @@ class IndicatorManager implements IndicatorManagerInterface
      * Add an indicator resolver.
      *
      * @param string  $indicator
-     * @param Closure $resolver
+     * @param IndicatorInterface $resolver
      */
-    public function add(string $indicator, \Closure $resolver)
+    public function add(string $indicator, IndicatorInterface $resolver)
     {
         $this->indicators[$indicator] = $resolver;
     }
@@ -42,6 +46,6 @@ class IndicatorManager implements IndicatorManagerInterface
             throw new \BadMethodCallException("Indicator [{$indicator}] does not exist");
         }
 
-        return call_user_func($this->indicators[$indicator])($parameters[0]);
+        return call_user_func($this->indicators[$indicator],$parameters[0]);
     }
 }

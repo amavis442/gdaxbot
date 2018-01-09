@@ -4,9 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Console\Application;
-use App\Bot\Gdaxbot;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use App\Util\Cache;
 use Illuminate\Database\Capsule\Manager as Capsule;
 

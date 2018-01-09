@@ -14,6 +14,7 @@ use App\Traits\Signals;
 use App\Traits\OHLC;
 use App\Strategies\Traits\Strategies;
 use Illuminate\Database\Capsule\Manager as DB;
+use App\Contracts\IndicatorInterface;
 
 /**
  * Class ExampleCommand
@@ -27,20 +28,24 @@ use Illuminate\Database\Capsule\Manager as DB;
 class TestStrategiesCommand extends Command
 {
 
-    use Signals,
-        OHLC; // add our traits
+    use OHLC; // add our traits
 
-    protected $indicators;
+    protected $container;
+
+    public function setContainer($container)
+    {
+        $this->container = $container;
+    }
 
     protected function configure()
     {
         $this->setName('test:strategies')
-                // the short description shown while running "php bin/console list"
-                ->setDescription('Testing out the strategies we have.')
-                ->setHelp('Testing out the strategies we have.');
+            // the short description shown while running "php bin/console list"
+            ->setDescription('Testing out the strategies we have.')
+            ->setHelp('Testing out the strategies we have.');
     }
 
-        /** -------------------------------------------------------------------
+    /** -------------------------------------------------------------------
      * @return null
      *
      *  this is the part of the command that executes.
@@ -48,27 +53,31 @@ class TestStrategiesCommand extends Command
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        $signal = new \App\Strategies\TrendingLinesStrategy();
-        
-        switch($signal->getSignal()) {
-            case -1:
-                $advise = 'Sell';
-                break;
-            case 0:
-               $advise = 'Hold';
-                break; 
-            case 1:
-               $advise = 'Buy';
-                break; 
+        $strategyManager = $this->container->get('manager.strategy');
+
+       
+        while (1) {
+            $data = $this->getRecentData();
+
+            $result = $strategyManager->trendlines($data, $this->container->get('manager.indicators'));
+
+            $output->write(\Carbon\Carbon::now('Europe/Amsterdam')->format('Y-m-d H:i:s'). ' .... ');
+            
+            switch ($result) {
+                case IndicatorInterface::SELL:
+                    $output->writeln('<error>Sell</error>');
+                    break;
+                case IndicatorInterface::HOLD:
+                    $output->writeln('<info>Sell</info>');
+                    break;
+                case IndicatorInterface::BUY:
+                    $output->writeln('<comment>Buy</comment>');
+                    break;
+            }
+
+            sleep(5);
         }
-        
-        $oldadvise = Cache::get('strategy.trendslines.advise');
-        
-        if ($oldadvise <> $advise) {
-            $output->writeln('<info>New Advise: *** '.$advise. ' ** </info>');
-            Cache::put('strategy.trendslines.advise', $advise);
-        }
-        
-        $output->writeln('<info>Old Advise: *** '.$advise. ' ** </info>');
+
+        $output->writeln("Exit ticker");
     }
 }

@@ -36,7 +36,9 @@ $application->add(new \App\Commands\TestTrendsCommand());
 
 $application->add(new \App\Commands\TestSignalsCommand());
 
-$application->add(new \App\Commands\TestStrategiesCommand());
+$testStrat = new \App\Commands\TestStrategiesCommand();
+$testStrat->setContainer($container);
+$application->add($testStrat);
 
 $application->add(new \App\Commands\TestStoplossCommand());
 
