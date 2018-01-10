@@ -132,20 +132,10 @@ class PositionBot implements BotInterface
 
                 $placeOrder = true;
                 if ($sellMe) {
-                    $buyOrder  = $this->orderService->fetchOrderByOrderId($order_id);
-                    $parent_id = $buyOrder->id;
-
-                    // Check if there are sell order for this position and cancel them.
-                    $existingSellOrder = $this->orderService->fetchOrderByParentId($parent_id);
+                    $existingSellOrder  = $this->orderService->getOpenSellOrderByOrderId($order_id);
 
                     if ($existingSellOrder) {
-                        // Give the order 1 minute to complete
-                        $created_at = $existingSellOrder->created_at;
-                        if (\Carbon\Carbon::parse('Y-m-d H:i:s', $created_at)->addMinute(1)->format('YmdHis') < \Carbon\Carbon::now()->format('YmdHis')) {
-                            $placeOrder = true;
-                        } else {
-                            $placeOrder = false;
-                        }
+                        $placeOrder = false;
                     }
 
                     if ($placeOrder) {
@@ -160,7 +150,7 @@ class PositionBot implements BotInterface
                         }
 
                         if ($status == 'open' || $status == 'pending') {
-                            $this->orderService->sell($order->getId(), $size, $sellPrice, $position_id, $parent_id);
+                            $this->orderService->sell($order->getId(), $size, $sellPrice, $position_id,0);
                             $msg[] = ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
                         }
                     }

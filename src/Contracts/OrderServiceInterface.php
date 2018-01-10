@@ -118,6 +118,8 @@ interface OrderServiceInterface {
      */
     public function fetchOrderByOrderId(string $order_id): ?\stdClass;
 
+    public function getOpenSellOrderByOrderId(string $order_id): ?\stdClass;
+
     /**
      * @return int
      */

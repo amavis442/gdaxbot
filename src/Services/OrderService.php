@@ -220,6 +220,19 @@ class OrderService implements OrderServiceInterface
         }
     }
 
+    public function getOpenSellOrderByOrderId(string $order_id): ?\stdClass
+    {
+        $result = DB::table('orders')->select('*')->where('order_id', $order_id)->whereIn('status',['open','pending'])->orderBy('id','desc')->first();
+
+        if ($result) {
+            return $result;
+        } else {
+            return null;
+        }
+    }
+
+
+
     /**
      * @return int
      */
