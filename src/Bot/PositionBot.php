@@ -103,13 +103,10 @@ class PositionBot implements BotInterface
         if (is_array($positions)) {
             foreach ($positions as $position) {
                 $position_id = $position['id'];
-                $order       = $this->orderService->fetchPosition($position_id, 'sell');
+                $order       = $this->orderService->fetchPosition($position_id, 'sell', 'done');
 
                 if ($order) {
-                    $status = $order->status;
-                    if ($status == 'done') {
-                        $this->positionService->close($position_id);
-                    }
+                    $this->positionService->close($position_id);
                 }
             }
         }
@@ -121,7 +118,7 @@ class PositionBot implements BotInterface
     protected function watchPositions(float $currentPrice): array
     {
         $positions = $this->positionService->getOpen();
-        $msg = [];
+        $msg       = [];
 
         if (is_array($positions)) {
             foreach ($positions as $position) {
@@ -131,7 +128,7 @@ class PositionBot implements BotInterface
                 $order_id    = $position['order_id']; // Buy order_id
 
                 $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, $this->config['stoploss']);
-                $msg = array_merge($msg,$this->stoplossRule->getMessage());
+                $msg    = array_merge($msg, $this->stoplossRule->getMessage());
 
                 $placeOrder = true;
                 if (true || $sellMe) {
@@ -212,7 +209,7 @@ class PositionBot implements BotInterface
             $msg[] = "** Update positions";
 
             $msgWatch = $this->watchPositions($currentPrice);
-            $msg = array_merge($msg, $msgWatch);
+            $msg      = array_merge($msg, $msgWatch);
 
             $msg[] = "=== DONE " . date('Y-m-d H:i:s') . " ===";
         }

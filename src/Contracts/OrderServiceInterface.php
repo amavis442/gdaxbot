@@ -88,10 +88,11 @@ interface OrderServiceInterface {
     /**
      * @param int    $position_id
      * @param string $side
+     * @param string $status
      *
      * @return null|\stdClass
      */
-    public function fetchPosition(int $position_id, string $side): ?\stdClass;
+    public function fetchPosition(int $position_id, string $side, string $status = 'done'): ?\stdClass;
 
 
     /**

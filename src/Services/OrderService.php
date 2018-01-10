@@ -178,7 +178,7 @@ class OrderService implements OrderServiceInterface
      *
      * @return \stdClass
      */
-    public function fetchPosition(int $position_id, string $side): ?\stdClass
+    public function fetchPosition(int $position_id, string $side, string $status = 'done'): ?\stdClass
     {
         $result = DB::table('orders')->select('*')->where('position_id', $position_id)->where('side', $side)->first();
 
