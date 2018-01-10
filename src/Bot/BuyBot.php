@@ -105,7 +105,7 @@ class BuyBot implements BotInterface
         $msg    = array_merge($msg, $strategy->getMessage());
 
 
-        $numOpenOrders        = (int)$this->orderService->getNumOpen() - (int)$this->positionService->getNumOpen();
+        $numOpenOrders        = (int)$this->orderService->getNumOpenBuyOrders() - (int)$this->positionService->getNumOpen();
         $numOrdersLeftToPlace = (int)$this->config['max_orders'] - $numOpenOrders;
         if (!$numOrdersLeftToPlace) {
             $numOrdersLeftToPlace = 0;
