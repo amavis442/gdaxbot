@@ -53,7 +53,7 @@ class RunBotCommand extends Command
                 $output->writeln($msg);
             }
 
-            sleep(5);
+            sleep(30);
         }
     }
 }
