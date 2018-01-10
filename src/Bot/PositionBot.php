@@ -180,7 +180,8 @@ class PositionBot implements BotInterface
     public function run()
     {
         $this->timestamp = \Carbon\Carbon::now('Europe/Amsterdam')->format('Y-m-d H:i:s');
-        
+        $this->msg = [];
+
         $this->init();
 
         // Get Account
