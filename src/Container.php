@@ -18,6 +18,10 @@ $container->register('bot.service.gdax', '\App\Services\GDaxService')
 $container->register('bot.httpclient', '\GuzzleHttp\Client');
 $container->register('bot.rule.stoploss', '\App\Rules\Stoploss');
 
+$container->register('logger', '\Monolog\Logger')->addArgument('gdaxbot')
+    ->addMethodCall('pushHandler',[new \Monolog\Handler\StreamHandler(__DIR__.'/../logs/gdaxlog.log', \Monolog\Logger::DEBUG)]);
+
+
 // Indicators
 $container->register('adx', '\App\Indicators\AverageDirectionalMovementIndexIndicator');
 $container->register('atr', '\App\Indicators\AverageTrueRangeIndicator');

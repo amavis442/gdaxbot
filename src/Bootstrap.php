@@ -8,6 +8,8 @@ use Symfony\Component\Cache\Adapter\RedisAdapter;
 use App\Util\Cache;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
+
+
 if (!isset($_SERVER['APP_ENV'])) {
     (new Dotenv())->load(__DIR__ . '/../.env');
 }

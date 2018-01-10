@@ -19,7 +19,8 @@
         "illuminate/database": "^5.5",
         "symfony/process": "^4.0",
         "symfony/var-dumper": "^4.0",
-        "symfony/yaml": "^4.0"
+        "symfony/yaml": "^4.0",
+        "monolog/monolog": "^1.23"
     },
      "autoload": {
         "psr-4": {"App\\": "src/"}
