@@ -161,7 +161,7 @@ class PositionBot implements BotInterface
 
                         if ($status == 'open' || $status == 'pending') {
                             $this->orderService->sell($order->getId(), $size, $price, $position_id, $parent_id);
-                            $msg = ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
+                            $msg[] = ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
                         }
                     }
                 }
@@ -202,7 +202,7 @@ class PositionBot implements BotInterface
 
         $botactive = ($this->config['botactive'] == 1 ? true : false);
         if (!$botactive) {
-            $msg .= "Bot is not active at the moment";
+            $msg[] = "Bot is not active at the moment";
         } else {
             $currentPrice = $this->gdaxService->getCurrentPrice();
 
