@@ -176,6 +176,10 @@ interface OrderServiceInterface {
      */
     public function fixRejectedSells();
 
+
+    public function getNumOpenBuyOrders(): int;
+
+
     /**
      * @param array|null $orders
      *

@@ -311,6 +311,15 @@ class OrderService implements OrderServiceInterface
         return Transform::toArray($result);
     }
 
+
+    public function getNumOpenBuyOrders(): int
+    {
+        $result = DB::table('orders')->select(DB::raw('count(*) total'))->where('side','buy')->where('status', 'open')->orWhere('status', 'pending')->first();
+
+        return isset($result->total) ? $result->total : 0;
+    }
+
+
     /**
      * Check of we already have a open buy order with that price
      *
