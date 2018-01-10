@@ -19,7 +19,8 @@ class PositionBot implements BotInterface
     protected $positionService;
     protected $stoplossRule;
     protected $msg = [];
-
+    protected $timestamp;
+    
     public function setContainer($container)
     {
         $this->container = $container;
@@ -40,8 +41,10 @@ class PositionBot implements BotInterface
      */
     public function actualize()
     {
+        
         $orders = $this->gdaxService->getOpenOrders();
         if (count($orders)) {
+            $this->msg[] = $this->timestamp .' .... <info>actualize orders</info>';
             $this->orderService->fixUnknownOrdersFromGdax($orders);
         }
     }
@@ -54,6 +57,7 @@ class PositionBot implements BotInterface
         $orders = $this->orderService->getOpenBuyOrders();
 
         if (count($orders)) {
+            $this->msg[] = $this->timestamp .' .... <info>updateBuyOrderStatusAndCreatePosition</info>';
             foreach ($orders as $order) {
                 /** @var \GDAX\Types\Response\Authenticated\Order $gdaxOrder */
                 $gdaxOrder = $this->gdaxService->getOrder($order['order_id']);
@@ -65,6 +69,7 @@ class PositionBot implements BotInterface
                 if ($status) {
                     if ($status == 'done') {
                         $position_id = $this->positionService->open($gdaxOrder->getId(), $gdaxOrder->getSize(), $gdaxOrder->getPrice());
+                        $this->msg[] = $this->timestamp .' .... <info>Opend position</info>';
                     }
 
                     $this->orderService->updateOrderStatus($order['id'], $gdaxOrder->getStatus(), $position_id);
@@ -84,6 +89,7 @@ class PositionBot implements BotInterface
         $orders = $this->orderService->getOpenSellOrders();
 
         if (is_array($orders)) {
+            $this->msg[] = $this->timestamp .' .... <info>actualizeSellOrders</info>';
             foreach ($orders as $order) {
                 $gdaxOrder = $this->gdaxService->getOrder($order['order_id']);
                 $status    = $gdaxOrder->getStatus();
@@ -101,6 +107,7 @@ class PositionBot implements BotInterface
     {
         $positions = $this->positionService->getOpen();
         if (is_array($positions)) {
+            $this->msg[] = $this->timestamp .' .... <info>actualizePositions</info>';
             foreach ($positions as $position) {
                 $position_id = $position['id'];
                 $order       = $this->orderService->fetchPosition($position_id, 'sell', 'done');
@@ -115,12 +122,12 @@ class PositionBot implements BotInterface
     /**
      * Checks the open buys and if they are filled then place a buy order for the same size but higher price
      */
-    protected function watchPositions(float $currentPrice): array
+    protected function watchPositions(float $currentPrice)
     {
         $positions = $this->positionService->getOpen();
-        $msg       = [];
-
+    
         if (is_array($positions)) {
+            $this->msg[] = $this->timestamp .' .... <info>watchPositions</info>';
             foreach ($positions as $position) {
                 $price       = $position['amount'];
                 $size        = $position['size'];
@@ -128,10 +135,11 @@ class PositionBot implements BotInterface
                 $order_id    = $position['order_id']; // Buy order_id
 
                 $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, $this->config['stoploss'], $this->config['takeprofit']);
-                $msg    = array_merge($msg, $this->stoplossRule->getMessage());
+                $this->msg    = array_merge($this->msg, $this->stoplossRule->getMessage());
 
                 $placeOrder = true;
                 if ($sellMe) {
+                    $this->msg[] = $this->timestamp .' .... <info>Sell trigger</info>';
                     $existingSellOrder  = $this->orderService->getOpenSellOrderByOrderId($order_id);
 
                     if ($existingSellOrder) {
@@ -151,14 +159,12 @@ class PositionBot implements BotInterface
 
                         if ($status == 'open' || $status == 'pending') {
                             $this->orderService->sell($order->getId(), $size, $sellPrice, $position_id,0);
-                            $msg[] = ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
+                            $this->msg[] = $this->timestamp .' .... <info>Place sell order ' . $order->getId() . ' for position ' . $position_id.'</info>';
                         }
                     }
                 }
             }
         }
-
-        return $msg;
     }
 
 
@@ -173,16 +179,15 @@ class PositionBot implements BotInterface
 
     public function run()
     {
+        $this->timestamp = \Carbon\Carbon::now('Europe/Amsterdam')->format('Y-m-d H:i:s');
+        
         $this->init();
 
-        $msg = [];
         // Get Account
         //$account = $this->gdaxService->getAccount('EUR');
 
-
-        $msg[] = "=== RUN [" . \Carbon\Carbon::now('Europe/Amsterdam')->format('Y-m-d H:i:s') . "] ===";
-
-
+        $this->msg[] = $this->timestamp .' .... <info>RUN</info>';
+      
         //Cleanup
         $this->orderService->garbageCollection();
 
@@ -192,24 +197,16 @@ class PositionBot implements BotInterface
 
         $botactive = ($this->config['botactive'] == 1 ? true : false);
         if (!$botactive) {
-            $msg[] = "Bot is not active at the moment";
+            $this->msg[] = $this->timestamp .' .... <error>Bot is not active at the moment</error>';
         } else {
             $currentPrice = $this->gdaxService->getCurrentPrice();
-
-            $msg[] = "** Update positions";
-
-            $msgWatch = $this->watchPositions($currentPrice);
-            $msg      = array_merge($msg, $msgWatch);
-
-            $msg[] = "=== DONE " . date('Y-m-d H:i:s') . " ===";
+            $this->watchPositions($currentPrice);
         }
 
         $this->actualizeSellOrders();
         $this->actualizePositions();
 
         $this->actualize();
-
-        $this->msg = $msg;
 
     }
 }
