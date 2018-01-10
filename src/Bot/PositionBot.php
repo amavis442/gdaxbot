@@ -141,7 +141,7 @@ class PositionBot implements BotInterface
                 $placeOrder = true;
                 if ($sellMe) {
                     $this->msg[]       = $this->timestamp . ' .... <info>Sell trigger</info>';
-                    $existingSellOrder = $this->orderService->getOpenSellOrderByOrderId($order_id);
+                    $existingSellOrder = $this->orderService->getOpenPosition($position_id);
                     
                     if ($existingSellOrder) {
                         $placeOrder = false;

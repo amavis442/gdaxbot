@@ -74,6 +74,10 @@ interface OrderServiceInterface {
      */
     public function sell(string $order_id, float $size, float $amount, int $position_id = 0,int $parent_id = 0): int;
 
+    
+    
+    public function getOpenPosition(int $id): ?\stdClass;    
+    
     /**
      * @return mixed
      */
@@ -117,8 +121,6 @@ interface OrderServiceInterface {
      * @return \stdClass
      */
     public function fetchOrderByOrderId(string $order_id): ?\stdClass;
-
-    public function getOpenSellOrderByOrderId(string $order_id): ?\stdClass;
 
     /**
      * @return int

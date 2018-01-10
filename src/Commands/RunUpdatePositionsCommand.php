@@ -61,7 +61,7 @@ class RunUpdatePositionsCommand extends Command
                 //$log->info($msg);
             }
 
-            sleep(5);
+            sleep(2);
         }
     }
 

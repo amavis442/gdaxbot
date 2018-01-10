@@ -173,6 +173,17 @@ class OrderService implements OrderServiceInterface
         }
     }
 
+    public function getOpenPosition(int $id): ?\stdClass
+    {
+         $result = DB::table('orders')->select('*')->where('position_id', $id)->where('side', 'sell')->whereIn('status', ['open','pending'])->first();
+
+        if ($result) {
+            return $result;
+        } else {
+            return null;
+        }
+    }
+    
     /**
      * @param int $id
      *
