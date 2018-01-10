@@ -220,7 +220,7 @@ class PositionBot implements BotInterface
         $this->actualizeSellOrders();
         $this->actualizePositions();
 
-        //$this->actualize();
+        $this->actualize();
 
         $this->msg = $msg;
 
