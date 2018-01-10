@@ -92,8 +92,6 @@ class BuyBot implements BotInterface
     }
 
 
-
-
     public function run()
     {
         $this->init();
@@ -104,7 +102,7 @@ class BuyBot implements BotInterface
 
         // Even when the limit is reached, i want to know the signal
         $signal = $strategy->getSignal();
-        $msg = array_merge($msg, $strategy->getMessage());
+        $msg    = array_merge($msg, $strategy->getMessage());
 
 
         $numOpenOrders        = (int)$this->positionService->getNumOpen();
@@ -131,7 +129,7 @@ class BuyBot implements BotInterface
 
                     $size     = $this->config['size'];
                     $buyPrice = number_format($currentPrice - 0.01, 2, '.', '');
-                    $msg      .= "Place buyorder for size " . $size . ' and price ' . $buyPrice;
+                    $msg[]    = "Place buyorder for size " . $size . ' and price ' . $buyPrice;
                     $this->placeBuyOrder($size, $buyPrice);
                 }
                 $msg[] = "=== DONE " . date('Y-m-d H:i:s') . " ===";
