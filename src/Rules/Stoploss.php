@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace App\Rules;
 
@@ -12,6 +12,7 @@ use App\Util\Cache;
  */
 class Stoploss
 {
+
     protected $msg = [];
 
     public function getMessage(): array
@@ -27,32 +28,43 @@ class Stoploss
      * @param float $buyprice
      * @param float $stoplossPercentage
      */
-    public function trailingStop(int $position_id, float $currentprice, float $buyprice, float $stoplossPercentage = 3): bool
+    public function trailingStop(int $position_id, float $currentprice, float $buyprice, float $stoplossPercentage = 3, float $takeprofitPercentage = 1): bool
     {
-        $stoploss = (float)($stoplossPercentage / 100);
+        $stoploss   = (float) ($stoplossPercentage / 100);
+        $takeprofit = (float) ($takeprofitPercentage / 100);
+
         // Hate loss
-        $limitLoss      = $buyprice * (1 - $stoploss);
-        $profitTreshold = $buyprice * (1 + $stoploss);
-        $oldLimit       = Cache::get('gdax.stoploss.' . $position_id, null);
+        $limitStopLoss  = (float) $buyprice * (1 - $stoploss);
+        $profitTreshold = $buyprice * (1 + $takeprofit);
 
-        $limit = (float)$currentprice * (1 - $stoploss); // 97 < 100 < 103, Take loss at 97 and lower
-        Cache::put('gdax.stoploss.' . $position_id, $limit, 3600);
+        $oldLimitTakeProfit = Cache::get('gdax.takeprofit.' . $position_id, 0);
+        $trailingTakeProfit = (float) $currentprice * (1 - $takeprofit); // 97 < 100 < 103, Take loss at 97 and lower
 
-        $this->msg[] = '<info>Currentprice: ' . $currentprice . ',Bought: ' . $buyprice . ', Limit: ' . $limit . ', Oldlimit: ' . $oldLimit . ", Limit loss: " . $limitLoss . ", Profit treshold: " . $profitTreshold . ", Stoploss: " . $stoploss . '</info>';
+        $this->msg[] = '<info>Bought: ' . $buyprice . '</info>';
+        $this->msg[] = '<info>Currentprice: ' . $currentprice . '<info>';
+        $this->msg[] = '<info>Stoploss limit: ' . $limitStopLoss . '</info>';
+        $this->msg[] = '<info>Profit treshold: ' . $profitTreshold . '</info>';
+        $this->msg[] = '<info>Old Trailing stop: ' . $oldLimitTakeProfit . '</info>';
+        $this->msg[] = '<info>Trailing stop: ' . $trailingTakeProfit . '</info>';
 
-        // Take profit
-        if ($limit > $buyprice && $currentprice < $oldLimit) {
-            $this->msg[] = '<comment>*** Trigger: Profit .... Sell at ' . $currentprice . "</comment>";
 
-            return true;
-        }
+        if ($trailingTakeProfit > $oldLimitTakeProfit) {
+            $this->msg[] = '<info>Update trailing stop: from ' . $oldLimitTakeProfit . ' to ' . $trailingTakeProfit . '</info>';
+            Cache::put('gdax.takeprofit.' . $position_id, $trailingTakeProfit, 3600);
+        } else {
+            if ($currentprice > $oldLimitTakeProfit) {
+                $this->msg[] = '<comment>*** Trigger: Profit .... Sell at ' . $currentprice . "</comment>";
+                return true;
+            } else {
+                if ($currentprice < $limitStopLoss) {
+                    $this->msg[] = '<error>*** Trigger: Loss .... Sell at ' . $currentprice . "</error>";
 
-        if ($currentprice < $limitLoss) {
-            $this->msg[] = '<error>*** Trigger: Loss .... Sell at ' . $currentprice . "</error>";
-
-            return true;
+                    return true;
+                }
+            }
         }
 
         return false;
     }
+
 }
