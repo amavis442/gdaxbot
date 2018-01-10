@@ -13,7 +13,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
-
 /**
  * Description of RunBotCommand
  *
@@ -21,8 +20,8 @@ use Symfony\Component\Console\Input\InputOption;
  */
 class RunBotCommand extends Command
 {
-    protected $container;
 
+    protected $container;
 
     public function setContainer($container)
     {
@@ -32,15 +31,16 @@ class RunBotCommand extends Command
     protected function configure()
     {
         $this->setName('bot:run:buys')
-             ->setDescription('Runs the bot for 1 cycle use cron to call this command.')
-             ->addOption('test', null, InputOption::VALUE_NONE, 'Run bot, but is will not open an/or close positions but it will update the database so please use a _dev database.')
-             ->setHelp('Runs the bot for 1 cycle use cron to call this command.');
+            ->setDescription('Runs the bot for 1 cycle use cron to call this command.')
+            ->addOption('test', null, InputOption::VALUE_NONE, 'Run bot, but is will not open an/or close positions but it will update the database so please use a _dev database.')
+            ->setHelp('Runs the bot for 1 cycle use cron to call this command.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $settings = $this->container->get('bot.settings');
         $config   = $settings->getSettings();
+        $log      = $this->container->get('logger');
 
         $bot = new \App\Bot\BuyBot();
         $bot->setContainer($this->container);
@@ -51,9 +51,11 @@ class RunBotCommand extends Command
             $msgs = $bot->getMessage();
             foreach ($msgs as $msg) {
                 $output->writeln($msg);
+                //$log->info($msg);
             }
 
             sleep(30);
         }
     }
+
 }

@@ -4,6 +4,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 namespace App\Commands;
 
 use App\Util\Indicators;
@@ -26,8 +27,8 @@ use App\Util\PositionConstants;
  */
 class RunUpdatePositionsCommand extends Command
 {
-    protected $container;
 
+    protected $container;
 
     public function setContainer($container)
     {
@@ -45,7 +46,8 @@ class RunUpdatePositionsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $settings = $this->container->get('bot.settings');
-        $config = $settings->getSettings();
+        $config   = $settings->getSettings();
+        $log      = $this->container->get('logger');
 
         $bot = new \App\Bot\PositionBot();
         $bot->setContainer($this->container);
@@ -54,11 +56,13 @@ class RunUpdatePositionsCommand extends Command
         while (1) {
             $bot->run();
             $msgs = $bot->getMessage();
-            foreach ($msgs as $msg){
+            foreach ($msgs as $msg) {
                 $output->writeln($msg);
+                //$log->info($msg);
             }
 
             sleep(5);
         }
     }
+
 }
