@@ -131,7 +131,7 @@ class PositionBot implements BotInterface
                 $msg    = array_merge($msg, $this->stoplossRule->getMessage());
 
                 $placeOrder = true;
-                if (true || $sellMe) {
+                if ($sellMe) {
                     $buyOrder  = $this->orderService->fetchOrderByOrderId($order_id);
                     $parent_id = $buyOrder->id;
 
@@ -160,7 +160,7 @@ class PositionBot implements BotInterface
                         }
 
                         if ($status == 'open' || $status == 'pending') {
-                            $this->orderService->sell($order->getId(), $size, $price, $position_id, $parent_id);
+                            $this->orderService->sell($order->getId(), $size, $sellPrice, $position_id, $parent_id);
                             $msg[] = ">> Place sell order " . $order->getId() . " for position " . $position_id . "\n";
                         }
                     }
