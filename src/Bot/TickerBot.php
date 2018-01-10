@@ -39,8 +39,8 @@ class TickerBot implements BotInterface
 
     protected function init()
     {
-        $this->orderService    = $this->container->get('bot.service.order');
-        $this->gdaxService     = $this->container->get('bot.service.gdax');
+        $this->orderService = $this->container->get('bot.service.order');
+        $this->gdaxService  = $this->container->get('bot.service.gdax');
     }
 
     protected function updateTicker($pair = 'BTC-EUR')
@@ -55,9 +55,9 @@ class TickerBot implements BotInterface
             $ticker               = [];
             $ticker['product_id'] = $pair;
             /** @var \DateTime $time */
-            $time             = $tickerData->getTime();
-            $timeStr          = $time->format('Y-m-d H:i:s');
-            $ticker['timeid'] = (int)\Carbon\Carbon::parse($timeStr)->setTimezone('Europe/Amsterdam')->format('YmdHis');
+            $time             = $tickerData->getTime(); // UTC
+            $d                = \Carbon\Carbon::instance($time);
+            $ticker['timeid'] = (int)$d->setTimezone('Europe/Amsterdam')->format('YmdHis');
             $ticker['volume'] = (int)round($tickerData->getVolume());
             $ticker['price']  = (float)number_format($tickerData->getPrice(), 2, '.', '');
 

@@ -1,0 +1,5 @@
+image: php:7.1
+
+before_script:
+- bash ci/docker_install.sh > /dev/null
+
