@@ -127,7 +127,7 @@ class PositionBot implements BotInterface
                 $position_id = $position['id'];
                 $order_id    = $position['order_id']; // Buy order_id
 
-                $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, $this->config['stoploss']);
+                $sellMe = $this->stoplossRule->trailingStop($position_id, $currentPrice, $price, $this->config['stoploss'], $this->config['takeprofit']);
                 $msg    = array_merge($msg, $this->stoplossRule->getMessage());
 
                 $placeOrder = true;
