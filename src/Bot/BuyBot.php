@@ -131,6 +131,10 @@ class BuyBot implements BotInterface
                     $buyPrice = number_format($currentPrice - 0.01, 2, '.', '');
                     $msg[]    = "Place buyorder for size " . $size . ' and price ' . $buyPrice;
                     $this->placeBuyOrder($size, $buyPrice);
+                } else {
+                    if ($numOrdersLeftToPlace < 1) {
+                        $msg[] = sprintf("Num orders has been reached: Allowed: %d, placed %d", (int)$this->config['max_orders'], (int) $numOpenOrders);
+                    }
                 }
                 $msg[] = "=== DONE " . date('Y-m-d H:i:s') . " ===";
             }
